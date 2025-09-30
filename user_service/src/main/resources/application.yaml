@@ -1,0 +1,32 @@
+server:
+  port: ${SERVER_PORT:8000}
+spring:
+  application:
+    name: user_service
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_URI:http://localhost:8080/realms/subOne}
+  liquibase:
+    change-log: classpath:db/changelog/changelog-master.xml
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/user_service}
+    user: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:123456}
+    enabled: true
+  r2dbc:
+    url: ${SPRING_DATASOURCE_URL_REACTIVE:r2dbc:postgresql://localhost:5432/user_service}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:123456}
+    pool:
+      initial-size: 2
+      max-size: 10
+      max-idle-time: 30m
+      max-life-time: 2h
+      validation-query: SELECT 1
+      validation-depth: remote
+      leak-detection-threshold: 3000
+    properties:
+      connectTimeout: 5s
+      socketTimeout: 30s
+
