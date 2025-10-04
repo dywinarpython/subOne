@@ -73,4 +73,13 @@ public class UserController {
         return userService.updateUser(updateUser, jwt).thenReturn(ResponseEntity.ok(Map.of("message", "user is updated")));
     }
 
+
+    @Operation(
+            summary = "Удаления пользователя"
+    )
+    @DeleteMapping
+    public Mono<ResponseEntity<Void>> deleteUser(@AuthenticationPrincipal Jwt jwt) {
+        return userService.deleteUser(jwt).thenReturn(ResponseEntity.noContent().build());
+    }
+
 }

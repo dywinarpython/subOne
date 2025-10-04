@@ -17,6 +17,8 @@ public interface UserRepository extends ReactiveCrudRepository<User, Long>, Upda
 
     Mono<UserResponseDto> findByUserId(UUID id);
 
+    Mono<Integer> deleteByUserId(UUID id);
+
 
     @Query("SELECT  user_id, name, surname, email FROM users WHERE user_id IN (:ids)")
     Flux<UserResponseDto> findByUserIds(@Param("ids") List<UUID> ids);

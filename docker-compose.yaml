@@ -33,10 +33,22 @@ services:
       KC_DB_USERNAME: ${POSTGRES_USER}
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
       KC_HOSTNAME: localhost
-      KAFKA_CLIENT_ID: keycloak
       KAFKA_BOOTSTRAP_SERVERS: kafka1:9092,kafka2:9093,kafka3:9094
+
+      #Producer config
+      KAFKA_CLIENT_ID: keycloak
       KAFKA_VERIFY_EMAIL_TOPIC: verify_email
       KAFKA_CREATE_USER_TOPIC: create_user
+
+      #Consumer config
+      KAFKA_DELETE_USER_TOPIC: delete_user
+      KAFKA_REALM_NAME: subOne
+      KAFKA_GROUP_ID: keycloak-user-deletion-group
+      KAFKA_ENABLE_AUTO_COMMIT: false
+      KAFKA_AUTO_OFFSET_RESET: earliest
+      KAFKA_MAX_POLL_RECORDS: 10
+      KAFKA_SESSION_TIMEOUT_MS: 30000
+      KAFKA_HEARTBEAT_INTERVAL_MS: 10000
     command: start-dev
     depends_on:
         dbSecurity:

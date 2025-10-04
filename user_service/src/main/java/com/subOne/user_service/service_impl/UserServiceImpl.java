@@ -10,6 +10,7 @@ import com.subOne.user_service.repository.UserRepository;
 import com.subOne.user_service.service.UserService;
 import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,7 @@ import java.util.UUID;
 public class UserServiceImpl implements UserService {
 
 
+    private final KafkaTemplate<String, String> kafkaTemplate;
     private final UserRepository userRepository;
 
     private final MapperUser mapperUser;
@@ -71,5 +73,15 @@ public class UserServiceImpl implements UserService {
         return requestUpdateUserDto.map(mapperUser::addUpdateField).flatMap(mp ->
                 userRepository.updateFields(mp, User.class, "userId", jwt.getSubject())
         );
+    }
+
+    @Override
+    @Transactional
+    public Mono<Void> deleteUser(Jwt jwt) {
+        return userRepository.deleteByUserId(UUID.fromString(jwt.getSubject())).flatMap(count ->
+        {
+            if(count != 1) return Mono.error(new NoSuchElementException("User is not found!"));
+            return Mono.empty();
+        }).then(Mono.fromFuture(kafkaTemplate.send( "delete_user", jwt.getSubject()))).then();
     }
 }
