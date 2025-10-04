@@ -1,13 +1,29 @@
 package com.subOne.user_service.mapper;
 
 import com.subOne.kecyloak_dto.UserInfo;
+import com.subOne.user_service.dto.request.RequestUpdateUserDto;
 import com.subOne.user_service.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Mapper(componentModel = "spring")
 public interface MapperUser {
 
     @Mapping(source = "email_verify", target = "verifyEmail")
     User userInfoToUser(UserInfo userInfo);
+
+    default Map<SqlIdentifier, Object> addUpdateField(RequestUpdateUserDto requestUpdateUserDto){
+        Map<SqlIdentifier, Object> mp = new HashMap<>();
+        if(requestUpdateUserDto.name() != null){
+            mp.put(SqlIdentifier.quoted("name"), requestUpdateUserDto.name());
+        }
+        if (requestUpdateUserDto.surname() != null){
+            mp.put(SqlIdentifier.quoted("surname"), requestUpdateUserDto.surname());
+        }
+        return mp;
+    }
 }

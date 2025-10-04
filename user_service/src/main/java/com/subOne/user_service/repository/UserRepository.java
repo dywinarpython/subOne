@@ -2,17 +2,25 @@ package com.subOne.user_service.repository;
 
 import com.subOne.user_service.dto.response.UserResponseDto;
 import com.subOne.user_service.entity.User;
+import com.subOne.user_service.repository.update.UpdateRepository;
 import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.UUID;
 
-public interface UserRepository extends ReactiveCrudRepository<User, Long> {
+public interface UserRepository extends ReactiveCrudRepository<User, Long>, UpdateRepository {
 
-    Mono<UserResponseDto> findUserById(UUID id);
+    Mono<UserResponseDto> findByUserId(UUID id);
+
+
+    @Query("SELECT  user_id, name, surname, email FROM users WHERE user_id IN (:ids)")
+    Flux<UserResponseDto> findByUserIds(@Param("ids") List<UUID> ids);
+
 
     @Modifying
     @Query("""
