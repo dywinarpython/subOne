@@ -13,7 +13,7 @@ import java.util.UUID;
 public interface UserService {
     Mono<Void> saveUser(UserInfo userInfo);
     Mono<Void> addVerifyEmailUser(String email);
-    Mono<UserResponseDto> getUserById(UUID id);
+    Mono<UserResponseDto> getUserById(Jwt jwt);
     Mono<UsersResponseDto> getUsersById(List<UUID> id);
     Mono<Void> updateUser(Mono<RequestUpdateUserDto> requestUpdateUserDto, Jwt jwt);
     Mono<Void> deleteUser(Jwt jwt);

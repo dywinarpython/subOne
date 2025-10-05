@@ -49,8 +49,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public Mono<UserResponseDto> getUserById(UUID id) {
-        return userRepository.findByUserId(id)
+    public Mono<UserResponseDto> getUserById(Jwt jwt) {
+        return userRepository.findByUserId(UUID.fromString(jwt.getSubject()))
                 .switchIfEmpty(Mono.error(new NoSuchElementException("User is not found!")));
     }
 
@@ -71,8 +71,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public Mono<Void> updateUser(Mono<RequestUpdateUserDto> requestUpdateUserDto, Jwt jwt) {
         return requestUpdateUserDto.map(mapperUser::addUpdateField).flatMap(mp ->
-                userRepository.updateFields(mp, User.class, "userId", jwt.getSubject())
-        );
+                userRepository.updateFields(mp, User.class, "userId", jwt.getSubject()));
     }
 
     @Override
@@ -81,7 +80,7 @@ public class UserServiceImpl implements UserService {
         return userRepository.deleteByUserId(UUID.fromString(jwt.getSubject())).flatMap(count ->
         {
             if(count != 1) return Mono.error(new NoSuchElementException("User is not found!"));
-            return Mono.empty();
-        }).then(Mono.fromFuture(kafkaTemplate.send( "delete_user", jwt.getSubject()))).then();
+            return Mono.fromFuture(kafkaTemplate.send( "delete_user", jwt.getSubject()));
+        }).then();
     }
 }

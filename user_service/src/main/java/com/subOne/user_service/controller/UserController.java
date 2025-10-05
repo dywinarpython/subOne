@@ -39,9 +39,9 @@ public class UserController {
                     )
             )
     )
-    @GetMapping("/{id}")
+    @GetMapping
     public Mono<UserResponseDto> getUserById(@AuthenticationPrincipal Jwt jwt) {
-        return userService.getUserById(UUID.fromString(jwt.getSubject()));
+        return userService.getUserById(jwt);
     }
 
     @Operation(
@@ -53,8 +53,8 @@ public class UserController {
                     )
             )
     )
-    @GetMapping
-    public Mono<UsersResponseDto> getUserById(@RequestParam("usersId") List<UUID> usersId) {
+    @GetMapping("/")
+    public Mono<UsersResponseDto> getUsersById(@RequestParam("usersId") List<UUID> usersId) {
         return userService.getUsersById(usersId);
     }
 
@@ -69,7 +69,7 @@ public class UserController {
             )
     )
     @PatchMapping
-    public Mono<ResponseEntity<Map<String, String>>> getUserById(@Valid @RequestBody Mono<RequestUpdateUserDto> updateUser, @AuthenticationPrincipal Jwt jwt) {
+    public Mono<ResponseEntity<Map<String, String>>> updateUser(@Valid @RequestBody Mono<RequestUpdateUserDto> updateUser, @AuthenticationPrincipal Jwt jwt) {
         return userService.updateUser(updateUser, jwt).thenReturn(ResponseEntity.ok(Map.of("message", "user is updated")));
     }
 
