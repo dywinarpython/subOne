@@ -6,5 +6,5 @@ import reactor.core.publisher.Mono;
 import java.util.Map;
 
 public interface UpdateRepository {
-    <T> Mono<Void> updateFields(Map<SqlIdentifier, Object> sqlIdentifierObjectMap, Class<T> classT, String column, Object columnValue);
+    <T> Mono<Long> updateFields(Map<SqlIdentifier, Object> sqlIdentifierObjectMap, Class<T> classT, String column, Object columnValue);
 }

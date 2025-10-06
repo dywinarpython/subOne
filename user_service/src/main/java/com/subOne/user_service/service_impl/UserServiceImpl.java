@@ -40,7 +40,6 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public Mono<Void> addVerifyEmailUser(String email) {
-        System.out.println(email);
         return userRepository.updateToVerifyEmail(email).flatMap(count -> {
             if(count != 1) return Mono.error(new NoSuchElementException("Email is not update!"));
             return Mono.empty();
@@ -71,7 +70,10 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public Mono<Void> updateUser(Mono<RequestUpdateUserDto> requestUpdateUserDto, Jwt jwt) {
         return requestUpdateUserDto.map(mapperUser::addUpdateField).flatMap(mp ->
-                userRepository.updateFields(mp, User.class, "userId", jwt.getSubject()));
+                userRepository.updateFields(mp, User.class, "userId", jwt.getSubject())).flatMap( count -> {
+                    if(count != 1) return Mono.error(new NoSuchElementException("User is not found!"));
+                    return Mono.empty();
+                });
     }
 
     @Override

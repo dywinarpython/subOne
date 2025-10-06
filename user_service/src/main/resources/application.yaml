@@ -1,6 +1,9 @@
 server:
   port: ${SERVER_PORT:8000}
 spring:
+  config:
+    activate:
+      on-profile: default
   application:
     name: user_service
   security:
@@ -41,9 +44,3 @@ spring:
           json:
             trusted:
               packages: "com.subOne.kecyloak_dto"
-
-logging:
-  level:
-    io.r2dbc.postgresql: DEBUG
-    org.springframework.r2dbc: DEBUG
-

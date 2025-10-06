@@ -1,0 +1,226 @@
+package com.subOne.user_service.service;
+
+import com.subOne.user_service.dto.request.RequestUpdateUserDto;
+import com.subOne.user_service.dto.response.UserResponseDto;
+import com.subOne.user_service.dto.response.UsersResponseDto;
+import com.subOne.user_service.entity.User;
+import com.subOne.user_service.mapper.MapperUser;
+import com.subOne.user_service.repository.UserRepository;
+import com.subOne.user_service.service_impl.UserServiceImpl;
+import jakarta.validation.ValidationException;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
+import org.springframework.security.oauth2.jwt.Jwt;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
+
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+@Slf4j
+public class UserServiceTest {
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private KafkaTemplate<String, String> kafkaTemplate;
+
+    @Mock
+    private Jwt jwt;
+
+    @Mock
+    private MapperUser mapperUser;
+
+    @InjectMocks
+    private UserServiceImpl userService;
+
+    private static void accept(Throwable throwable) {
+        assertEquals(NoSuchElementException.class, throwable.getClass());
+        log.info("User is not found -> correct");
+    }
+
+
+    @Test
+    void saveUser_UserInfoCorrect_saveToDb(){
+        when(userRepository.save(any())).thenReturn(Mono.just(new User()));
+
+        Mono<Void> result = userService.saveUser(any());
+
+        StepVerifier.create(result)
+                .expectComplete()
+                .verify();
+        verify(userRepository).save(any());
+    }
+
+
+    @Test
+    void addVerifyEmailUser_emailIsFound_saveToDb(){
+        when(userRepository.updateToVerifyEmail(anyString())).thenReturn(Mono.just(1));
+
+        Mono<Void> result = userService.addVerifyEmailUser(anyString());
+
+        StepVerifier.create(result)
+                .expectComplete()
+                .verify();
+        verify(userRepository).updateToVerifyEmail(anyString());
+    }
+
+    @Test
+    void addVerifyEmailUser_emailIsNotFound_NotSaveToDb(){
+        when(userRepository.updateToVerifyEmail(anyString())).thenReturn(Mono.just(0));
+
+        Mono<Void> result = userService.addVerifyEmailUser(anyString());
+
+
+        StepVerifier.create(result)
+                .expectErrorSatisfies(throwable -> {
+                            assertEquals(NoSuchElementException.class, throwable.getClass());
+                            log.info("Email is not found -> correct");
+                        }
+                        )
+                .verify();
+        verify(userRepository).updateToVerifyEmail(anyString());
+    }
+
+    @Test
+    void getUserById_UserIsFound_CorrectReturnAndCheckRepo(){
+        UserResponseDto userResponseDto = new UserResponseDto(UUID.randomUUID(), "testName", "testSurname", "testEmail");
+        when(userRepository.findByUserId(any())).thenReturn(Mono.just(userResponseDto));
+        when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
+
+        Mono<UserResponseDto> result = userService.getUserById(jwt);
+
+        StepVerifier.create(result)
+                .expectNext(userResponseDto)
+                .expectComplete()
+                .verify();
+        verify(userRepository).findByUserId(any());
+    }
+
+    @Test
+    void getUserById_UserIsNotFound_UnCorrectReturnAndCheckRepo(){
+       when(userRepository.findByUserId(any())).thenReturn(Mono.empty());
+       when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
+       Mono<UserResponseDto> result = userService.getUserById(jwt);
+
+        StepVerifier.create(result)
+                .expectErrorSatisfies(UserServiceTest::accept)
+                .verify();
+        verify(userRepository).findByUserId(any());
+    }
+
+    @Test
+    void getUsersById_OnePersonIsNotFound_CorrectReturnAndCheckRepo(){
+        List<UUID> userIds = List.of(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
+        List<UserResponseDto> ls = new ArrayList<>();
+        ls.add(new UserResponseDto(userIds.getFirst(), "testName", "testSurname", "testEmail"));
+        ls.add(new UserResponseDto(userIds.get(1), "testName2", "testSurname2", "testEmail2"));
+        ls.add(new UserResponseDto(null, null, null, null));
+        ls.add(new UserResponseDto(userIds.getLast(), "testName3", "testSurname3", "testEmail3"));
+        UsersResponseDto usersResponseDto = new UsersResponseDto(ls);
+
+
+        when(userRepository.findByUserIds(any())).thenReturn(Flux.fromIterable(ls.stream().filter(user -> user.userId() != null).toList()));
+
+        Mono<UsersResponseDto> result = userService.getUsersById(userIds);
+
+        StepVerifier.create(result)
+                .expectNext(usersResponseDto)
+                .expectComplete()
+                .verify();
+        verify(userRepository).findByUserIds(any());
+    }
+
+    @Test
+    void getUsersById_UserIsMoreFive_CorrectReturnAndCheckRepo(){
+        List<UUID> userIds = List.of(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
+
+        Mono<UsersResponseDto> result = userService.getUsersById(userIds);
+
+        StepVerifier.create(result)
+                .expectErrorSatisfies(throwable -> {
+                    assertEquals(ValidationException.class, throwable.getClass());
+                    log.info("User is more 5 -> correct");
+                })
+                .verify();
+        verify(userRepository, times(0)).findByUserIds(any());
+    }
+
+    @Test
+    void updateUser_UpdateUserDtoIsCorrectAndUserIsFound_CorrectUpdateAndCheckRepo(){
+        Mono<RequestUpdateUserDto> requestUpdateUserDtoMono = Mono.just(new RequestUpdateUserDto(null, null));
+        when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
+        when(mapperUser.addUpdateField(any(RequestUpdateUserDto.class))).thenReturn(Map.of());
+        when(userRepository.updateFields(any(), any(), anyString(), any())).thenReturn(Mono.just(1L));
+
+        Mono<Void> result = userService.updateUser(requestUpdateUserDtoMono, jwt);
+
+        StepVerifier.create(result)
+                .expectComplete()
+                .verify();
+        verify(userRepository).updateFields(any(), any(), anyString(), any());
+    }
+
+    @Test
+    void updateUser_UpdateUserDtoIsCorrectAndUserIsNotFound_NotCorrectUpdateAndCheckRepo(){
+        Mono<RequestUpdateUserDto> requestUpdateUserDtoMono = Mono.just(new RequestUpdateUserDto(null, null));
+        when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
+        when(mapperUser.addUpdateField(any(RequestUpdateUserDto.class))).thenReturn(Map.of());
+        when(userRepository.updateFields(any(), any(), anyString(), any())).thenReturn(Mono.just(0L));
+
+        Mono<Void> result = userService.updateUser(requestUpdateUserDtoMono, jwt);
+
+        StepVerifier.create(result)
+                .expectErrorSatisfies(UserServiceTest::accept)
+                .verify();
+        verify(userRepository).updateFields(any(), any(), anyString(), any());
+    }
+
+    @Test
+    void deleteUser_UserIsFound_deleteFromDbAndCheckRepo(){
+
+        when(userRepository.deleteByUserId(any())).thenReturn(Mono.just(1));
+        when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
+        ProducerRecord<String, String> producerRecord = new ProducerRecord<>("delete_user", jwt.getSubject());
+        SendResult<String, String> sendresult = new SendResult<>(producerRecord, null);
+        when(kafkaTemplate.send(anyString(), anyString())).thenReturn(CompletableFuture.completedFuture(sendresult));
+
+        Mono<Void> result = userService.deleteUser(jwt);
+
+        StepVerifier.create(result)
+                .expectComplete()
+                .verify();
+        verify(userRepository).deleteByUserId(any());
+    }
+
+    @Test
+    void deleteUser_UserIsNotFound_NotDeleteFromDb(){
+
+        when(userRepository.deleteByUserId(any())).thenReturn(Mono.just(0));
+        when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
+
+        Mono<Void> result = userService.deleteUser(jwt);
+
+        StepVerifier.create(result)
+                .expectErrorSatisfies(throwable -> {
+                    assertEquals(NoSuchElementException.class, throwable.getClass());
+                    log.info("User if not found -> correct");
+                })
+                .verify();
+        verify(userRepository).deleteByUserId(any());
+    }
+}

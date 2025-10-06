@@ -1,0 +1,12 @@
+server:
+  port: 0
+spring:
+  application:
+    name: user_service
+  liquibase:
+    change-log: classpath:db/changelog/changelog-master.xml
+    enabled: true
+logging:
+  level:
+    org.springframework.security: DEBUG
+
