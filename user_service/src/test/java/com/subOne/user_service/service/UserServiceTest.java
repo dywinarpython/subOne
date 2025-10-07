@@ -4,26 +4,23 @@ import com.subOne.user_service.dto.request.RequestUpdateUserDto;
 import com.subOne.user_service.dto.response.UserResponseDto;
 import com.subOne.user_service.dto.response.UsersResponseDto;
 import com.subOne.user_service.entity.User;
+import com.subOne.user_service.kafka.serviceProducer.KafkaService;
 import com.subOne.user_service.mapper.MapperUser;
 import com.subOne.user_service.repository.UserRepository;
 import com.subOne.user_service.service_impl.UserServiceImpl;
 import jakarta.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.SendResult;
 import org.springframework.security.oauth2.jwt.Jwt;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -37,7 +34,7 @@ public class UserServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private KafkaTemplate<String, String> kafkaTemplate;
+    private KafkaService kafkaService;
 
     @Mock
     private Jwt jwt;
@@ -195,9 +192,7 @@ public class UserServiceTest {
 
         when(userRepository.deleteByUserId(any())).thenReturn(Mono.just(1));
         when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
-        ProducerRecord<String, String> producerRecord = new ProducerRecord<>("delete_user", jwt.getSubject());
-        SendResult<String, String> sendresult = new SendResult<>(producerRecord, null);
-        when(kafkaTemplate.send(anyString(), anyString())).thenReturn(CompletableFuture.completedFuture(sendresult));
+        when(kafkaService.sendToTopic(any(), any())).thenReturn(Mono.empty());
 
         Mono<Void> result = userService.deleteUser(jwt);
 
@@ -212,6 +207,7 @@ public class UserServiceTest {
 
         when(userRepository.deleteByUserId(any())).thenReturn(Mono.just(0));
         when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
+
 
         Mono<Void> result = userService.deleteUser(jwt);
 

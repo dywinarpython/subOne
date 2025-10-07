@@ -9,4 +9,6 @@ spring:
 logging:
   level:
     org.springframework.security: DEBUG
+    org.springframework.r2dbc.core: DEBUG
+    io.r2dbc.postgresql.PARAM: DEBUG
 

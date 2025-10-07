@@ -53,7 +53,7 @@ public class UserController {
                     )
             )
     )
-    @GetMapping("/")
+    @GetMapping("/list")
     public Mono<UsersResponseDto> getUsersById(@RequestParam("usersId") List<UUID> usersId) {
         return userService.getUsersById(usersId);
     }
