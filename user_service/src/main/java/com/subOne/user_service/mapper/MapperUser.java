@@ -26,7 +26,7 @@ public interface MapperUser {
             mp.put(SqlIdentifier.quoted("surname"), requestUpdateUserDto.surname());
         }
         if(requestUpdateUserDto.surname() == null && requestUpdateUserDto.name() == null){
-            throw new ValidationException("Surname and name have not been transferred");
+            throw new ValidationException("Surname or name have not been transferred");
         }
         return mp;
     }
