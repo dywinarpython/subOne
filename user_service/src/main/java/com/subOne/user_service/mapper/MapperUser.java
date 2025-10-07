@@ -3,6 +3,7 @@ package com.subOne.user_service.mapper;
 import com.subOne.kecyloak_dto.UserInfo;
 import com.subOne.user_service.dto.request.RequestUpdateUserDto;
 import com.subOne.user_service.entity.User;
+import jakarta.validation.ValidationException;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -23,6 +24,9 @@ public interface MapperUser {
         }
         if (requestUpdateUserDto.surname() != null){
             mp.put(SqlIdentifier.quoted("surname"), requestUpdateUserDto.surname());
+        }
+        if(requestUpdateUserDto.surname() == null && requestUpdateUserDto.name() == null){
+            throw new ValidationException("Surname or name have not been transferred");
         }
         return mp;
     }

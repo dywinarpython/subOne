@@ -19,8 +19,8 @@ public class UpdateRepositoryImpl implements UpdateRepository {
     private final R2dbcEntityTemplate r2dbcEntityTemplate;
 
     @Override
-    public <T> Mono<Void> updateFields(Map<SqlIdentifier, Object> sqlIdentifierObjectMap, Class<T> classT, String column, Object columnValue) {
+    public <T> Mono<Long> updateFields(Map<SqlIdentifier, Object> sqlIdentifierObjectMap, Class<T> classT, String column, Object columnValue) {
         Update update = Update.from(sqlIdentifierObjectMap);
-        return r2dbcEntityTemplate.update(Query.query(Criteria.where(column).is(columnValue)), update, classT).then();
+        return r2dbcEntityTemplate.update(Query.query(Criteria.where(column).is(columnValue)), update, classT);
     }
 }

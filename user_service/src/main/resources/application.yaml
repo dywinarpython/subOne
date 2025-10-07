@@ -1,6 +1,9 @@
 server:
   port: ${SERVER_PORT:8000}
 spring:
+  config:
+    activate:
+      on-profile: default
   application:
     name: user_service
   security:
@@ -31,6 +34,7 @@ spring:
       socketTimeout: 30s
   kafka:
     partitions: 3
+    topicNameDeleteUser: ${KAFKA_NAME_TOPIC_DELETE_USER}
     bootstrap-servers: ${KAFKA_SERVERS:localhost:19092,localhost:19093,localhost:19094}
     consumer:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
@@ -41,9 +45,3 @@ spring:
           json:
             trusted:
               packages: "com.subOne.kecyloak_dto"
-
-logging:
-  level:
-    io.r2dbc.postgresql: DEBUG
-    org.springframework.r2dbc: DEBUG
-
