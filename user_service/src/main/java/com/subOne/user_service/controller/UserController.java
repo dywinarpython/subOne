@@ -1,8 +1,8 @@
 package com.subOne.user_service.controller;
 
-import com.subOne.user_service.dto.request.RequestUpdateUserDto;
-import com.subOne.user_service.dto.response.UserResponseDto;
-import com.subOne.user_service.dto.response.UsersResponseDto;
+import com.subOne.user_service.dto.user.request.RequestUpdateUserDto;
+import com.subOne.user_service.dto.user.response.UserResponseDto;
+import com.subOne.user_service.dto.user.response.UsersResponseDto;
 import com.subOne.user_service.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -60,13 +60,7 @@ public class UserController {
 
 
     @Operation(
-            summary = "Обновление информации пользователя",
-            responses = @ApiResponse(
-                    responseCode = "200",
-                    content = @Content(
-                            array = @ArraySchema(schema = @Schema(implementation = RequestUpdateUserDto.class))
-                    )
-            )
+            summary = "Обновление информации пользователя"
     )
     @PatchMapping
     public Mono<ResponseEntity<Map<String, String>>> updateUser(@Valid @RequestBody Mono<RequestUpdateUserDto> updateUser, @AuthenticationPrincipal Jwt jwt) {
@@ -81,5 +75,4 @@ public class UserController {
     public Mono<ResponseEntity<Void>> deleteUser(@AuthenticationPrincipal Jwt jwt) {
         return userService.deleteUser(jwt).thenReturn(ResponseEntity.noContent().build());
     }
-
 }
