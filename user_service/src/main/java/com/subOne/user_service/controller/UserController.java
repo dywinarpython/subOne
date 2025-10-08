@@ -60,13 +60,7 @@ public class UserController {
 
 
     @Operation(
-            summary = "Обновление информации пользователя",
-            responses = @ApiResponse(
-                    responseCode = "200",
-                    content = @Content(
-                            array = @ArraySchema(schema = @Schema(implementation = RequestUpdateUserDto.class))
-                    )
-            )
+            summary = "Обновление информации пользователя"
     )
     @PatchMapping
     public Mono<ResponseEntity<Map<String, String>>> updateUser(@Valid @RequestBody Mono<RequestUpdateUserDto> updateUser, @AuthenticationPrincipal Jwt jwt) {
@@ -81,5 +75,4 @@ public class UserController {
     public Mono<ResponseEntity<Void>> deleteUser(@AuthenticationPrincipal Jwt jwt) {
         return userService.deleteUser(jwt).thenReturn(ResponseEntity.noContent().build());
     }
-
 }

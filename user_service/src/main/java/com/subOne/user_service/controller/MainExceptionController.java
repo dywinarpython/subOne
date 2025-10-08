@@ -23,7 +23,7 @@ import java.util.NoSuchElementException;
 @ControllerAdvice
 @Hidden
 @Slf4j
-public class MainException {
+public class MainExceptionController {
 
     @ExceptionHandler(DecodingException.class)
     public Mono<ResponseEntity<Map<String, String>>> handleDecodingErrors(DecodingException ex) {
