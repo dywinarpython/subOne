@@ -87,6 +87,24 @@ services:
       start_period: 40s
     restart: unless-stopped
 
+  db_group:
+    ports:
+      - "5433:5432"
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: group_service
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db_group:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d group_service" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+
   kafka1:
     image: confluentinc/cp-kafka:latest
     container_name: kafka1
@@ -195,6 +213,7 @@ networks:
 volumes:
   dbSecurity:
   db_user:
+  db_group:
   kafka1-data:
   kafka2-data:
   kafka3-data:

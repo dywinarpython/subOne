@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
+    <changeSet id="2025-10-08-002-create-group_members" author="Dywinar">
+        <createTable tableName="group_members">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="group_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint tableName="group_members" columnNames="group_id, user_id"/>
+        <addForeignKeyConstraint baseTableName="group_members" baseColumnNames="group_id" referencedTableName="groups"
+                                 referencedColumnNames="id" constraintName="fk_groups_group_members"/>
+    </changeSet>
+</databaseChangeLog>

@@ -8,9 +8,7 @@
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
 
-
 	<artifactId>group_service</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
 	<name>group_service</name>
 	<description>GroupService microservice</description>
 
