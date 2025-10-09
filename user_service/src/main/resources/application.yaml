@@ -45,3 +45,7 @@ spring:
           json:
             trusted:
               packages: "com.subOne.kecyloak_dto"
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.r2dbc.core: DEBUG

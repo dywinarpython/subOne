@@ -5,14 +5,16 @@ import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Table("group_members")
-@Setter
+@Table("group_invites")
 @Getter
-public class GroupMember {
+@Setter
+public class GroupInvite {
     @Id
     private Long id;
+    private UUID code;
     private Long groupId;
-    private UUID userId;
+    private LocalDateTime expiresAt;
 }

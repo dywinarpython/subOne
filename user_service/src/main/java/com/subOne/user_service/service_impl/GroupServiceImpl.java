@@ -43,17 +43,22 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
+    public Mono<UUID> getOwnerId(Long groupId) {
+        return groupRepository.findOwnerByGroupId(groupId);
+    }
+
+    @Override
     public Mono<ResponseGroupsDto> getGroups(Jwt jwt) {
         return groupRepository.findByOwnerId(UUID.fromString(jwt.getSubject())).collectList().map(ResponseGroupsDto::new);
     }
 
     @Override
     @Transactional
-    public Mono<Void> updateGroup(Mono<RequestUpdateGroupDto> requestGroupDtoMono, Jwt jwt) {
+    public Mono<Void> updateGroup(Mono<RequestUpdateGroupDto> requestGroupDtoMono, Long groupId, Jwt jwt) {
         return requestGroupDtoMono.flatMap(requestUpdateGroupDto ->
-            groupRepository.updateGroupByIdAndOwnerId(requestUpdateGroupDto.groupId(), requestUpdateGroupDto.name(), UUID.fromString(jwt.getSubject()))
+            groupRepository.updateGroupByIdAndOwnerId(groupId, requestUpdateGroupDto.name(), UUID.fromString(jwt.getSubject()))
                     .flatMap(count -> {
-                        if(count != 1) return checkRights(requestUpdateGroupDto.groupId()).then();
+                        if(count != 1) return checkRights(groupId).then();
                         return Mono.empty();
                     }));
     }

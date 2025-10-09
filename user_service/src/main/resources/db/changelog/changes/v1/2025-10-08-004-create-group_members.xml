@@ -18,6 +18,6 @@
         </createTable>
         <addUniqueConstraint tableName="group_members" columnNames="group_id, user_id"/>
         <addForeignKeyConstraint baseTableName="group_members" baseColumnNames="group_id" referencedTableName="groups"
-                                 referencedColumnNames="id" constraintName="fk_groups_group_members"/>
+                                 referencedColumnNames="id" constraintName="fk_groups_group_members" onDelete="CASCADE"/>
     </changeSet>
 </databaseChangeLog>

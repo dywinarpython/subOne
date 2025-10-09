@@ -24,7 +24,7 @@ import java.util.Map;
 
 @Tag(name = "Управление группами")
 @RestController
-@RequestMapping("/api/v1/group")
+@RequestMapping("/api/v1/groups")
 @RequiredArgsConstructor
 public class GroupController {
 
@@ -68,7 +68,7 @@ public class GroupController {
                     )
             )
     )
-    @GetMapping
+    @GetMapping("/me")
     public Mono<ResponseGroupsDto> getGroups(@AuthenticationPrincipal Jwt jwt) {
         return groupService.getGroups(jwt);
     }
@@ -77,9 +77,9 @@ public class GroupController {
     @Operation(
             summary = "Обновление информации группы"
     )
-    @PatchMapping
-    public Mono<ResponseEntity<Map<String, String>>> updateGroup(@Valid @RequestBody Mono<RequestUpdateGroupDto> requestUpdateGroupDtoMono , @AuthenticationPrincipal Jwt jwt) {
-        return groupService.updateGroup(requestUpdateGroupDtoMono, jwt).thenReturn(ResponseEntity.ok(Map.of("message", "group is updated")));
+    @PatchMapping("/{groupId}")
+    public Mono<ResponseEntity<Map<String, String>>> updateGroup(@PathVariable Long groupId, @Valid @RequestBody Mono<RequestUpdateGroupDto> requestUpdateGroupDtoMono , @AuthenticationPrincipal Jwt jwt) {
+        return groupService.updateGroup(requestUpdateGroupDtoMono,groupId , jwt).thenReturn(ResponseEntity.ok(Map.of("message", "group is updated")));
     }
 
 

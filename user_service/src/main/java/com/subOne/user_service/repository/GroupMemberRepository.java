@@ -18,11 +18,30 @@ public interface GroupMemberRepository extends R2dbcRepository<GroupMember, Long
     Flux<UUID> findByGroupId(Long groupId);
 
     @Query("""
-            select owner_id
-            from groups
-            where id = :groupId
+            select count(*) < 5
+            from group_members
+            where group_id = :groupId
             """)
-    Mono<UUID> findOwnerByGroupId(Long groupId);
+    Mono<Boolean> existsMembersInGroupIsNoMoreFive(Long groupId);
+
+
+
+
+    @Query("""
+           SELECT EXISTS (
+                SELECT 1
+                FROM groups g
+                WHERE g.id = :groupId
+                     AND (
+                      g.owner_id = :userId
+                      OR EXISTS (
+                          SELECT 1
+                          FROM group_members gm
+                          WHERE gm.user_id = :userId AND  gm.group_id = :groupId)
+                      )
+           )
+    """)
+    Mono<Boolean> existsByUserIDAndGroupId(UUID userId, Long groupId);
 
     Mono<Long> deleteByUserId(UUID userId);
 

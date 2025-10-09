@@ -32,6 +32,13 @@ public interface GroupRepository extends R2dbcRepository<Group, Long> {
     )
     Mono<ResponseGroupDto> findGroupById(Long groupId, UUID userId);
 
+    @Query("""
+            select owner_id
+            from groups
+            where id = :groupId
+            """)
+    Mono<UUID> findOwnerByGroupId(Long groupId);
+
     @Modifying
     @Query(
             """
