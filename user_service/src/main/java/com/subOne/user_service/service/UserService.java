@@ -1,9 +1,9 @@
 package com.subOne.user_service.service;
 
 import com.subOne.kecyloak_dto.UserInfo;
-import com.subOne.user_service.dto.request.RequestUpdateUserDto;
-import com.subOne.user_service.dto.response.UserResponseDto;
-import com.subOne.user_service.dto.response.UsersResponseDto;
+import com.subOne.user_service.dto.user.request.RequestUpdateUserDto;
+import com.subOne.user_service.dto.user.response.UserResponseDto;
+import com.subOne.user_service.dto.user.response.UsersResponseDto;
 import org.springframework.security.oauth2.jwt.Jwt;
 import reactor.core.publisher.Mono;
 

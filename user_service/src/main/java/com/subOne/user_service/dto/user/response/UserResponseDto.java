@@ -1,4 +1,4 @@
-package com.subOne.user_service.dto.response;
+package com.subOne.user_service.dto.user.response;
 
 
 import java.util.UUID;

@@ -1,8 +1,8 @@
 package com.subOne.user_service.controller;
 
-import com.subOne.user_service.dto.request.RequestUpdateUserDto;
-import com.subOne.user_service.dto.response.UserResponseDto;
-import com.subOne.user_service.dto.response.UsersResponseDto;
+import com.subOne.user_service.dto.user.request.RequestUpdateUserDto;
+import com.subOne.user_service.dto.user.response.UserResponseDto;
+import com.subOne.user_service.dto.user.response.UsersResponseDto;
 import com.subOne.user_service.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -24,7 +24,7 @@ import java.util.UUID;
 
 @Tag(name = "Управление пользователями")
 @RestController
-@RequestMapping("/api/v1/user")
+@RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
 public class UserController {
 
@@ -39,7 +39,7 @@ public class UserController {
                     )
             )
     )
-    @GetMapping
+    @GetMapping("/me")
     public Mono<UserResponseDto> getUserById(@AuthenticationPrincipal Jwt jwt) {
         return userService.getUserById(jwt);
     }
@@ -53,7 +53,7 @@ public class UserController {
                     )
             )
     )
-    @GetMapping("/list")
+    @GetMapping
     public Mono<UsersResponseDto> getUsersById(@RequestParam("usersId") List<UUID> usersId) {
         return userService.getUsersById(usersId);
     }
@@ -62,7 +62,7 @@ public class UserController {
     @Operation(
             summary = "Обновление информации пользователя"
     )
-    @PatchMapping
+    @PatchMapping("/me")
     public Mono<ResponseEntity<Map<String, String>>> updateUser(@Valid @RequestBody Mono<RequestUpdateUserDto> updateUser, @AuthenticationPrincipal Jwt jwt) {
         return userService.updateUser(updateUser, jwt).thenReturn(ResponseEntity.ok(Map.of("message", "user is updated")));
     }
@@ -71,7 +71,7 @@ public class UserController {
     @Operation(
             summary = "Удаления пользователя"
     )
-    @DeleteMapping
+    @DeleteMapping("/me")
     public Mono<ResponseEntity<Void>> deleteUser(@AuthenticationPrincipal Jwt jwt) {
         return userService.deleteUser(jwt).thenReturn(ResponseEntity.noContent().build());
     }

@@ -1,8 +1,8 @@
 package com.subOne.user_service.service;
 
-import com.subOne.user_service.dto.request.RequestUpdateUserDto;
-import com.subOne.user_service.dto.response.UserResponseDto;
-import com.subOne.user_service.dto.response.UsersResponseDto;
+import com.subOne.user_service.dto.user.request.RequestUpdateUserDto;
+import com.subOne.user_service.dto.user.response.UserResponseDto;
+import com.subOne.user_service.dto.user.response.UsersResponseDto;
 import com.subOne.user_service.entity.User;
 import com.subOne.user_service.kafka.serviceProducer.KafkaService;
 import com.subOne.user_service.mapper.MapperUser;

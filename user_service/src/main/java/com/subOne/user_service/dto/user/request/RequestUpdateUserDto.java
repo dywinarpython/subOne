@@ -1,4 +1,4 @@
-package com.subOne.user_service.dto.request;
+package com.subOne.user_service.dto.user.request;
 
 import jakarta.validation.constraints.Size;
 

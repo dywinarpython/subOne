@@ -1,6 +1,6 @@
 package com.subOne.user_service.repository;
 
-import com.subOne.user_service.dto.response.UserResponseDto;
+import com.subOne.user_service.dto.user.response.UserResponseDto;
 import com.subOne.user_service.entity.User;
 import com.subOne.user_service.repository.update.UpdateRepository;
 import org.springframework.data.r2dbc.repository.Modifying;
