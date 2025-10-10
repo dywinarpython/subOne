@@ -6,7 +6,6 @@ import com.subOne.user_service.mapper.MapperGroupMember;
 import com.subOne.user_service.repository.GroupMemberRepository;
 import com.subOne.user_service.service.GroupMemberService;
 import com.subOne.user_service.service.GroupService;
-import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
@@ -33,18 +32,18 @@ public class GroupMemberServiceImpl implements GroupMemberService {
 
     @Override
     public Mono<ResponseMembersDto> addUser(UUID userId, Long groupId) {
-        return groupMemberRepository.existsByUserIDAndGroupId(userId, groupId)
+        return groupMemberRepository.existsByUserIdAndGroupId(userId, groupId)
                 .flatMap( bl -> {
                     if (bl) return Mono.error(new ResponseStatusException(HttpStatus.CONFLICT, "User is already a member of the group"));
                     return Mono.empty();
                 })
-                .then(groupMemberRepository.existsMembersInGroupIsNoMoreFive(groupId))
+                .then(Mono.defer( () -> groupMemberRepository.existsMembersInGroupIsNoMoreFive(groupId)))
                 .flatMap(bl -> {
-                    if (!bl) return Mono.error(new ValidationException("There can be no more than 5 members of the group (the owner is not considered)"));
+                    if (!bl) return Mono.error(new ResponseStatusException(HttpStatus.CONFLICT, "There can be no more than 5 members of the group (the owner is not considered)"));
                     return Mono.empty();
                 })
-                .then(groupMemberRepository.save(mapperGroupMember.userIdAndGroupIdToGroupMember(userId, groupId)))
-                .then(getUsersAndOwner(groupId));
+                .then(Mono.defer(() -> groupMemberRepository.save(mapperGroupMember.userIdAndGroupIdToGroupMember(userId, groupId))))
+                .then(Mono.defer(() -> getUsersAndOwner(groupId)));
     }
 
     @Override
@@ -76,7 +75,7 @@ public class GroupMemberServiceImpl implements GroupMemberService {
 
     private Mono<ResponseMembersDto> getUsersAndOwner(Long groupId){
         return groupService.getOwnerId(groupId).flatMap( ownerId -> {
-            Flux<ResponseMemberDto> members = groupMemberRepository.findByGroupId(groupId).map(id -> new ResponseMemberDto(id, false));
+            Flux<ResponseMemberDto> members = groupMemberRepository.findMembersIdByGroupId(groupId).map(id -> new ResponseMemberDto(id, false));
             return Flux.concat(
                     Flux.just(new ResponseMemberDto(ownerId, true)),
                     members

@@ -15,7 +15,7 @@ public interface GroupMemberRepository extends R2dbcRepository<GroupMember, Long
             from group_members
             where group_id = :groupId
             """)
-    Flux<UUID> findByGroupId(Long groupId);
+    Flux<UUID> findMembersIdByGroupId(Long groupId);
 
     @Query("""
             select count(*) < 5
@@ -41,7 +41,7 @@ public interface GroupMemberRepository extends R2dbcRepository<GroupMember, Long
                       )
            )
     """)
-    Mono<Boolean> existsByUserIDAndGroupId(UUID userId, Long groupId);
+    Mono<Boolean> existsByUserIdAndGroupId(UUID userId, Long groupId);
 
     Mono<Long> deleteByUserId(UUID userId);
 

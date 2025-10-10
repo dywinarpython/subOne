@@ -50,12 +50,12 @@ public class GroupInviteServiceImpl implements GroupInviteService {
                     long minutesExpiresAt =  Duration.between(LocalDateTime.now(), codeDto.expiresAt()).toSeconds();
                     return  Mono.just(new ResponseInviteCodeDto(codeDto.code(), minutesExpiresAt));
                 })
-                .switchIfEmpty(createCodeInvite(groupId));
+                .switchIfEmpty(Mono.defer(() ->createCodeInvite(groupId)));
     }
 
 
     private Mono<ResponseInviteCodeDto> createCodeInvite(Long groupId) {
-        return groupInviteRepository.save(mapperGroupInvite.codeAndGroupIDToGroupInvite(groupId, UUID.randomUUID()))
+        return groupInviteRepository.save(mapperGroupInvite.codeAndGroupIdToGroupInvite(groupId, UUID.randomUUID()))
                 .map(groupInvite ->
                         new ResponseInviteCodeDto(groupInvite.getCode(), Duration.ofMinutes(5).toSeconds()));
     }

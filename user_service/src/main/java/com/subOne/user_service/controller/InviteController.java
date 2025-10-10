@@ -33,7 +33,7 @@ public class InviteController {
 
     @Operation(summary = "Получения кода приглашения")
     @GetMapping("/{groupId}")
-    public Mono<ResponseInviteCodeDto> joinGroupByCode(@RequestParam Long groupId, @AuthenticationPrincipal Jwt jwt) {
+    public Mono<ResponseInviteCodeDto> getCodeByGroupId(@PathVariable Long groupId, @AuthenticationPrincipal Jwt jwt) {
         return groupInviteService.getCodeByGroupId(groupId, jwt);
     }
 

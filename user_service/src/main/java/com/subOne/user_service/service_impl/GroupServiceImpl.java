@@ -39,7 +39,7 @@ public class GroupServiceImpl implements GroupService {
     @Transactional(readOnly = true)
     public Mono<ResponseGroupDto> getGroupById(Long groupId, Jwt jwt) {
         return groupRepository.findGroupById(groupId, UUID.fromString(jwt.getSubject()))
-                .switchIfEmpty(checkRights(groupId));
+                .switchIfEmpty(Mono.defer(() -> checkRights(groupId)));
     }
 
     @Override

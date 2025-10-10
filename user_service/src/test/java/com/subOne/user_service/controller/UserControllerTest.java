@@ -1,31 +1,14 @@
 package com.subOne.user_service.controller;
 
-import com.subOne.user_service.config.TestConfig;
-import com.subOne.user_service.config.TestContainerConfig;
-import com.subOne.user_service.config.TestSecurityConfig;
 import com.subOne.user_service.dto.user.request.RequestUpdateUserDto;
 import com.subOne.user_service.dto.user.response.UserResponseDto;
 import com.subOne.user_service.dto.user.response.UsersResponseDto;
 import com.subOne.user_service.entity.User;
-import com.subOne.user_service.kafka.serviceProducer.KafkaService;
 import com.subOne.user_service.mapper.MapperUser;
-import com.subOne.user_service.repository.UserRepository;
-import com.subOne.user_service.service_impl.UserServiceImpl;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -37,32 +20,11 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt;
 
-@SpringBootTest
-@ActiveProfiles("test")
-@EnableAutoConfiguration(exclude = {KafkaAutoConfiguration.class})
-@AutoConfigureWebTestClient
-@Import({TestConfig.class, TestContainerConfig.class, TestSecurityConfig.class})
-@Slf4j
-public class UserControllerTest {
-
-    @MockitoBean
-    private KafkaService kafkaService;
-
-    @InjectMocks
-    private UserServiceImpl userService;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private WebTestClient webTestClient;
+public class UserControllerTest extends AbstractControllerTest{
 
     @Autowired
     private MapperUser mapperUser;
 
-    private Jwt jwt;
-
-    private User user;
 
     private static void checkUser(UserResponseDto usersResponseDto, User user){
         assertEquals(usersResponseDto.email(), user.getEmail());
@@ -72,35 +34,13 @@ public class UserControllerTest {
     }
 
 
-    @BeforeEach
-    void setUp(){
-        UUID userId = UUID.randomUUID();
-
-        jwt = Jwt.withTokenValue("dummy-token")
-                .header("alg", "none")
-                .claim("sub", userId)
-                .build();
-
-        user = new User();
-        user.setUserId(userId);
-        user.setEmail("testEmail" + System.currentTimeMillis() +  "@mail.com");
-        user.setName("test");
-        user.setSurname("testSurname");
-        user.setVerifyEmail(false);
-
-        StepVerifier.create(userRepository.save(user))
-                .assertNext(savedUser -> this.user = savedUser)
-                .verifyComplete();
-
-        webTestClient = webTestClient.mutateWith(mockJwt().jwt(jwt));
-    }
 
     @Test
-    @DisplayName("ПРОВЕРКА GET -> /api/v1/user")
+    @DisplayName("ПРОВЕРКА GET -> /api/v1/users/me")
     void getUserById_UserISCreate_ReturnCorrect(){
         Flux<UserResponseDto> result = webTestClient
                 .get()
-                .uri("/api/v1/user")
+                .uri("/api/v1/users/me")
                 .exchange()
                 .expectStatus().isOk().returnResult(UserResponseDto.class).getResponseBody();
 
@@ -111,7 +51,7 @@ public class UserControllerTest {
     }
 
     @Test
-    @DisplayName("ПРОВЕРКА GET -> /api/v1/user/list?usersId=")
+    @DisplayName("ПРОВЕРКА GET -> /api/v1/users?usersId=")
     void getUsersById_UsersISCreateAndOneIsNotFound_ReturnCorrect(){
         User user2 = new User();
         user2.setUserId(UUID.randomUUID());
@@ -123,7 +63,7 @@ public class UserControllerTest {
 
         Flux<UsersResponseDto> result = webTestClient
                 .get()
-                .uri("/api/v1/user/list?usersId=" + user.getUserId() + "," + UUID.randomUUID() + "," + user2.getUserId())
+                .uri("/api/v1/users?usersId=" + user.getUserId() + "," + UUID.randomUUID() + "," + user2.getUserId())
                 .exchange()
                 .expectStatus().isOk()
                 .returnResult(UsersResponseDto.class).getResponseBody();
@@ -143,12 +83,12 @@ public class UserControllerTest {
     }
 
     @Test
-    @DisplayName("ПРОВЕКРА PATCH -> /api/v1/user userIsFound")
+    @DisplayName("ПРОВЕКРА PATCH -> /api/v1/users/me userIsFound")
     void updateUser_UserIsCreate_CorrectUpdate(){
         RequestUpdateUserDto requestUpdateUserDto = new RequestUpdateUserDto("user", "surname");
         webTestClient
                 .patch()
-                .uri("/api/v1/user")
+                .uri("/api/v1/users/me")
                 .bodyValue(requestUpdateUserDto)
                 .exchange()
                 .expectStatus().isOk();
@@ -162,12 +102,12 @@ public class UserControllerTest {
     }
 
     @Test
-    @DisplayName("ПРОВЕКРА PATCH -> /api/v1/user userIsFoundAndRequestIsUnCorrect")
+    @DisplayName("ПРОВЕКРА PATCH -> /api/v1/users/me userIsFoundAndRequestIsUnCorrect")
     void updateUser_UserIsFoundAndRequestISUnCorrect_CorrectUpdate(){
         RequestUpdateUserDto requestUpdateUserDto = new RequestUpdateUserDto(null, null);
         webTestClient
                 .patch()
-                .uri("/api/v1/user")
+                .uri("/api/v1/users/me")
                 .bodyValue(requestUpdateUserDto)
                 .exchange()
                 .expectStatus().is4xxClientError();
@@ -182,14 +122,14 @@ public class UserControllerTest {
 
 
     @Test
-    @DisplayName("ПРОВЕРКА DELETE /api/v1/user")
+    @DisplayName("ПРОВЕРКА DELETE /api/v1/users/me")
     void deleteUser_UserIsCorrect_CorrectDelete(){
 
         when(kafkaService.sendToTopic(anyString(), anyString())).thenReturn(Mono.empty());
 
         webTestClient
                 .delete()
-                .uri("/api/v1/user")
+                .uri("/api/v1/users/me")
                 .exchange()
                 .expectStatus().isNoContent();
 
@@ -202,7 +142,7 @@ public class UserControllerTest {
 
 
     @Test
-    @DisplayName("ПРОВЕРКА DELETE /api/v1/user userIsNotFound")
+    @DisplayName("ПРОВЕРКА DELETE /api/v1/users/me userIsNotFound")
     void deleteUser_UserIsNotFound_UnCorrectDelete(){
 
         jwt = Jwt.withTokenValue("dummy-token")
@@ -215,7 +155,7 @@ public class UserControllerTest {
         webTestClient
                 .mutateWith(mockJwt().jwt(jwt))
                 .delete()
-                .uri("/api/v1/user")
+                .uri("/api/v1/users/me")
                 .exchange()
                 .expectStatus().isNotFound();
 
