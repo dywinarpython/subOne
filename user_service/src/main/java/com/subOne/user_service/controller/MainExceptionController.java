@@ -63,5 +63,4 @@ public class MainExceptionController {
     public Mono<ResponseEntity<Map<String, String>>> handler(AccessDeniedException ex){
         return Mono.just(ResponseEntity.status(403).body(Map.of("error", ex.getMessage())));
     }
-
 }
