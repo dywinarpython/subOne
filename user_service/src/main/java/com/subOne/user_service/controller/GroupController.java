@@ -34,9 +34,9 @@ public class GroupController {
     @Operation(
             summary = "Создание группы",
             responses = @ApiResponse(
-                    responseCode = "200",
+                    responseCode = "201",
                     content = @Content(
-                            array = @ArraySchema(schema = @Schema(implementation = ResponseGroupDto.class))
+                            schema = @Schema(implementation = ResponseGroupDto.class)
                     )
             )
     )

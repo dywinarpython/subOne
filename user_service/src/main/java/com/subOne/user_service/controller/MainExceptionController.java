@@ -56,7 +56,8 @@ public class MainExceptionController {
     }
     @ExceptionHandler(ResponseStatusException.class)
     public Mono<ResponseEntity<Map<String, String>>> handler(ResponseStatusException ex){
-        return Mono.just(ResponseEntity.status(ex.getStatusCode()).body(Map.of("error", Objects.requireNonNull(ex.getReason()))));
+        String reason = ex.getReason() != null ? ex.getReason() : "Unexpected error";
+        return Mono.just(ResponseEntity.status(ex.getStatusCode()).body(Map.of("error", reason)));
     }
     @ExceptionHandler(AccessDeniedException.class)
     public Mono<ResponseEntity<Map<String, String>>> handler(AccessDeniedException ex){
