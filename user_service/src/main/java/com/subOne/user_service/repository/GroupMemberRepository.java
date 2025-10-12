@@ -10,6 +10,10 @@ import java.util.UUID;
 
 public interface GroupMemberRepository extends R2dbcRepository<GroupMember, Long> {
 
+    Mono<Long> deleteByUserId(UUID userId);
+
+    Mono<Boolean> existsByGroupIdAndUserId(Long groupId, UUID userId);
+
     @Query("""
             select user_id
             from group_members
@@ -23,8 +27,6 @@ public interface GroupMemberRepository extends R2dbcRepository<GroupMember, Long
             where group_id = :groupId
             """)
     Mono<Boolean> existsMembersInGroupIsNoMoreFive(Long groupId);
-
-
 
 
     @Query("""
@@ -43,8 +45,16 @@ public interface GroupMemberRepository extends R2dbcRepository<GroupMember, Long
     """)
     Mono<Boolean> existsByUserIdAndGroupId(UUID userId, Long groupId);
 
-    Mono<Long> deleteByUserId(UUID userId);
 
-    Mono<Boolean> existsByGroupIdAndUserId(Long groupId, UUID userId);
+    @Query("""
+            select exists(
+                select 1
+                from groups 
+                where id = :groupId and owner_id = :ownerId
+            )
+            """)
+    Mono<Boolean> existsByGroupIdAndOwnerId(Long groupId, UUID ownerId);
+
+
 
 }

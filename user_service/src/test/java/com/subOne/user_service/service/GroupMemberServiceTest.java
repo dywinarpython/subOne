@@ -187,7 +187,7 @@ public class GroupMemberServiceTest {
         when(groupService.checkUserIsOwner(anyLong(), any())).thenReturn(Mono.empty());
         when(groupMemberRepository.deleteByUserId(any())).thenReturn(Mono.just(1L));
 
-        Mono<Void> result = groupMemberService.deleteUser(1L, UUID.randomUUID(), jwt);
+        Mono<Void> result = groupMemberService.deleteMember(1L, UUID.randomUUID(), jwt);
 
         StepVerifier.create(result)
                 .verifyComplete();
@@ -202,7 +202,7 @@ public class GroupMemberServiceTest {
         when(groupService.checkUserIsOwner(anyLong(), any())).thenReturn(Mono.empty());
         when(groupMemberRepository.deleteByUserId(any())).thenReturn(Mono.just(0L));
 
-        Mono<Void> result = groupMemberService.deleteUser(1L, UUID.randomUUID(), jwt);
+        Mono<Void> result = groupMemberService.deleteMember(1L, UUID.randomUUID(), jwt);
 
         StepVerifier.create(result)
                 .expectErrorSatisfies(throwable ->

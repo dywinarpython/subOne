@@ -11,6 +11,8 @@ import com.subOne.user_service.repository.UserRepository;
 import com.subOne.user_service.service.UserService;
 import jakarta.validation.ValidationException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +31,7 @@ public class UserServiceImpl implements UserService {
     private final MapperUser mapperUser;
     private final String nameTopicDeleteUser;
 
-    public UserServiceImpl(KafkaService kafkaService, UserRepository userRepository, MapperUser mapperUser,     @Value("${spring.kafka.topicNameDeleteUser:delete_user}") String nameTopicDeleteUser) {
+    public UserServiceImpl(KafkaService kafkaService, UserRepository userRepository, MapperUser mapperUser, @Value("${spring.kafka.topicNameDeleteUser:delete_user}") String nameTopicDeleteUser) {
         this.kafkaService = kafkaService;
         this.userRepository = userRepository;
         this.mapperUser = mapperUser;
@@ -54,6 +56,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "USER", key = "#jwt.getSubject()")
     public Mono<UserResponseDto> getUserById(Jwt jwt) {
         return userRepository.findByUserId(UUID.fromString(jwt.getSubject()))
                 .switchIfEmpty(Mono.error(new NoSuchElementException("User is not found!")));
@@ -74,6 +77,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "USER", key = "#jwt.getSubject()")
     public Mono<Void> updateUser(Mono<RequestUpdateUserDto> requestUpdateUserDto, Jwt jwt) {
         return requestUpdateUserDto.map(mapperUser::addUpdateField).flatMap(mp ->
                 userRepository.updateFields(mp, User.class, "userId", jwt.getSubject())).flatMap( count -> {
@@ -84,6 +88,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "USER", key = "#jwt.getSubject()")
     public Mono<Void> deleteUser(Jwt jwt) {
         return userRepository.deleteByUserId(UUID.fromString(jwt.getSubject())).flatMap(count ->
         {

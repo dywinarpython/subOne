@@ -16,5 +16,5 @@ public interface GroupService {
     Mono<ResponseGroupsDto> getGroups(Jwt jwt);
     Mono<Void> updateGroup(Mono<RequestUpdateGroupDto> requestGroupDtoMono, Long groupId, Jwt jwt);
     Mono<Void> deleteGroup(Long groupId, Jwt jwt);
-    Mono<Void> checkUserIsOwner(Long groupId, Jwt jwt);
+    Mono<Boolean> checkUserIsOwner(Long groupId, Jwt jwt);
 }

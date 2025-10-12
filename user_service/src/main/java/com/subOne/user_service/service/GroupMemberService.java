@@ -9,6 +9,7 @@ import java.util.UUID;
 public interface GroupMemberService {
     Mono<ResponseMembersDto> addUser(UUID userId, Long groupId);
     Mono<ResponseMembersDto> getUsers(Long groupId, Jwt jwt);
-    Mono<Void> deleteUser(Long groupId, UUID userId, Jwt jwt);
+    Mono<Void> deleteMember(Long groupId, UUID userId, Jwt jwt);
+    Mono<Boolean> checkUserInGroup(Long groupId, Jwt jwt);
 
 }

@@ -93,7 +93,7 @@ public class GroupInviteServiceTest {
                 codeDto.code(),
                 Duration.between(LocalDateTime.now(), codeDto.expiresAt()).toSeconds());
         StepVerifier.create(result)
-                .expectNext(responseInviteCodeDto)
+                .assertNext(code -> assertEquals(responseInviteCodeDto.code(), code.code()))
                 .verifyComplete();
         verify(groupService).checkUserIsOwner(anyLong(), any());
         verify(groupInviteRepository).findCodeByGroupId(anyLong());

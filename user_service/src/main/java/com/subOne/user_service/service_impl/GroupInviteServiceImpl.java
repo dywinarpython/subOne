@@ -1,5 +1,6 @@
 package com.subOne.user_service.service_impl;
 
+import com.subOne.user_service.cache.CacheService;
 import com.subOne.user_service.dto.group_invite.response.ResponseInviteCodeDto;
 import com.subOne.user_service.dto.group_member.response.ResponseMembersDto;
 import com.subOne.user_service.mapper.MapperGroupInvite;
@@ -8,6 +9,7 @@ import com.subOne.user_service.service.GroupInviteService;
 import com.subOne.user_service.service.GroupMemberService;
 import com.subOne.user_service.service.GroupService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -31,10 +33,13 @@ public class GroupInviteServiceImpl implements GroupInviteService {
 
     private final GroupInviteRepository groupInviteRepository;
 
+    private final CacheService cacheService;
+
     @Override
     @Transactional
     public Mono<ResponseMembersDto> addUserByCode(UUID code, Jwt jwt) {
-        return groupInviteRepository.findGroupIdByCode(code)
+        return cacheService.getValue("CODE::" + code, Long.class)
+                .switchIfEmpty(groupInviteRepository.findGroupIdByCode(code))
                 .flatMap(groupId ->
                         groupMemberService.addUser(UUID.fromString(jwt.getSubject()), groupId))
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.GONE, "Invite code has expired")));
@@ -50,13 +55,15 @@ public class GroupInviteServiceImpl implements GroupInviteService {
                     long minutesExpiresAt =  Duration.between(LocalDateTime.now(), codeDto.expiresAt()).toSeconds();
                     return  Mono.just(new ResponseInviteCodeDto(codeDto.code(), minutesExpiresAt));
                 })
-                .switchIfEmpty(Mono.defer(() ->createCodeInvite(groupId)));
+                .switchIfEmpty(Mono.defer(() -> createCodeInvite(groupId)));
     }
 
 
     private Mono<ResponseInviteCodeDto> createCodeInvite(Long groupId) {
         return groupInviteRepository.save(mapperGroupInvite.codeAndGroupIdToGroupInvite(groupId, UUID.randomUUID()))
                 .map(groupInvite ->
-                        new ResponseInviteCodeDto(groupInvite.getCode(), Duration.ofMinutes(5).toSeconds()));
+                        new ResponseInviteCodeDto(groupInvite.getCode(), Duration.ofMinutes(5).toSeconds()))
+                .flatMap(code ->
+                        cacheService.saveValue("CODE::" + code.code(), groupId, Duration.ofMinutes(5)).thenReturn(code));
     }
 }

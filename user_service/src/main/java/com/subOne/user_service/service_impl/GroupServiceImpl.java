@@ -1,5 +1,6 @@
 package com.subOne.user_service.service_impl;
 
+import com.subOne.user_service.cache.CacheService;
 import com.subOne.user_service.dto.group.request.RequestGroupDto;
 import com.subOne.user_service.dto.group.request.RequestUpdateGroupDto;
 import com.subOne.user_service.dto.group.response.ResponseGroupDto;
@@ -9,12 +10,14 @@ import com.subOne.user_service.repository.GroupRepository;
 import com.subOne.user_service.service.GroupService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
@@ -26,6 +29,8 @@ public class GroupServiceImpl implements GroupService {
     private final GroupRepository groupRepository;
 
     private final MapperGroup mapperGroup;
+
+    private final CacheService cacheService;
 
     @Override
     @Transactional
@@ -43,6 +48,7 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
+    @Cacheable(value = "OWNER", key = "#groupId")
     public Mono<UUID> getOwnerId(Long groupId) {
         return groupRepository.findOwnerByGroupId(groupId);
     }
@@ -67,20 +73,26 @@ public class GroupServiceImpl implements GroupService {
     @Transactional
     // TODO при удалении группы обязательно в дальнейшем требуется удаления всех подписок
     public Mono<Void> deleteGroup(Long groupId, Jwt jwt) {
-        return groupRepository.deleteByIdAndOwnerId(groupId, UUID.fromString(jwt.getSubject())).flatMap(count ->{
+        return groupRepository.deleteByIdAndOwnerId(groupId, UUID.fromString(jwt.getSubject())).flatMap(count -> {
            if(count != 1) return checkRights(groupId).then();
            return Mono.empty();}
         );
     }
 
     @Override
-    // TODO добавить кеширование
-    public Mono<Void> checkUserIsOwner(Long groupId, Jwt jwt) {
-        return groupRepository.existsByIdAndOwnerId(groupId, UUID.fromString(jwt.getSubject())).flatMap(
-                exists -> {
-                    if(exists) return Mono.empty();
-                    return checkRights(groupId).then();}
-        );
+    public Mono<Boolean> checkUserIsOwner(Long groupId, Jwt jwt) {
+        return cacheService.getValue("OWNER::" + groupId, UUID.class)
+                .flatMap(userId ->
+                        userId.equals(UUID.fromString(jwt.getSubject())) ? Mono.just(true) : Mono.empty())
+                .switchIfEmpty(Mono.defer(() ->
+                    groupRepository.existsByIdAndOwnerId(groupId, UUID.fromString(jwt.getSubject())).flatMap(
+                            exists -> {
+                                if(exists) {
+                                    return cacheService.saveValue("OWNER::" + groupId, jwt.getSubject(), Duration.ofMinutes(30)).thenReturn(true);
+                                }
+                                return checkRights(groupId).thenReturn(false);
+                            })
+                ));
     }
 
     private Mono<ResponseGroupDto> checkRights(Long groupId) {

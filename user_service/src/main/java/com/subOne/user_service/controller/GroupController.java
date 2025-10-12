@@ -22,6 +22,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.Map;
 
+// TODO реализовать получения групп в которых состоит пользователь
 @Tag(name = "Управление группами")
 @RestController
 @RequestMapping("/api/v1/groups")
@@ -58,6 +59,7 @@ public class GroupController {
     public Mono<ResponseGroupDto> getGroupById(@PathVariable Long groupId, @AuthenticationPrincipal Jwt jwt) {
         return groupService.getGroupById(groupId, jwt);
     }
+
 
     @Operation(
             summary = "Получение групп пользователя",
