@@ -1,5 +1,6 @@
 package com.subOne.user_service.service;
 
+import com.subOne.user_service.cache.CacheService;
 import com.subOne.user_service.dto.group.request.RequestGroupDto;
 import com.subOne.user_service.dto.group.request.RequestUpdateGroupDto;
 import com.subOne.user_service.dto.group.response.ResponseGroupDto;
@@ -37,6 +38,9 @@ public class GroupServiceTest {
 
     @Mock
     private MapperGroup mapperGroup;
+
+    @Mock
+    private CacheService cacheService;
 
     @InjectMocks
     private GroupServiceImpl groupService;
@@ -216,13 +220,18 @@ public class GroupServiceTest {
     void checkUserIsOwner_GroupIsFoundAndUserIsOwner_CorrectResultAndCheckRepo(){
         when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
         when(groupRepository.existsByIdAndOwnerId(anyLong(), any())).thenReturn(Mono.just(true));
+        when(cacheService.saveValue(anyString(), any(), any())).thenReturn(Mono.empty());
+        when(cacheService.getValue(anyString(), any())).thenReturn(Mono.empty());
 
-        Mono<Void> result = groupService.checkUserIsOwner(1L, jwt);
+        Mono<Boolean> result = groupService.checkUserIsOwner(1L, jwt);
 
         StepVerifier.create(result)
+                .expectNext(true)
                 .verifyComplete();
         verify(groupRepository).existsByIdAndOwnerId(anyLong(), any());
         verify(groupRepository, times(0)).existsById(anyLong());
+        verify(cacheService).saveValue(anyString(), any(), any());
+        verify(cacheService).getValue(anyString(), any());
     }
 
     @Test
@@ -230,8 +239,9 @@ public class GroupServiceTest {
         when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
         when(groupRepository.existsByIdAndOwnerId(anyLong(), any())).thenReturn(Mono.just(false));
         when(groupRepository.existsById(anyLong())).thenReturn(Mono.just(true));
+        when(cacheService.getValue(anyString(), any())).thenReturn(Mono.empty());
 
-        Mono<Void> result = groupService.checkUserIsOwner(1L, jwt);
+        Mono<Boolean> result = groupService.checkUserIsOwner(1L, jwt);
 
         StepVerifier.create(result)
                 .expectErrorSatisfies(throwable ->
@@ -239,6 +249,8 @@ public class GroupServiceTest {
                 .verify();
         verify(groupRepository).existsByIdAndOwnerId(anyLong(), any());
         verify(groupRepository).existsById(anyLong());
+        verify(cacheService, times(0)).saveValue(anyString(), any(), any());
+        verify(cacheService).getValue(anyString(), any());
     }
 
     @Test
@@ -246,8 +258,9 @@ public class GroupServiceTest {
         when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
         when(groupRepository.existsByIdAndOwnerId(anyLong(), any())).thenReturn(Mono.just(false));
         when(groupRepository.existsById(anyLong())).thenReturn(Mono.just(false));
+        when(cacheService.getValue(anyString(), any())).thenReturn(Mono.empty());
 
-        Mono<Void> result = groupService.checkUserIsOwner(1L, jwt);
+        Mono<Boolean> result = groupService.checkUserIsOwner(1L, jwt);
 
         StepVerifier.create(result)
                 .expectErrorSatisfies(throwable ->
@@ -255,6 +268,8 @@ public class GroupServiceTest {
                 .verify();
         verify(groupRepository).existsByIdAndOwnerId(anyLong(), any());
         verify(groupRepository).existsById(anyLong());
+        verify(cacheService, times(0)).saveValue(anyString(), any(), any());
+        verify(cacheService).getValue(anyString(), any());
     }
 
 }
