@@ -1,5 +1,6 @@
 package com.subOne.user_service.service;
 
+import com.subOne.user_service.cache.CacheService;
 import com.subOne.user_service.dto.group_member.response.ResponseMemberDto;
 import com.subOne.user_service.dto.group_member.response.ResponseMembersDto;
 import com.subOne.user_service.entity.GroupMember;
@@ -40,6 +41,9 @@ public class GroupMemberServiceTest {
 
     @Mock
     private Jwt jwt;
+
+    @Mock
+    private CacheService cacheService;
 
     @InjectMocks
     private GroupMemberServiceImpl groupMemberService;
@@ -126,6 +130,8 @@ public class GroupMemberServiceTest {
                         new ResponseMemberDto(UUID.randomUUID(), false)
                 )
         );
+        when(cacheService.getValue(anyString(), any())).thenReturn(Mono.empty());
+        when(cacheService.saveValue(anyString(), any(), any())).thenReturn(Mono.empty());
         when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
         when(groupMemberRepository.existsByGroupIdAndUserId(any(), any())).thenReturn(Mono.just(true));
         when(groupService.getOwnerId(anyLong())).thenReturn(Mono.just(responseMembersDto.users().getFirst().userId()));
@@ -146,6 +152,8 @@ public class GroupMemberServiceTest {
         verify(groupService, times(0)).checkUserIsOwner(anyLong(), any());
         verify(groupService).getOwnerId(anyLong());
         verify(groupMemberRepository).findMembersIdByGroupId(anyLong());
+        verify(cacheService).saveValue(anyString(), any(), any());
+        verify(cacheService).getValue(anyString(), any());
     }
 
     @Test
@@ -157,6 +165,7 @@ public class GroupMemberServiceTest {
                         new ResponseMemberDto(UUID.randomUUID(), false)
                 )
         );
+        when(cacheService.getValue(anyString(), any())).thenReturn(Mono.empty());
         when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
         when(groupMemberRepository.existsByGroupIdAndUserId(anyLong(), any())).thenReturn(Mono.just(false));
         when(groupService.getOwnerId(anyLong())).thenReturn(Mono.just(responseMembersDto.users().getFirst().userId()));
@@ -178,6 +187,8 @@ public class GroupMemberServiceTest {
         verify(groupService).checkUserIsOwner(anyLong(), any());
         verify(groupService).getOwnerId(anyLong());
         verify(groupMemberRepository).findMembersIdByGroupId(anyLong());
+        verify(cacheService, times(0)).saveValue(anyString(), any(), any());
+        verify(cacheService).getValue(anyString(), any());
     }
 
     @Test

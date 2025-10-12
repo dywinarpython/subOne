@@ -1,5 +1,6 @@
 package com.subOne.user_service.service;
 
+import com.subOne.user_service.cache.CacheService;
 import com.subOne.user_service.dto.group_invite.CodeDto;
 import com.subOne.user_service.dto.group_invite.response.ResponseInviteCodeDto;
 import com.subOne.user_service.dto.group_member.response.ResponseMembersDto;
@@ -47,6 +48,9 @@ public class GroupInviteServiceTest {
     private GroupInviteRepository groupInviteRepository;
 
     @Mock
+    private CacheService cacheService;
+
+    @Mock
     private Jwt jwt;
 
     @Test
@@ -55,6 +59,7 @@ public class GroupInviteServiceTest {
         when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
         when(groupInviteRepository.findGroupIdByCode(any())).thenReturn(Mono.just(1L));
         when(groupMemberService.addUser(any(), anyLong())).thenReturn(Mono.just(responseMembersDto));
+        when(cacheService.getValue(anyString(), any())).thenReturn(Mono.empty());
 
         Mono<ResponseMembersDto> result = groupInviteService.addUserByCode(UUID.randomUUID(), jwt);
 
@@ -63,13 +68,15 @@ public class GroupInviteServiceTest {
                 .verifyComplete();
         verify(groupInviteRepository).findGroupIdByCode(any());
         verify(groupMemberService).addUser(any(), anyLong());
+        verify(cacheService).getValue(anyString(), any());
     }
 
     @Test
     void addUserByCode_CodeIsNotCorrect_NotCorrectAddAndCheckRepo(){
         when(groupInviteRepository.findGroupIdByCode(any())).thenReturn(Mono.empty());
+        when(cacheService.getValue(anyString(), any())).thenReturn(Mono.empty());
 
-        Mono<ResponseMembersDto> result = groupInviteService.addUserByCode(UUID.randomUUID(), any());
+        Mono<ResponseMembersDto> result = groupInviteService.addUserByCode(UUID.randomUUID(), jwt);
 
         StepVerifier.create(result)
                 .expectErrorSatisfies(throwable ->
@@ -77,6 +84,7 @@ public class GroupInviteServiceTest {
                 .verify();
         verify(groupInviteRepository).findGroupIdByCode(any());
         verify(groupMemberService, times(0)).addUser(any(), anyLong());
+        verify(cacheService).getValue(anyString(), any());
     }
 
     @Test
@@ -98,6 +106,7 @@ public class GroupInviteServiceTest {
         verify(groupService).checkUserIsOwner(anyLong(), any());
         verify(groupInviteRepository).findCodeByGroupId(anyLong());
         verify(groupInviteRepository, times(0)).save(any());
+        verify(cacheService, times(0)).saveValue(anyString(), any(), any());
     }
 
 
@@ -112,6 +121,7 @@ public class GroupInviteServiceTest {
         when(groupInviteRepository.findCodeByGroupId(anyLong())).thenReturn(Mono.empty());
         when(mapperGroupInvite.codeAndGroupIdToGroupInvite(anyLong(), any())).thenReturn(new GroupInvite());
         when(groupInviteRepository.save(any())).thenReturn(Mono.just(groupInvite));
+        when(cacheService.saveValue(anyString(), any(), any())).thenReturn(Mono.empty());
 
         Mono<ResponseInviteCodeDto> result = groupInviteService.getCodeByGroupId(anyLong(), any());
 
@@ -123,6 +133,7 @@ public class GroupInviteServiceTest {
         verify(groupService).checkUserIsOwner(anyLong(), any());
         verify(groupInviteRepository).findCodeByGroupId(anyLong());
         verify(groupInviteRepository).save(any());
+        verify(cacheService).saveValue(anyString(), any(), any());
     }
 
 
