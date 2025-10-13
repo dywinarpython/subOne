@@ -33,9 +33,7 @@ public interface GroupMemberRepository extends R2dbcRepository<GroupMember, Long
             LEFT JOIN group_members gm ON g.id = gm.group_id AND gm.user_id = :userId
             WHERE g.id = :groupId AND (g.owner_id = :userId OR gm.user_id IS NOT NULL)
         ) as exist,
-        (SELECT COUNT(*) as count
-         FROM group_members
-         WHERE group_id = :groupId)
+        CAST((SELECT COUNT(*) FROM group_members WHERE group_id = :groupId) AS BIGINT) AS count
     """)
     Mono<GroupMemberInfoDto> findExistUserInGroupAndCountMemberInGroup(UUID userId, Long groupId);
 }

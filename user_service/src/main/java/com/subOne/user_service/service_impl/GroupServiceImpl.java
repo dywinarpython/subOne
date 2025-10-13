@@ -96,7 +96,7 @@ public class GroupServiceImpl implements GroupService {
                     groupRepository.existsByIdAndOwnerId(groupId, UUID.fromString(jwt.getSubject())).flatMap(
                             exists -> {
                                 if(exists) {
-                                    return cacheService.saveValue("OWNER::" + groupId, jwt.getSubject(), Duration.ofMinutes(30)).thenReturn(true);
+                                    return cacheService.saveValue("OWNER::" + groupId, UUID.fromString(jwt.getSubject()), Duration.ofMinutes(30)).thenReturn(true);
                                 }
                                 return checkRights(groupId).thenReturn(false);
                             })
