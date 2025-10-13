@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
+    <changeSet id="2025-10-13-008-create-foreign-key-user" author="Dywinar">
+        <addForeignKeyConstraint baseTableName="group_members" baseColumnNames="user_id" referencedTableName="users"
+                                 referencedColumnNames="user_id" constraintName="fk_user_id_users_group_member" onDelete="CASCADE"/>
+        <addForeignKeyConstraint baseTableName="groups" baseColumnNames="owner_id" referencedTableName="users"
+                                 referencedColumnNames="user_id" constraintName="fk_user_id_users_group" onDelete="CASCADE"/>
+    </changeSet>
+</databaseChangeLog>

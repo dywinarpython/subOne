@@ -8,6 +8,7 @@ import com.subOne.user_service.repository.GroupMemberRepository;
 import com.subOne.user_service.service.GroupMemberService;
 import com.subOne.user_service.service.GroupService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
@@ -25,6 +26,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class GroupMemberServiceImpl implements GroupMemberService {
 
     private final MapperGroupMember mapperGroupMember;
@@ -37,16 +39,11 @@ public class GroupMemberServiceImpl implements GroupMemberService {
 
 
     @Override
-    // TODO уменьшить количество запросов
     public Mono<ResponseMembersDto> addUser(UUID userId, Long groupId) {
-        return groupMemberRepository.existsByUserIdAndGroupId(userId, groupId)
-                .flatMap( bl -> {
-                    if (bl) return Mono.error(new ResponseStatusException(HttpStatus.CONFLICT, "User is already a member of the group"));
-                    return Mono.empty();
-                })
-                .then(Mono.defer( () -> groupMemberRepository.existsMembersInGroupIsNoMoreFive(groupId)))
-                .flatMap(bl -> {
-                    if (!bl) return Mono.error(new ResponseStatusException(HttpStatus.CONFLICT, "There can be no more than 5 members of the group (the owner is not considered)"));
+        return groupMemberRepository.findExistUserInGroupAndCountMemberInGroup(userId, groupId)
+                .flatMap( dto -> {
+                    if (dto.exist()) return Mono.error(new ResponseStatusException(HttpStatus.CONFLICT, "User is already a member of the group"));
+                    if (dto.count() >= 5) return Mono.error(new ResponseStatusException(HttpStatus.CONFLICT, "There can be no more than 5 members of the group (the owner is not considered)"));
                     return Mono.empty();
                 })
                 .then(Mono.defer(() -> groupMemberRepository.save(mapperGroupMember.userIdAndGroupIdToGroupMember(userId, groupId))))
@@ -56,17 +53,11 @@ public class GroupMemberServiceImpl implements GroupMemberService {
     @Override
     @Transactional(readOnly = true)
     public Mono<ResponseMembersDto> getUsers(Long groupId, Jwt jwt) {
-        String key = "MEMBER::" + jwt.getSubject() + ' ' + groupId;
-        return cacheService.getValue(key, Boolean.class)
-                .flatMap(hasAccess -> {
-                    if (hasAccess) return Mono.just(true);
-                    return Mono.empty();
-                })
-                .switchIfEmpty(
-                        checkUserInGroup(groupId, jwt)
-                )
+        return checkUserInGroup(groupId, jwt)
                 .then(Mono.defer(() -> getUsersAndOwner(groupId)));
     }
+
+
 
 
     @Override
@@ -92,18 +83,32 @@ public class GroupMemberServiceImpl implements GroupMemberService {
     @Override
     @Transactional(readOnly = true)
     @Cacheable(value = "MEMBER", key = "#jwt.getSubject() + ' ' + #groupId")
-    public Mono<Boolean> checkUserInGroup(Long groupId, Jwt jwt){
-        return groupMemberRepository.existsByGroupIdAndUserId(groupId, UUID.fromString(jwt.getSubject())).flatMap(
-                exists -> {
-                    if(!exists) return groupService.checkUserIsOwner(groupId, jwt);
-                    String key = "MEMBER::" + jwt.getSubject() + ' ' + groupId;
-                    return cacheService.saveValue(key, true, Duration.ofMinutes(15)).thenReturn(true);
-                }
-        );
+    public Mono<Boolean> checkUserInGroup(Long groupId, Jwt jwt) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+        String memberKey = "MEMBER::" + userId + ' ' + groupId;
+        String ownerKey = "OWNER::" + groupId;
+        return cacheService.getValue(memberKey, Boolean.class)
+                .switchIfEmpty(
+                        cacheService.getValue(ownerKey, UUID.class)
+                                .map(ownerId -> ownerId.equals(userId))
+                                .switchIfEmpty(Mono.just(false))
+                )
+                .flatMap(isMemberOrOwner -> {
+                    if (isMemberOrOwner) return Mono.just(true);
+                    return groupMemberRepository.existsByGroupIdAndUserId(groupId, userId)
+                            .flatMap(exists -> {
+                                if (exists) {
+                                    return cacheService.saveValue(memberKey, true, Duration.ofMinutes(15))
+                                            .thenReturn(true);
+                                }
+                                return groupService.checkUserIsOwner(groupId, jwt);
+                            });
+                });
     }
 
+
     private Mono<ResponseMembersDto> getUsersAndOwner(Long groupId){
-        return groupService.getOwnerId(groupId).flatMap( ownerId -> {
+        return groupService.getOwner(groupId).flatMap( ownerId -> {
             Flux<ResponseMemberDto> members = groupMemberRepository.findMembersIdByGroupId(groupId).map(id -> new ResponseMemberDto(id, false));
             return Flux.concat(
                     Flux.just(new ResponseMemberDto(ownerId, true)),

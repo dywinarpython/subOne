@@ -1,6 +1,7 @@
 package com.subOne.user_service.repository;
 
 import com.subOne.user_service.dto.group.response.ResponseGroupDto;
+import com.subOne.user_service.dto.user.response.UserResponseDto;
 import com.subOne.user_service.entity.Group;
 import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
@@ -18,10 +19,18 @@ public interface GroupRepository extends R2dbcRepository<Group, Long> {
 
     Flux<ResponseGroupDto> findByOwnerId(UUID ownerId);
 
+    @Query("""
+            select g.id, g.name, g.created_at, g.updated_at
+            from groups g
+            join group_members gm on gm.group_id = g.id
+            where gm.user_id = :userId
+            """)
+    Flux<ResponseGroupDto> findGroupsUserIsMember(UUID userId);
+
     @Query(
             """
             select g.id , name,  created_at, updated_at
-            from "groups" g
+            from groups g
             where g.id = :groupId and (g.owner_id = :userId or
                 exists(
                     select 1
@@ -33,11 +42,12 @@ public interface GroupRepository extends R2dbcRepository<Group, Long> {
     Mono<ResponseGroupDto> findGroupById(Long groupId, UUID userId);
 
     @Query("""
-            select owner_id
-            from groups
-            where id = :groupId
+            select owner_id, u.name, u.surname, u.email
+            from groups g
+            join users u on u.user_id = g.owner_id
+            where g.id = :groupId
             """)
-    Mono<UUID> findOwnerByGroupId(Long groupId);
+    Mono<UserResponseDto> findOwnerByGroupId(Long groupId);
 
     @Modifying
     @Query(

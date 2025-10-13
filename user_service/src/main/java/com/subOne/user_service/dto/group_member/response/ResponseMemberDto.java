@@ -1,6 +1,7 @@
 package com.subOne.user_service.dto.group_member.response;
 
-import java.util.UUID;
+import com.subOne.user_service.dto.user.response.UserResponseDto;
 
-public record ResponseMemberDto(UUID userId, Boolean owner) {
+
+public record ResponseMemberDto(UserResponseDto user, Boolean owner) {
 }

@@ -28,6 +28,7 @@ public class GroupControllerTest extends AbstractControllerTest{
     @Autowired
     private MapperGroup mapperGroup;
 
+
     private final String requestMapping = "/api/v1/groups";
 
     protected Group group;
@@ -80,12 +81,31 @@ public class GroupControllerTest extends AbstractControllerTest{
                 .verifyComplete();
     }
 
-    @DisplayName("ПРОВЕРКА GET -> /api/v1/groups/me")
+    @DisplayName("ПРОВЕРКА GET -> /api/v1/groups/owner/me")
     @Test
     void getGroups_GroupsIsCreated_CorrectReturn(){
         groupRepository.save(mapperGroup
                 .requestGroupDtotoGroup(new RequestGroupDto("groupTests"), user.getUserId().toString())).block();
 
+        Flux<ResponseGroupsDto> result = webTestClient
+                .get()
+                .uri(requestMapping + "/owner/me")
+                .exchange()
+                .expectStatus().isOk()
+                .returnResult(ResponseGroupsDto.class).getResponseBody();
+        StepVerifier.create(result)
+                .assertNext(
+                        responseGroupsDto -> {
+                            assertEquals(2, responseGroupsDto.groups().size());
+                        }
+
+                )
+                .verifyComplete();
+    }
+
+    @DisplayName("ПРОВЕРКА GET -> /api/v1/groups/me")
+    @Test
+    void getGroupsUserIsMember_UserIsNotMember_CorrectReturn(){
         Flux<ResponseGroupsDto> result = webTestClient
                 .get()
                 .uri(requestMapping + "/me")
@@ -95,7 +115,7 @@ public class GroupControllerTest extends AbstractControllerTest{
         StepVerifier.create(result)
                 .assertNext(
                         responseGroupsDto -> {
-                            assertEquals(2, responseGroupsDto.groups().size());
+                            assertEquals(0, responseGroupsDto.groups().size());
                             responseGroupsDto.groups()
                                     .forEach(this::checkGroup);
                         }

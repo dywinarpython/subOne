@@ -1,5 +1,7 @@
 package com.subOne.user_service.repository;
 
+import com.subOne.user_service.dto.group_member.GroupMemberInfoDto;
+import com.subOne.user_service.dto.user.response.UserResponseDto;
 import com.subOne.user_service.entity.GroupMember;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
@@ -14,47 +16,26 @@ public interface GroupMemberRepository extends R2dbcRepository<GroupMember, Long
 
     Mono<Boolean> existsByGroupIdAndUserId(Long groupId, UUID userId);
 
+
     @Query("""
-            select user_id
-            from group_members
+            select u.user_id, u.name, u.surname, u.email
+            from group_members g
+            join users u on u.user_id = g.user_id
             where group_id = :groupId
             """)
-    Flux<UUID> findMembersIdByGroupId(Long groupId);
+    Flux<UserResponseDto> findMembersIdByGroupId(Long groupId);
 
     @Query("""
-            select count(*) < 5
-            from group_members
-            where group_id = :groupId
-            """)
-    Mono<Boolean> existsMembersInGroupIsNoMoreFive(Long groupId);
-
-
-    @Query("""
-           SELECT EXISTS (
-                SELECT 1
-                FROM groups g
-                WHERE g.id = :groupId
-                     AND (
-                      g.owner_id = :userId
-                      OR EXISTS (
-                          SELECT 1
-                          FROM group_members gm
-                          WHERE gm.user_id = :userId AND  gm.group_id = :groupId)
-                      )
-           )
+    SELECT
+        EXISTS (
+            SELECT 1
+            FROM groups g
+            LEFT JOIN group_members gm ON g.id = gm.group_id AND gm.user_id = :userId
+            WHERE g.id = :groupId AND (g.owner_id = :userId OR gm.user_id IS NOT NULL)
+        ) as exist,
+        (SELECT COUNT(*) as count
+         FROM group_members
+         WHERE group_id = :groupId)
     """)
-    Mono<Boolean> existsByUserIdAndGroupId(UUID userId, Long groupId);
-
-
-    @Query("""
-            select exists(
-                select 1
-                from groups 
-                where id = :groupId and owner_id = :ownerId
-            )
-            """)
-    Mono<Boolean> existsByGroupIdAndOwnerId(Long groupId, UUID ownerId);
-
-
-
+    Mono<GroupMemberInfoDto> findExistUserInGroupAndCountMemberInGroup(UUID userId, Long groupId);
 }

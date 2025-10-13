@@ -5,12 +5,13 @@ import com.subOne.user_service.dto.group.request.RequestGroupDto;
 import com.subOne.user_service.dto.group.request.RequestUpdateGroupDto;
 import com.subOne.user_service.dto.group.response.ResponseGroupDto;
 import com.subOne.user_service.dto.group.response.ResponseGroupsDto;
+import com.subOne.user_service.dto.user.response.UserResponseDto;
 import com.subOne.user_service.mapper.MapperGroup;
 import com.subOne.user_service.repository.GroupRepository;
 import com.subOne.user_service.service.GroupService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -48,14 +49,20 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    @Cacheable(value = "OWNER", key = "#groupId")
-    public Mono<UUID> getOwnerId(Long groupId) {
+    public Mono<UserResponseDto> getOwner(Long groupId) {
         return groupRepository.findOwnerByGroupId(groupId);
     }
 
     @Override
-    public Mono<ResponseGroupsDto> getGroups(Jwt jwt) {
+    public Mono<ResponseGroupsDto> getGroupsCreateUser(Jwt jwt) {
         return groupRepository.findByOwnerId(UUID.fromString(jwt.getSubject())).collectList().map(ResponseGroupsDto::new);
+    }
+
+    @Override
+    public Mono<ResponseGroupsDto> getGroupsUserIsMember(Jwt jwt) {
+        return groupRepository.findGroupsUserIsMember(UUID.fromString(jwt.getSubject()))
+                .collectList()
+                .map(ResponseGroupsDto::new);
     }
 
     @Override
@@ -71,6 +78,7 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "OWNER", key = "#groupId")
     // TODO при удалении группы обязательно в дальнейшем требуется удаления всех подписок
     public Mono<Void> deleteGroup(Long groupId, Jwt jwt) {
         return groupRepository.deleteByIdAndOwnerId(groupId, UUID.fromString(jwt.getSubject())).flatMap(count -> {
