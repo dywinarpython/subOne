@@ -54,8 +54,6 @@ public class InviteControllerTest extends AbstractControllerTest{
 
     @BeforeEach
     void setUpInvite(){
-        setUp();
-
         User user1 = new User();
         user1.setEmail("email" + UUID.randomUUID());
         user1.setName("name");

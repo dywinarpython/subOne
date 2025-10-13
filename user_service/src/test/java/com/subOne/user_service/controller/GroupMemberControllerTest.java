@@ -31,7 +31,7 @@ public class GroupMemberControllerTest extends GroupControllerTest{
     @BeforeEach
     void setUpGroupMember(){
         User user1 = new User();
-        user1.setEmail("email" + UUID.randomUUID());
+        user1.setEmail("email" + System.currentTimeMillis() + "@mail.com");
         user1.setName("name");
         user1.setSurname("surname");
         user1.setVerifyEmail(true);
@@ -39,7 +39,6 @@ public class GroupMemberControllerTest extends GroupControllerTest{
         StepVerifier.create(userRepository.save(user1))
                         .assertNext(userSave -> this.userMember = userSave)
                         .verifyComplete();
-        setUpForGroupTests();
         GroupMember groupMember = new GroupMember();
         groupMember.setGroupId(group.getId());
         groupMember.setUserId(userMember.getUserId());

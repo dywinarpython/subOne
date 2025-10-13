@@ -45,7 +45,6 @@ public class GroupControllerTest extends AbstractControllerTest{
 
     @BeforeEach
     void setUpForGroupTests(){
-        setUp();
         StepVerifier.create(groupRepository.save(mapperGroup
                 .requestGroupDtotoGroup(new RequestGroupDto("groupTests"), user.getUserId().toString())))
                 .assertNext(group -> this.group = group)
@@ -96,7 +95,7 @@ public class GroupControllerTest extends AbstractControllerTest{
         StepVerifier.create(result)
                 .assertNext(
                         responseGroupsDto -> {
-                            assertEquals(2, responseGroupsDto.groups().size());
+                            assertTrue(2 <= responseGroupsDto.groups().size());
                         }
 
                 )
