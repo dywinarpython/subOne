@@ -4,9 +4,11 @@ import com.subOne.user_service.dto.group.request.RequestGroupDto;
 import com.subOne.user_service.dto.group_invite.response.ResponseInviteCodeDto;
 import com.subOne.user_service.dto.group_member.response.ResponseMemberDto;
 import com.subOne.user_service.dto.group_member.response.ResponseMembersDto;
+import com.subOne.user_service.dto.user.response.UserResponseDto;
 import com.subOne.user_service.entity.Group;
 import com.subOne.user_service.entity.GroupInvite;
 import com.subOne.user_service.entity.GroupMember;
+import com.subOne.user_service.entity.User;
 import com.subOne.user_service.mapper.MapperGroup;
 import com.subOne.user_service.repository.GroupInviteRepository;
 import com.subOne.user_service.repository.GroupMemberRepository;
@@ -45,12 +47,23 @@ public class InviteControllerTest extends AbstractControllerTest{
 
     private Group group;
 
+    private User userMember;
+
 
     private final String requestMapping = "/api/v1/invitations";
 
     @BeforeEach
     void setUpInvite(){
-        setUp();
+        User user1 = new User();
+        user1.setEmail("email" + UUID.randomUUID());
+        user1.setName("name");
+        user1.setSurname("surname");
+        user1.setVerifyEmail(true);
+        user1.setUserId(UUID.randomUUID());
+        StepVerifier.create(userRepository.save(user1))
+                .assertNext(userSave -> this.userMember = userSave)
+                .verifyComplete();
+
         StepVerifier.create(groupRepository.save(mapperGroup
                         .requestGroupDtotoGroup(new RequestGroupDto("groupTests"), user.getUserId().toString())))
                 .assertNext(group -> this.group = group)
@@ -71,7 +84,7 @@ public class InviteControllerTest extends AbstractControllerTest{
 
         jwt = Jwt.withTokenValue("dummy-token")
                 .header("alg", "none")
-                .claim("sub", UUID.randomUUID())
+                .claim("sub", userMember.getUserId())
                 .build();
 
         Flux<ResponseMembersDto> result = webTestClient
@@ -86,13 +99,13 @@ public class InviteControllerTest extends AbstractControllerTest{
                 .assertNext(responseMembersDto -> {
                     assertEquals(2, responseMembersDto.users().size());
                     List<ResponseMemberDto> users = responseMembersDto.users();
-                    assertEquals(users.getFirst().userId(), UUID.fromString(jwt.getSubject()));
+                    assertEquals(users.getFirst().user().userId(), UUID.fromString(jwt.getSubject()));
                     assertEquals(true, users.getFirst().owner());
                     assertEquals(false, users.get(1).owner());
-                    List<UUID> expectedUserId = users.stream().map(ResponseMemberDto::userId).toList();
+                    List<UUID> expectedUserId = users.stream().map(ResponseMemberDto::user).map(UserResponseDto::userId).toList();
                     StepVerifier.create(groupMemberRepository
                                     .findMembersIdByGroupId(groupInvite.getGroupId()).collectList())
-                            .assertNext(memberIds -> assertEquals(memberIds, expectedUserId));
+                            .assertNext(memberIds -> assertEquals(memberIds.stream().map(UserResponseDto::userId).toList(), expectedUserId));
                 });
     }
 
@@ -111,7 +124,7 @@ public class InviteControllerTest extends AbstractControllerTest{
     void joinGroupByCode_UserIsMemberGroup_NotCorrectSave(){
         jwt = Jwt.withTokenValue("dummy-token")
                 .header("alg", "none")
-                .claim("sub", UUID.randomUUID())
+                .claim("sub", userMember.getUserId())
                 .build();
         GroupMember groupMember = new GroupMember();
         groupMember.setGroupId(groupInvite.getGroupId());

@@ -2,13 +2,11 @@ package com.subOne.user_service.service;
 
 import com.subOne.user_service.dto.user.request.RequestUpdateUserDto;
 import com.subOne.user_service.dto.user.response.UserResponseDto;
-import com.subOne.user_service.dto.user.response.UsersResponseDto;
 import com.subOne.user_service.entity.User;
 import com.subOne.user_service.kafka.serviceProducer.KafkaService;
 import com.subOne.user_service.mapper.MapperUser;
 import com.subOne.user_service.repository.UserRepository;
 import com.subOne.user_service.service_impl.UserServiceImpl;
-import jakarta.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,7 +14,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.oauth2.jwt.Jwt;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -118,43 +115,6 @@ public class UserServiceTest {
                 .expectErrorSatisfies(UserServiceTest::accept)
                 .verify();
         verify(userRepository).findByUserId(any());
-    }
-
-    @Test
-    void getUsersById_OnePersonIsNotFound_CorrectReturnAndCheckRepo(){
-        List<UUID> userIds = List.of(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
-        List<UserResponseDto> ls = new ArrayList<>();
-        ls.add(new UserResponseDto(userIds.getFirst(), "testName", "testSurname", "testEmail"));
-        ls.add(new UserResponseDto(userIds.get(1), "testName2", "testSurname2", "testEmail2"));
-        ls.add(new UserResponseDto(null, null, null, null));
-        ls.add(new UserResponseDto(userIds.getLast(), "testName3", "testSurname3", "testEmail3"));
-        UsersResponseDto usersResponseDto = new UsersResponseDto(ls);
-
-
-        when(userRepository.findByUserIds(any())).thenReturn(Flux.fromIterable(ls.stream().filter(user -> user.userId() != null).toList()));
-
-        Mono<UsersResponseDto> result = userService.getUsersById(userIds);
-
-        StepVerifier.create(result)
-                .expectNext(usersResponseDto)
-                .expectComplete()
-                .verify();
-        verify(userRepository).findByUserIds(any());
-    }
-
-    @Test
-    void getUsersById_UserIsMoreFive_CorrectReturnAndCheckRepo(){
-        List<UUID> userIds = List.of(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
-
-        Mono<UsersResponseDto> result = userService.getUsersById(userIds);
-
-        StepVerifier.create(result)
-                .expectErrorSatisfies(throwable -> {
-                    assertEquals(ValidationException.class, throwable.getClass());
-                    log.info("User is more 5 -> correct");
-                })
-                .verify();
-        verify(userRepository, times(0)).findByUserIds(any());
     }
 
     @Test

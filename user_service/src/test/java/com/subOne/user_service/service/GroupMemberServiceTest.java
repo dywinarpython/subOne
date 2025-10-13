@@ -1,7 +1,10 @@
 package com.subOne.user_service.service;
 
+import com.subOne.user_service.cache.CacheService;
+import com.subOne.user_service.dto.group_member.GroupMemberInfoDto;
 import com.subOne.user_service.dto.group_member.response.ResponseMemberDto;
 import com.subOne.user_service.dto.group_member.response.ResponseMembersDto;
+import com.subOne.user_service.dto.user.response.UserResponseDto;
 import com.subOne.user_service.entity.GroupMember;
 import com.subOne.user_service.mapper.MapperGroupMember;
 import com.subOne.user_service.repository.GroupMemberRepository;
@@ -41,6 +44,9 @@ public class GroupMemberServiceTest {
     @Mock
     private Jwt jwt;
 
+    @Mock
+    private CacheService cacheService;
+
     @InjectMocks
     private GroupMemberServiceImpl groupMemberService;
 
@@ -49,23 +55,21 @@ public class GroupMemberServiceTest {
     void addUser_UserIsNotMemberGroupAndGroupCountMemberIsNoMoreFive_CorrectReturnAndSaveToDbAndCheckRepo(){
         ResponseMembersDto responseMembersDto = new ResponseMembersDto(
                 List.of(
-                        new ResponseMemberDto(UUID.randomUUID(), true),
-                        new ResponseMemberDto(UUID.randomUUID(), false),
-                        new ResponseMemberDto(UUID.randomUUID(), false)
+                        new ResponseMemberDto(new UserResponseDto(UUID.randomUUID(), "test1", "surname1", "email1"), true),
+                        new ResponseMemberDto(new UserResponseDto(UUID.randomUUID(), "test2", "surname2", "email2"), false),
+                        new ResponseMemberDto(new UserResponseDto(UUID.randomUUID(), "test3", "surname3", "email3"), false)
                 )
         );
-        when(groupMemberRepository.existsByUserIdAndGroupId(any(), anyLong()))
-                .thenReturn(Mono.just(false));
-        when(groupMemberRepository.existsMembersInGroupIsNoMoreFive(anyLong()))
-                .thenReturn(Mono.just(true));
+        when(groupMemberRepository.findExistUserInGroupAndCountMemberInGroup(any(), anyLong()))
+                .thenReturn(Mono.just(new GroupMemberInfoDto(false, 1L)));
         when(groupMemberRepository.save(any())).thenReturn(Mono.just(new GroupMember()));
         when(mapperGroupMember.userIdAndGroupIdToGroupMember(any(), anyLong())).thenReturn(new GroupMember());
-        when(groupService.getOwnerId(anyLong())).thenReturn(Mono.just(responseMembersDto.users().getFirst().userId()));
+        when(groupService.getOwner(anyLong())).thenReturn(Mono.just(responseMembersDto.users().getFirst().user()));
         when(groupMemberRepository.findMembersIdByGroupId(anyLong()))
                 .thenReturn(Flux.fromIterable(responseMembersDto.users()
                         .stream()
                         .filter(responseMemberDto -> !responseMemberDto.owner())
-                        .map(ResponseMemberDto::userId)
+                        .map(ResponseMemberDto::user)
                         .toList()
                 ));
 
@@ -75,45 +79,43 @@ public class GroupMemberServiceTest {
                 .expectNext(responseMembersDto)
                 .verifyComplete();
 
-        verify(groupMemberRepository).existsByUserIdAndGroupId(any(), anyLong());
-        verify(groupMemberRepository).existsMembersInGroupIsNoMoreFive(anyLong());
+        verify(groupMemberRepository).findExistUserInGroupAndCountMemberInGroup(any(), anyLong());
         verify(groupMemberRepository).save(any());
-        verify(groupService).getOwnerId(anyLong());
+        verify(groupService).getOwner(anyLong());
         verify(groupMemberRepository).findMembersIdByGroupId(anyLong());
     }
 
     @Test
     @DisplayName("Проверка добавления пользователя в группу (он не в группе, количество members > 5) ")
     void addUser_UserIsNotMemberGroupAndGroupCountMemberIsMoreFive_NotCorrectReturnAndNotSaveToDbAndCheckRepo(){
-        when(groupMemberRepository.existsByUserIdAndGroupId(any(), anyLong())).thenReturn(Mono.just(false));
-        when(groupMemberRepository.existsMembersInGroupIsNoMoreFive(anyLong())).thenReturn(Mono.just(false));
+        when(groupMemberRepository.findExistUserInGroupAndCountMemberInGroup(any(), anyLong()))
+                .thenReturn(Mono.just(new GroupMemberInfoDto(false, 5L)));
 
         Mono<ResponseMembersDto> result = groupMemberService.addUser(any(), anyLong());
 
         StepVerifier.create(result)
                 .expectErrorSatisfies(throwable -> assertEquals(ResponseStatusException.class, throwable.getClass()))
                 .verify();
-        verify(groupMemberRepository).existsByUserIdAndGroupId(any(), anyLong());
-        verify(groupMemberRepository).existsMembersInGroupIsNoMoreFive(anyLong());
+        verify(groupMemberRepository).findExistUserInGroupAndCountMemberInGroup(any(), anyLong());
         verify(groupMemberRepository, times(0)).save(any());
-        verify(groupService, times(0)).getOwnerId(anyLong());
+        verify(groupService, times(0)).getOwner(anyLong());
         verify(groupMemberRepository, times(0)).findMembersIdByGroupId(anyLong());
     }
+
     @Test
     @DisplayName("Проверка добавления пользователя в группу (он уже в этой группе) ")
     void addUser_UserIsMemberGroup_NotCorrectReturnAndNotSaveToDbAndCheckRepo(){
-        when(groupMemberRepository.existsByUserIdAndGroupId(any(), anyLong()))
-                .thenReturn(Mono.just(true));
+        when(groupMemberRepository.findExistUserInGroupAndCountMemberInGroup(any(), anyLong()))
+                .thenReturn(Mono.just(new GroupMemberInfoDto(true, 1L)));
 
         Mono<ResponseMembersDto> responseMembersDtoMono = groupMemberService.addUser(any(), anyLong());
 
         StepVerifier.create(responseMembersDtoMono)
                 .expectErrorSatisfies(throwable -> assertEquals(ResponseStatusException.class, throwable.getClass()))
                 .verify();
-        verify(groupMemberRepository).existsByUserIdAndGroupId(any(), anyLong());
-        verify(groupMemberRepository, times(0)).existsMembersInGroupIsNoMoreFive(anyLong());
+        verify(groupMemberRepository).findExistUserInGroupAndCountMemberInGroup(any(), anyLong());
         verify(groupMemberRepository, times(0)).save(any());
-        verify(groupService, times(0)).getOwnerId(anyLong());
+        verify(groupService, times(0)).getOwner(anyLong());
         verify(groupMemberRepository, times(0)).findMembersIdByGroupId(anyLong());
     }
 
@@ -121,19 +123,21 @@ public class GroupMemberServiceTest {
     void getUsers_UserIsMember_CorrectReturnAndCheckRepo(){
         ResponseMembersDto responseMembersDto = new ResponseMembersDto(
                 List.of(
-                        new ResponseMemberDto(UUID.randomUUID(), true),
-                        new ResponseMemberDto(UUID.randomUUID(), false),
-                        new ResponseMemberDto(UUID.randomUUID(), false)
+                        new ResponseMemberDto(new UserResponseDto(UUID.randomUUID(), "test1", "surname1", "email1"), true),
+                        new ResponseMemberDto(new UserResponseDto(UUID.randomUUID(), "test2", "surname2", "email2"), false),
+                        new ResponseMemberDto(new UserResponseDto(UUID.randomUUID(), "test3", "surname3", "email3"), false)
                 )
         );
+        when(cacheService.getValue(anyString(), any())).thenReturn(Mono.empty());
+        when(cacheService.saveValue(anyString(), any(), any())).thenReturn(Mono.empty());
         when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
         when(groupMemberRepository.existsByGroupIdAndUserId(any(), any())).thenReturn(Mono.just(true));
-        when(groupService.getOwnerId(anyLong())).thenReturn(Mono.just(responseMembersDto.users().getFirst().userId()));
+        when(groupService.getOwner(anyLong())).thenReturn(Mono.just(responseMembersDto.users().getFirst().user()));
         when(groupMemberRepository.findMembersIdByGroupId(anyLong()))
                 .thenReturn(Flux.fromIterable(responseMembersDto.users()
                         .stream()
                         .filter(responseMemberDto -> !responseMemberDto.owner())
-                        .map(ResponseMemberDto::userId)
+                        .map(ResponseMemberDto::user)
                         .toList()
                 ));
 
@@ -144,28 +148,31 @@ public class GroupMemberServiceTest {
                 .verifyComplete();
         verify(groupMemberRepository).existsByGroupIdAndUserId(anyLong(), any());
         verify(groupService, times(0)).checkUserIsOwner(anyLong(), any());
-        verify(groupService).getOwnerId(anyLong());
+        verify(groupService).getOwner(anyLong());
         verify(groupMemberRepository).findMembersIdByGroupId(anyLong());
+        verify(cacheService).saveValue(anyString(), any(), any());
+        verify(cacheService, times(2)).getValue(anyString(), any());
     }
 
     @Test
     void getUsers_UserIsOwner_CorrectReturnAndCheckRepo(){
         ResponseMembersDto responseMembersDto = new ResponseMembersDto(
                 List.of(
-                        new ResponseMemberDto(UUID.randomUUID(), true),
-                        new ResponseMemberDto(UUID.randomUUID(), false),
-                        new ResponseMemberDto(UUID.randomUUID(), false)
+                        new ResponseMemberDto(new UserResponseDto(UUID.randomUUID(), "test1", "surname1", "email1"), true),
+                        new ResponseMemberDto(new UserResponseDto(UUID.randomUUID(), "test2", "surname2", "email2"), false),
+                        new ResponseMemberDto(new UserResponseDto(UUID.randomUUID(), "test3", "surname3", "email3"), false)
                 )
         );
+        when(cacheService.getValue(anyString(), any())).thenReturn(Mono.empty());
         when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
         when(groupMemberRepository.existsByGroupIdAndUserId(anyLong(), any())).thenReturn(Mono.just(false));
-        when(groupService.getOwnerId(anyLong())).thenReturn(Mono.just(responseMembersDto.users().getFirst().userId()));
+        when(groupService.getOwner(anyLong())).thenReturn(Mono.just(responseMembersDto.users().getFirst().user()));
         when(groupService.checkUserIsOwner(anyLong(), any())).thenReturn(Mono.empty());
         when(groupMemberRepository.findMembersIdByGroupId(anyLong()))
                 .thenReturn(Flux.fromIterable(responseMembersDto.users()
                         .stream()
                         .filter(responseMemberDto -> !responseMemberDto.owner())
-                        .map(ResponseMemberDto::userId)
+                        .map(ResponseMemberDto::user)
                         .toList()
                 ));
 
@@ -176,8 +183,10 @@ public class GroupMemberServiceTest {
                 .verifyComplete();
         verify(groupMemberRepository).existsByGroupIdAndUserId(anyLong(), any());
         verify(groupService).checkUserIsOwner(anyLong(), any());
-        verify(groupService).getOwnerId(anyLong());
+        verify(groupService).getOwner(anyLong());
         verify(groupMemberRepository).findMembersIdByGroupId(anyLong());
+        verify(cacheService, times(0)).saveValue(anyString(), any(), any());
+        verify(cacheService, times(2)).getValue(anyString(), any());
     }
 
     @Test
@@ -187,7 +196,7 @@ public class GroupMemberServiceTest {
         when(groupService.checkUserIsOwner(anyLong(), any())).thenReturn(Mono.empty());
         when(groupMemberRepository.deleteByUserId(any())).thenReturn(Mono.just(1L));
 
-        Mono<Void> result = groupMemberService.deleteUser(1L, UUID.randomUUID(), jwt);
+        Mono<Void> result = groupMemberService.deleteMember(1L, UUID.randomUUID(), jwt);
 
         StepVerifier.create(result)
                 .verifyComplete();
@@ -202,7 +211,7 @@ public class GroupMemberServiceTest {
         when(groupService.checkUserIsOwner(anyLong(), any())).thenReturn(Mono.empty());
         when(groupMemberRepository.deleteByUserId(any())).thenReturn(Mono.just(0L));
 
-        Mono<Void> result = groupMemberService.deleteUser(1L, UUID.randomUUID(), jwt);
+        Mono<Void> result = groupMemberService.deleteMember(1L, UUID.randomUUID(), jwt);
 
         StepVerifier.create(result)
                 .expectErrorSatisfies(throwable ->

@@ -33,7 +33,7 @@ public class GroupMemberController {
             @PathVariable Long groupId,
             @PathVariable UUID userId,
             @AuthenticationPrincipal Jwt jwt) {
-        return groupMemberService.deleteUser(groupId, userId, jwt)
+        return groupMemberService.deleteMember(groupId, userId, jwt)
                 .thenReturn(ResponseEntity.noContent().build());
     }
 }

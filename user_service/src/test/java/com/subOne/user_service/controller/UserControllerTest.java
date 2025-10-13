@@ -2,12 +2,9 @@ package com.subOne.user_service.controller;
 
 import com.subOne.user_service.dto.user.request.RequestUpdateUserDto;
 import com.subOne.user_service.dto.user.response.UserResponseDto;
-import com.subOne.user_service.dto.user.response.UsersResponseDto;
 import com.subOne.user_service.entity.User;
-import com.subOne.user_service.mapper.MapperUser;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.jwt.Jwt;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -22,8 +19,6 @@ import static org.springframework.security.test.web.reactive.server.SecurityMock
 
 public class UserControllerTest extends AbstractControllerTest{
 
-    @Autowired
-    private MapperUser mapperUser;
 
 
     private static void checkUser(UserResponseDto usersResponseDto, User user){
@@ -46,38 +41,6 @@ public class UserControllerTest extends AbstractControllerTest{
 
         StepVerifier.create(result)
                 .assertNext(userResponseDto -> checkUser(userResponseDto, user))
-                .expectComplete()
-                .verify();
-    }
-
-    @Test
-    @DisplayName("ПРОВЕРКА GET -> /api/v1/users?usersId=")
-    void getUsersById_UsersISCreateAndOneIsNotFound_ReturnCorrect(){
-        User user2 = new User();
-        user2.setUserId(UUID.randomUUID());
-        user2.setEmail("testEmail2@mail.com");
-        user2.setName("test");
-        user2.setSurname("testSurname");
-        user2.setVerifyEmail(false);
-        userRepository.save(user2).block();
-
-        Flux<UsersResponseDto> result = webTestClient
-                .get()
-                .uri("/api/v1/users?usersId=" + user.getUserId() + "," + UUID.randomUUID() + "," + user2.getUserId())
-                .exchange()
-                .expectStatus().isOk()
-                .returnResult(UsersResponseDto.class).getResponseBody();
-
-        StepVerifier.create(result)
-                .assertNext(usersResponseDto -> {
-                    assertEquals(3, usersResponseDto.users().size());
-                    UserResponseDto user1Dto = usersResponseDto.users().getFirst();
-                    checkUser(user1Dto, user);
-                    UserResponseDto user2Dto = usersResponseDto.users().get(1);
-                    checkUser(user2Dto, new User());
-                    UserResponseDto user3Dto = usersResponseDto.users().getLast();
-                    checkUser(user3Dto, user2);
-                })
                 .expectComplete()
                 .verify();
     }

@@ -59,8 +59,24 @@ public class GroupController {
         return groupService.getGroupById(groupId, jwt);
     }
 
+
     @Operation(
-            summary = "Получение групп пользователя",
+            summary = "Получение групп созданных пользователем",
+            responses = @ApiResponse(
+                    responseCode = "200",
+                    content = @Content(
+                            array = @ArraySchema(schema = @Schema(implementation = ResponseGroupsDto.class))
+                    )
+            )
+    )
+    @GetMapping("owner/me")
+    public Mono<ResponseGroupsDto> getGroups(@AuthenticationPrincipal Jwt jwt) {
+        return groupService.getGroupsCreateUser(jwt);
+    }
+
+    // TODO: сделать пагинацию
+    @Operation(
+            summary = "Получение групп: пользователь член группы",
             responses = @ApiResponse(
                     responseCode = "200",
                     content = @Content(
@@ -69,8 +85,8 @@ public class GroupController {
             )
     )
     @GetMapping("/me")
-    public Mono<ResponseGroupsDto> getGroups(@AuthenticationPrincipal Jwt jwt) {
-        return groupService.getGroups(jwt);
+    public Mono<ResponseGroupsDto> getGroupsUserIsMember(@AuthenticationPrincipal Jwt jwt) {
+        return groupService.getGroupsUserIsMember(jwt);
     }
 
 

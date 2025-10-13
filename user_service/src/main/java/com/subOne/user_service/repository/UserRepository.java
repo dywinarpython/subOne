@@ -7,10 +7,8 @@ import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
 import java.util.UUID;
 
 public interface UserRepository extends ReactiveCrudRepository<User, Long>, UpdateRepository {
@@ -18,11 +16,6 @@ public interface UserRepository extends ReactiveCrudRepository<User, Long>, Upda
     Mono<UserResponseDto> findByUserId(UUID id);
 
     Mono<Integer> deleteByUserId(UUID id);
-
-
-    @Query("SELECT  user_id, name, surname, email FROM users WHERE user_id IN (:ids)")
-    Flux<UserResponseDto> findByUserIds(@Param("ids") List<UUID> ids);
-
 
     @Modifying
     @Query("""

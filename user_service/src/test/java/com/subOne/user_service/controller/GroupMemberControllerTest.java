@@ -3,6 +3,7 @@ package com.subOne.user_service.controller;
 import com.subOne.user_service.dto.group_member.response.ResponseMemberDto;
 import com.subOne.user_service.dto.group_member.response.ResponseMembersDto;
 import com.subOne.user_service.entity.GroupMember;
+import com.subOne.user_service.entity.User;
 import com.subOne.user_service.repository.GroupMemberRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -24,13 +25,23 @@ public class GroupMemberControllerTest extends GroupControllerTest{
 
     private GroupMember groupMember;
 
+    private User userMember;
+
 
     @BeforeEach
     void setUpGroupMember(){
-        setUpForGroupTests();
+        User user1 = new User();
+        user1.setEmail("email" + System.currentTimeMillis() + "@mail.com");
+        user1.setName("name");
+        user1.setSurname("surname");
+        user1.setVerifyEmail(true);
+        user1.setUserId(UUID.randomUUID());
+        StepVerifier.create(userRepository.save(user1))
+                        .assertNext(userSave -> this.userMember = userSave)
+                        .verifyComplete();
         GroupMember groupMember = new GroupMember();
         groupMember.setGroupId(group.getId());
-        groupMember.setUserId(UUID.randomUUID());
+        groupMember.setUserId(userMember.getUserId());
 
         StepVerifier.create(groupMemberRepository.save(groupMember))
                 .assertNext(gm -> this.groupMember = gm)
@@ -52,9 +63,9 @@ public class GroupMemberControllerTest extends GroupControllerTest{
                 .assertNext(responseMembersDto -> {
                    assertEquals(2, responseMembersDto.users().size());
                    List<ResponseMemberDto> users = responseMembersDto.users();
-                   assertEquals(users.getFirst().userId(), UUID.fromString(jwt.getSubject()));
+                   assertEquals(users.getFirst().user().userId(), UUID.fromString(jwt.getSubject()));
                    assertEquals(true, users.getFirst().owner());
-                   assertEquals(users.get(1).userId(), groupMember.getUserId());
+                   assertEquals(users.get(1).user().userId(), groupMember.getUserId());
                    assertEquals(false, users.get(1).owner());
                 });
     }
