@@ -1,8 +1,7 @@
 package com.subOne.user_service.cache;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.subOne.user_service.dto.group.response.ResponseGroupDto;
-import com.subOne.user_service.dto.user.response.UserResponseDto;
+import com.subOne.user_service.dto.user.response.ResponseUserDto;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,14 +28,15 @@ public class CacheConfig {
     public RedisCacheManager redisCacheManager(RedisConnectionFactory redisConnectionFactory, ObjectMapper objectMapper) {
         Map<String, RedisCacheConfiguration> redisCacheConfigurationMap = new HashMap<>();
 
-        Jackson2JsonRedisSerializer<UserResponseDto> userSerializer =
-                new Jackson2JsonRedisSerializer<>(objectMapper, UserResponseDto.class);
+        Jackson2JsonRedisSerializer<ResponseUserDto> userSerializer =
+                new Jackson2JsonRedisSerializer<>(objectMapper, ResponseUserDto.class);
 
-        Jackson2JsonRedisSerializer<ResponseGroupDto> groupSerializer =
-                new Jackson2JsonRedisSerializer<>(objectMapper, ResponseGroupDto.class);
 
         Jackson2JsonRedisSerializer<UUID> uuidSerializer =
                 new Jackson2JsonRedisSerializer<>(objectMapper, UUID.class);
+
+        Jackson2JsonRedisSerializer<Boolean> booleanSerializer =
+                new Jackson2JsonRedisSerializer<>(objectMapper, Boolean.class);
 
         redisCacheConfigurationMap.put("USER", RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(10))
@@ -52,7 +52,7 @@ public class CacheConfig {
         redisCacheConfigurationMap.put("MEMBER", RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(15))
                 .disableCachingNullValues()
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(uuidSerializer)));
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(booleanSerializer)));
 
         return RedisCacheManager.builder(redisConnectionFactory)
                 .withInitialCacheConfigurations(redisCacheConfigurationMap)

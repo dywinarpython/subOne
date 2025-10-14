@@ -1,6 +1,6 @@
 package com.subOne.user_service.repository;
 
-import com.subOne.user_service.dto.user.response.UserResponseDto;
+import com.subOne.user_service.dto.user.response.ResponseUserDto;
 import com.subOne.user_service.entity.User;
 import com.subOne.user_service.repository.update.UpdateRepository;
 import org.springframework.data.r2dbc.repository.Modifying;
@@ -13,7 +13,7 @@ import java.util.UUID;
 
 public interface UserRepository extends ReactiveCrudRepository<User, Long>, UpdateRepository {
 
-    Mono<UserResponseDto> findByUserId(UUID id);
+    Mono<ResponseUserDto> findByUserId(UUID id);
 
     Mono<Integer> deleteByUserId(UUID id);
 

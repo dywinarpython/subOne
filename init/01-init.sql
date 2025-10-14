@@ -1,0 +1,3 @@
+DROP SCHEMA public CASCADE;
+CREATE SCHEMA IF NOT EXISTS user_service AUTHORIZATION postgres;
+CREATE SCHEMA IF NOT EXISTS subscriptions_service AUTHORIZATION postgres;

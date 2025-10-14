@@ -5,7 +5,7 @@ import com.subOne.user_service.dto.group.request.RequestGroupDto;
 import com.subOne.user_service.dto.group.request.RequestUpdateGroupDto;
 import com.subOne.user_service.dto.group.response.ResponseGroupDto;
 import com.subOne.user_service.dto.group.response.ResponseGroupsDto;
-import com.subOne.user_service.dto.user.response.UserResponseDto;
+import com.subOne.user_service.dto.user.response.ResponseUserDto;
 import com.subOne.user_service.entity.Group;
 import com.subOne.user_service.mapper.MapperGroup;
 import com.subOne.user_service.repository.GroupRepository;
@@ -124,13 +124,13 @@ public class GroupServiceTest {
 
     @Test
     void getOwner_GroupIsFound_CorrectReturnAndCheckRepo(){
-        UserResponseDto userResponseDto = new UserResponseDto(UUID.randomUUID(), "testName", "surname", "email");
-        when(groupRepository.findOwnerByGroupId(anyLong())).thenReturn(Mono.just(userResponseDto));
+        ResponseUserDto responseUserDto = new ResponseUserDto(UUID.randomUUID(), "testName", "surname", "email");
+        when(groupRepository.findOwnerByGroupId(anyLong())).thenReturn(Mono.just(responseUserDto));
 
-        Mono<UserResponseDto> result = groupService.getOwner(anyLong());
+        Mono<ResponseUserDto> result = groupService.getOwner(anyLong());
 
         StepVerifier.create(result)
-                .expectNext(userResponseDto)
+                .expectNext(responseUserDto)
                 .verifyComplete();
 
         verify(groupRepository).findOwnerByGroupId(anyLong());

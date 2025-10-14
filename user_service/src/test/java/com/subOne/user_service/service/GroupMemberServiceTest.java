@@ -4,7 +4,7 @@ import com.subOne.user_service.cache.CacheService;
 import com.subOne.user_service.dto.group_member.GroupMemberInfoDto;
 import com.subOne.user_service.dto.group_member.response.ResponseMemberDto;
 import com.subOne.user_service.dto.group_member.response.ResponseMembersDto;
-import com.subOne.user_service.dto.user.response.UserResponseDto;
+import com.subOne.user_service.dto.user.response.ResponseUserDto;
 import com.subOne.user_service.entity.GroupMember;
 import com.subOne.user_service.mapper.MapperGroupMember;
 import com.subOne.user_service.repository.GroupMemberRepository;
@@ -55,9 +55,9 @@ public class GroupMemberServiceTest {
     void addUser_UserIsNotMemberGroupAndGroupCountMemberIsNoMoreFive_CorrectReturnAndSaveToDbAndCheckRepo(){
         ResponseMembersDto responseMembersDto = new ResponseMembersDto(
                 List.of(
-                        new ResponseMemberDto(new UserResponseDto(UUID.randomUUID(), "test1", "surname1", "email1"), true),
-                        new ResponseMemberDto(new UserResponseDto(UUID.randomUUID(), "test2", "surname2", "email2"), false),
-                        new ResponseMemberDto(new UserResponseDto(UUID.randomUUID(), "test3", "surname3", "email3"), false)
+                        new ResponseMemberDto(new ResponseUserDto(UUID.randomUUID(), "test1", "surname1", "email1"), true),
+                        new ResponseMemberDto(new ResponseUserDto(UUID.randomUUID(), "test2", "surname2", "email2"), false),
+                        new ResponseMemberDto(new ResponseUserDto(UUID.randomUUID(), "test3", "surname3", "email3"), false)
                 )
         );
         when(groupMemberRepository.findExistUserInGroupAndCountMemberInGroup(any(), anyLong()))
@@ -123,9 +123,9 @@ public class GroupMemberServiceTest {
     void getUsers_UserIsMember_CorrectReturnAndCheckRepo(){
         ResponseMembersDto responseMembersDto = new ResponseMembersDto(
                 List.of(
-                        new ResponseMemberDto(new UserResponseDto(UUID.randomUUID(), "test1", "surname1", "email1"), true),
-                        new ResponseMemberDto(new UserResponseDto(UUID.randomUUID(), "test2", "surname2", "email2"), false),
-                        new ResponseMemberDto(new UserResponseDto(UUID.randomUUID(), "test3", "surname3", "email3"), false)
+                        new ResponseMemberDto(new ResponseUserDto(UUID.randomUUID(), "test1", "surname1", "email1"), true),
+                        new ResponseMemberDto(new ResponseUserDto(UUID.randomUUID(), "test2", "surname2", "email2"), false),
+                        new ResponseMemberDto(new ResponseUserDto(UUID.randomUUID(), "test3", "surname3", "email3"), false)
                 )
         );
         when(cacheService.getValue(anyString(), any())).thenReturn(Mono.empty());
@@ -158,9 +158,9 @@ public class GroupMemberServiceTest {
     void getUsers_UserIsOwner_CorrectReturnAndCheckRepo(){
         ResponseMembersDto responseMembersDto = new ResponseMembersDto(
                 List.of(
-                        new ResponseMemberDto(new UserResponseDto(UUID.randomUUID(), "test1", "surname1", "email1"), true),
-                        new ResponseMemberDto(new UserResponseDto(UUID.randomUUID(), "test2", "surname2", "email2"), false),
-                        new ResponseMemberDto(new UserResponseDto(UUID.randomUUID(), "test3", "surname3", "email3"), false)
+                        new ResponseMemberDto(new ResponseUserDto(UUID.randomUUID(), "test1", "surname1", "email1"), true),
+                        new ResponseMemberDto(new ResponseUserDto(UUID.randomUUID(), "test2", "surname2", "email2"), false),
+                        new ResponseMemberDto(new ResponseUserDto(UUID.randomUUID(), "test3", "surname3", "email3"), false)
                 )
         );
         when(cacheService.getValue(anyString(), any())).thenReturn(Mono.empty());

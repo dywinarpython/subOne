@@ -1,7 +1,7 @@
 package com.subOne.user_service.service;
 
 import com.subOne.user_service.dto.user.request.RequestUpdateUserDto;
-import com.subOne.user_service.dto.user.response.UserResponseDto;
+import com.subOne.user_service.dto.user.response.ResponseUserDto;
 import com.subOne.user_service.entity.User;
 import com.subOne.user_service.kafka.serviceProducer.KafkaService;
 import com.subOne.user_service.mapper.MapperUser;
@@ -92,14 +92,14 @@ public class UserServiceTest {
 
     @Test
     void getUserById_UserIsFound_CorrectReturnAndCheckRepo(){
-        UserResponseDto userResponseDto = new UserResponseDto(UUID.randomUUID(), "testName", "testSurname", "testEmail");
-        when(userRepository.findByUserId(any())).thenReturn(Mono.just(userResponseDto));
+        ResponseUserDto responseUserDto = new ResponseUserDto(UUID.randomUUID(), "testName", "testSurname", "testEmail");
+        when(userRepository.findByUserId(any())).thenReturn(Mono.just(responseUserDto));
         when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
 
-        Mono<UserResponseDto> result = userService.getUserById(jwt);
+        Mono<ResponseUserDto> result = userService.getUserById(jwt);
 
         StepVerifier.create(result)
-                .expectNext(userResponseDto)
+                .expectNext(responseUserDto)
                 .expectComplete()
                 .verify();
         verify(userRepository).findByUserId(any());
@@ -109,7 +109,7 @@ public class UserServiceTest {
     void getUserById_UserIsNotFound_UnCorrectReturnAndCheckRepo(){
        when(userRepository.findByUserId(any())).thenReturn(Mono.empty());
        when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
-       Mono<UserResponseDto> result = userService.getUserById(jwt);
+       Mono<ResponseUserDto> result = userService.getUserById(jwt);
 
         StepVerifier.create(result)
                 .expectErrorSatisfies(UserServiceTest::accept)

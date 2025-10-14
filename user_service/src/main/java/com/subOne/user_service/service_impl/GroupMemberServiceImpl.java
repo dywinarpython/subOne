@@ -101,9 +101,14 @@ public class GroupMemberServiceImpl implements GroupMemberService {
                                     return cacheService.saveValue(memberKey, true, Duration.ofMinutes(15))
                                             .thenReturn(true);
                                 }
-                                return groupService.checkUserIsOwner(groupId, jwt);
+                                return groupService.checkUserIsOwnerWithoutCacheGet(groupId, jwt);
                             });
                 });
+    }
+
+    @Override
+    public Mono<Boolean> checkUserIsOwnerGroup(Long groupId, Jwt jwt) {
+        return groupService.checkUserIsOwner(groupId, jwt);
     }
 
 

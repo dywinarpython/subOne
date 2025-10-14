@@ -4,7 +4,7 @@ import com.subOne.user_service.dto.group.request.RequestGroupDto;
 import com.subOne.user_service.dto.group_invite.response.ResponseInviteCodeDto;
 import com.subOne.user_service.dto.group_member.response.ResponseMemberDto;
 import com.subOne.user_service.dto.group_member.response.ResponseMembersDto;
-import com.subOne.user_service.dto.user.response.UserResponseDto;
+import com.subOne.user_service.dto.user.response.ResponseUserDto;
 import com.subOne.user_service.entity.Group;
 import com.subOne.user_service.entity.GroupInvite;
 import com.subOne.user_service.entity.GroupMember;
@@ -102,10 +102,10 @@ public class InviteControllerTest extends AbstractControllerTest{
                     assertEquals(users.getFirst().user().userId(), UUID.fromString(jwt.getSubject()));
                     assertEquals(true, users.getFirst().owner());
                     assertEquals(false, users.get(1).owner());
-                    List<UUID> expectedUserId = users.stream().map(ResponseMemberDto::user).map(UserResponseDto::userId).toList();
+                    List<UUID> expectedUserId = users.stream().map(ResponseMemberDto::user).map(ResponseUserDto::userId).toList();
                     StepVerifier.create(groupMemberRepository
                                     .findMembersIdByGroupId(groupInvite.getGroupId()).collectList())
-                            .assertNext(memberIds -> assertEquals(memberIds.stream().map(UserResponseDto::userId).toList(), expectedUserId));
+                            .assertNext(memberIds -> assertEquals(memberIds.stream().map(ResponseUserDto::userId).toList(), expectedUserId));
                 });
     }
 

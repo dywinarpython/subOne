@@ -5,7 +5,7 @@ import com.subOne.user_service.dto.group.request.RequestGroupDto;
 import com.subOne.user_service.dto.group.request.RequestUpdateGroupDto;
 import com.subOne.user_service.dto.group.response.ResponseGroupDto;
 import com.subOne.user_service.dto.group.response.ResponseGroupsDto;
-import com.subOne.user_service.dto.user.response.UserResponseDto;
+import com.subOne.user_service.dto.user.response.ResponseUserDto;
 import com.subOne.user_service.mapper.MapperGroup;
 import com.subOne.user_service.repository.GroupRepository;
 import com.subOne.user_service.service.GroupService;
@@ -49,7 +49,7 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public Mono<UserResponseDto> getOwner(Long groupId) {
+    public Mono<ResponseUserDto> getOwner(Long groupId) {
         return groupRepository.findOwnerByGroupId(groupId);
     }
 
@@ -101,6 +101,17 @@ public class GroupServiceImpl implements GroupService {
                                 return checkRights(groupId).thenReturn(false);
                             })
                 ));
+    }
+
+    @Override
+    public Mono<Boolean> checkUserIsOwnerWithoutCacheGet(Long groupId, Jwt jwt) {
+        return groupRepository.existsByIdAndOwnerId(groupId, UUID.fromString(jwt.getSubject())).flatMap(
+                exists -> {
+                    if(exists) {
+                        return cacheService.saveValue("OWNER::" + groupId, UUID.fromString(jwt.getSubject()), Duration.ofMinutes(30)).thenReturn(true);
+                    }
+                    return checkRights(groupId).thenReturn(false);
+                });
     }
 
     private Mono<ResponseGroupDto> checkRights(Long groupId) {

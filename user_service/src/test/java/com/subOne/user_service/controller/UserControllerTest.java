@@ -1,7 +1,7 @@
 package com.subOne.user_service.controller;
 
 import com.subOne.user_service.dto.user.request.RequestUpdateUserDto;
-import com.subOne.user_service.dto.user.response.UserResponseDto;
+import com.subOne.user_service.dto.user.response.ResponseUserDto;
 import com.subOne.user_service.entity.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,7 +21,7 @@ public class UserControllerTest extends AbstractControllerTest{
 
 
 
-    private static void checkUser(UserResponseDto usersResponseDto, User user){
+    private static void checkUser(ResponseUserDto usersResponseDto, User user){
         assertEquals(usersResponseDto.email(), user.getEmail());
         assertEquals(usersResponseDto.name(), user.getName());
         assertEquals(usersResponseDto.surname(), user.getSurname());
@@ -33,11 +33,11 @@ public class UserControllerTest extends AbstractControllerTest{
     @Test
     @DisplayName("ПРОВЕРКА GET -> /api/v1/users/me")
     void getUserById_UserISCreate_ReturnCorrect(){
-        Flux<UserResponseDto> result = webTestClient
+        Flux<ResponseUserDto> result = webTestClient
                 .get()
                 .uri("/api/v1/users/me")
                 .exchange()
-                .expectStatus().isOk().returnResult(UserResponseDto.class).getResponseBody();
+                .expectStatus().isOk().returnResult(ResponseUserDto.class).getResponseBody();
 
         StepVerifier.create(result)
                 .assertNext(userResponseDto -> checkUser(userResponseDto, user))

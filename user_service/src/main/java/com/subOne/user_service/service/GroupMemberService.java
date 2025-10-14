@@ -11,5 +11,6 @@ public interface GroupMemberService {
     Mono<ResponseMembersDto> getUsers(Long groupId, Jwt jwt);
     Mono<Void> deleteMember(Long groupId, UUID userId, Jwt jwt);
     Mono<Boolean> checkUserInGroup(Long groupId, Jwt jwt);
+    Mono<Boolean> checkUserIsOwnerGroup(Long groupId, Jwt jwt);
 
 }

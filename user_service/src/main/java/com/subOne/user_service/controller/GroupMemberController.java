@@ -11,6 +11,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
+import java.util.Map;
 import java.util.UUID;
 
 @Tag(name = "Управление участниками группы")
@@ -21,10 +22,24 @@ public class GroupMemberController {
     private final GroupMemberService groupMemberService;
 
 
+
+
     @Operation(summary = "Получение членов группы")
     @GetMapping
     public Mono<ResponseEntity<ResponseMembersDto>> getMembers(@PathVariable Long groupId, @AuthenticationPrincipal Jwt jwt) {
         return groupMemberService.getUsers(groupId, jwt).map(ResponseEntity::ok);
+    }
+
+    @Operation(summary = "Проверка пользователь член группы")
+    @GetMapping("/check")
+    public Mono<ResponseEntity<Map<String, Boolean>>> checkUserInGroup(@PathVariable Long groupId, @AuthenticationPrincipal Jwt jwt) {
+        return groupMemberService.checkUserInGroup(groupId, jwt).thenReturn(ResponseEntity.ok(Map.of("hasAccess", true)));
+    }
+
+    @Operation(summary = "Проверка пользователь собственник группы")
+    @GetMapping("/check/owner")
+    public Mono<ResponseEntity<Map<String, Boolean>>> checkUserIsOwnerGroup(@PathVariable Long groupId, @AuthenticationPrincipal Jwt jwt) {
+        return groupMemberService.checkUserIsOwnerGroup(groupId, jwt).thenReturn(ResponseEntity.ok(Map.of("hasAccess", true)));
     }
 
     @Operation(summary = "Удаление пользователя из группы")

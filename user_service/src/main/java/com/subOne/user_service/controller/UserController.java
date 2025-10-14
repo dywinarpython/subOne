@@ -1,7 +1,7 @@
 package com.subOne.user_service.controller;
 
 import com.subOne.user_service.dto.user.request.RequestUpdateUserDto;
-import com.subOne.user_service.dto.user.response.UserResponseDto;
+import com.subOne.user_service.dto.user.response.ResponseUserDto;
 import com.subOne.user_service.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -32,12 +32,12 @@ public class UserController {
             responses = @ApiResponse(
                     responseCode = "200",
                     content = @Content(
-                            array = @ArraySchema(schema = @Schema(implementation = UserResponseDto.class))
+                            array = @ArraySchema(schema = @Schema(implementation = ResponseUserDto.class))
                     )
             )
     )
     @GetMapping("/me")
-    public Mono<UserResponseDto> getUserById(@AuthenticationPrincipal Jwt jwt) {
+    public Mono<ResponseUserDto> getUserById(@AuthenticationPrincipal Jwt jwt) {
         return userService.getUserById(jwt);
     }
 

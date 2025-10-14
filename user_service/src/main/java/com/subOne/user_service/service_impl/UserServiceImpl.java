@@ -5,7 +5,7 @@ import com.subOne.user_service.dto.user.request.RequestUpdateUserDto;
 import com.subOne.user_service.entity.User;
 import com.subOne.user_service.kafka.serviceProducer.KafkaService;
 import com.subOne.user_service.mapper.MapperUser;
-import com.subOne.user_service.dto.user.response.UserResponseDto;
+import com.subOne.user_service.dto.user.response.ResponseUserDto;
 import com.subOne.user_service.repository.UserRepository;
 import com.subOne.user_service.service.UserService;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,7 +54,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     @Cacheable(value = "USER", key = "#jwt.getSubject()")
-    public Mono<UserResponseDto> getUserById(Jwt jwt) {
+    public Mono<ResponseUserDto> getUserById(Jwt jwt) {
         return userRepository.findByUserId(UUID.fromString(jwt.getSubject()))
                 .switchIfEmpty(Mono.error(new NoSuchElementException("User is not found!")));
     }

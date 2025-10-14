@@ -1,7 +1,7 @@
 package com.subOne.user_service.repository;
 
 import com.subOne.user_service.dto.group.response.ResponseGroupDto;
-import com.subOne.user_service.dto.user.response.UserResponseDto;
+import com.subOne.user_service.dto.user.response.ResponseUserDto;
 import com.subOne.user_service.entity.Group;
 import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
@@ -47,7 +47,7 @@ public interface GroupRepository extends R2dbcRepository<Group, Long> {
             join users u on u.user_id = g.owner_id
             where g.id = :groupId
             """)
-    Mono<UserResponseDto> findOwnerByGroupId(Long groupId);
+    Mono<ResponseUserDto> findOwnerByGroupId(Long groupId);
 
     @Modifying
     @Query(

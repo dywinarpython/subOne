@@ -1,7 +1,7 @@
 package com.subOne.user_service.repository;
 
 import com.subOne.user_service.dto.group_member.GroupMemberInfoDto;
-import com.subOne.user_service.dto.user.response.UserResponseDto;
+import com.subOne.user_service.dto.user.response.ResponseUserDto;
 import com.subOne.user_service.entity.GroupMember;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
@@ -23,7 +23,7 @@ public interface GroupMemberRepository extends R2dbcRepository<GroupMember, Long
             join users u on u.user_id = g.user_id
             where group_id = :groupId
             """)
-    Flux<UserResponseDto> findMembersIdByGroupId(Long groupId);
+    Flux<ResponseUserDto> findMembersIdByGroupId(Long groupId);
 
     @Query("""
     SELECT

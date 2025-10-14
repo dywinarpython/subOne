@@ -21,12 +21,13 @@ spring:
           issuer-uri: ${KEYCLOAK_URI:http://localhost:8080/realms/subOne}
   liquibase:
     change-log: classpath:db/changelog/changelog-master.xml
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/user_service}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/subOne}
     user: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:123456}
+    default-schema: user_service
     enabled: true
   r2dbc:
-    url: ${SPRING_DATASOURCE_URL_REACTIVE:r2dbc:postgresql://localhost:5432/user_service}
+    url: ${SPRING_DATASOURCE_URL_REACTIVE:r2dbc:postgresql://localhost:5432/subOne?schema=user_service}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:123456}
     pool:
