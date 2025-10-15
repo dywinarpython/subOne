@@ -1,14 +1,11 @@
-package com.subOne.subscriptions_service.dto.request;
+package com.subOne.subscriptions_service.dto.subscription.request;
 
 import com.subOne.subscriptions_service.entity.enumEntity.PaymentPeriod;
 import com.subOne.subscriptions_service.validate.EndDateAfterNow;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Size;
 
 public record RequestSubscriptionDto(
         @NotNull(message = "Service name is not null")
@@ -31,5 +28,6 @@ public record RequestSubscriptionDto(
 
         @NotNull(message = "Amount is not null")
         @DecimalMin(value = "0.01", message = "Amount must be greater than zero")
+        @DecimalMax(value = "9999999999999.99", message = "Amount is too big")
         BigDecimal amount) {
 }

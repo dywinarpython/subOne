@@ -1,8 +1,8 @@
 package com.subOne.subscriptions_service.mapper;
 
-import com.subOne.subscriptions_service.dto.request.RequestSubscriptionDto;
-import com.subOne.subscriptions_service.dto.request.RequestUpdateSubscriptionDto;
-import com.subOne.subscriptions_service.dto.response.ResponseSubscriptionDto;
+import com.subOne.subscriptions_service.dto.subscription.request.RequestSubscriptionDto;
+import com.subOne.subscriptions_service.dto.subscription.request.RequestUpdateSubscriptionDto;
+import com.subOne.subscriptions_service.dto.subscription.response.ResponseSubscriptionDto;
 import com.subOne.subscriptions_service.entity.UserSubscription;
 import com.subOne.subscriptions_service.entity.enumEntity.SubscriptionStatus;
 import org.mapstruct.Mapper;
@@ -35,17 +35,8 @@ public interface UserSubscriptionMapper {
         if (requestUpdateSubscriptionDto.serviceName() != null){
             mp.put(SqlIdentifier.quoted("service_name"), requestUpdateSubscriptionDto.serviceName());
         }
-        if (requestUpdateSubscriptionDto.startDate() != null){
-            mp.put(SqlIdentifier.quoted("start_date"), requestUpdateSubscriptionDto.startDate());
-        }
-        if (requestUpdateSubscriptionDto.endDate() != null){
-            mp.put(SqlIdentifier.quoted("end_date"), requestUpdateSubscriptionDto.endDate());
-        }
         if (requestUpdateSubscriptionDto.amount() != null){
             mp.put(SqlIdentifier.quoted("amount"), requestUpdateSubscriptionDto.amount());
-        }
-        if (requestUpdateSubscriptionDto.paymentPeriod() != null){
-            mp.put(SqlIdentifier.quoted("payment_period"), requestUpdateSubscriptionDto.paymentPeriod().toString());
         }
         if (requestUpdateSubscriptionDto.statusStop() != null && requestUpdateSubscriptionDto.statusStop()){
             mp.put(SqlIdentifier.quoted("status"), SubscriptionStatus.STOP.toString());

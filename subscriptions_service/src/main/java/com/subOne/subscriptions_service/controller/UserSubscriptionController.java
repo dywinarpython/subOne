@@ -1,9 +1,9 @@
 package com.subOne.subscriptions_service.controller;
 
-import com.subOne.subscriptions_service.dto.request.RequestSubscriptionDto;
-import com.subOne.subscriptions_service.dto.request.RequestUpdateSubscriptionDto;
-import com.subOne.subscriptions_service.dto.response.ResponseSubscriptionDto;
-import com.subOne.subscriptions_service.dto.response.ResponseSubscriptionsDto;
+import com.subOne.subscriptions_service.dto.subscription.request.RequestSubscriptionDto;
+import com.subOne.subscriptions_service.dto.subscription.request.RequestUpdateSubscriptionDto;
+import com.subOne.subscriptions_service.dto.subscription.response.ResponseSubscriptionDto;
+import com.subOne.subscriptions_service.dto.subscription.response.ResponseSubscriptionsDto;
 import com.subOne.subscriptions_service.service.UserSubscriptionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -89,6 +89,27 @@ public class UserSubscriptionController {
         return userSubscriptionService.updateSubscription(groupId, subscriptionId, requestSubscriptionDtoMono, jwt)
                 .thenReturn(ResponseEntity.ok(Map.of("message", "Subscription is update")));
     }
+
+    @Operation(
+            summary = "Продления подписки по числу (число = значение из PaymentPeriod)",
+            responses = @ApiResponse(
+                    responseCode = "200",
+                    content = @Content(
+                            schema = @Schema(implementation = Map.class)
+                    )
+            )
+    )
+    @PatchMapping("/{subscriptionId}/extend/{extensionCount}")
+    public Mono<ResponseEntity<Map<String, String>>> extendSubscription(@PathVariable Long groupId,
+                                                                        @PathVariable Long subscriptionId,
+                                                                        @PathVariable Long extensionCount,
+                                                                        @AuthenticationPrincipal Jwt jwt){
+        return userSubscriptionService.renewSubscriptionById(groupId, subscriptionId, extensionCount, jwt)
+                .thenReturn(ResponseEntity.ok(Map.of("message", "Subscription extended")));
+    }
+
+
+
 
     @Operation(
             summary = "Удаление подписки для определенной группы",

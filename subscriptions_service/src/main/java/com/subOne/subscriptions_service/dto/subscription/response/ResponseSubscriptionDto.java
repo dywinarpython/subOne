@@ -1,4 +1,4 @@
-package com.subOne.subscriptions_service.dto.response;
+package com.subOne.subscriptions_service.dto.subscription.response;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

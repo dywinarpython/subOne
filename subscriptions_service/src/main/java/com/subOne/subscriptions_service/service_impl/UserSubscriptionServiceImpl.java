@@ -1,19 +1,22 @@
 package com.subOne.subscriptions_service.service_impl;
 
 import com.subOne.subscriptions_service.client.WebClientService;
-import com.subOne.subscriptions_service.dto.request.RequestSubscriptionDto;
-import com.subOne.subscriptions_service.dto.request.RequestUpdateSubscriptionDto;
-import com.subOne.subscriptions_service.dto.response.ResponseSubscriptionDto;
-import com.subOne.subscriptions_service.dto.response.ResponseSubscriptionsDto;
+import com.subOne.subscriptions_service.dto.subscription.request.RequestSubscriptionDto;
+import com.subOne.subscriptions_service.dto.subscription.request.RequestUpdateSubscriptionDto;
+import com.subOne.subscriptions_service.dto.subscription.response.ResponseSubscriptionDto;
+import com.subOne.subscriptions_service.dto.subscription.response.ResponseSubscriptionsDto;
 import com.subOne.subscriptions_service.entity.UserSubscription;
 import com.subOne.subscriptions_service.mapper.UserSubscriptionMapper;
 import com.subOne.subscriptions_service.repository.UserSubscriptionRepository;
+import com.subOne.subscriptions_service.service.AnalyticSubscriptionService;
 import com.subOne.subscriptions_service.service.UserSubscriptionService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Mono;
 
 import javax.xml.bind.ValidationException;
@@ -21,26 +24,37 @@ import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserSubscriptionServiceImpl implements UserSubscriptionService {
 
+
     private final UserSubscriptionRepository userSubscriptionRepository;
+
+    private final TransactionalOperator transactionalOperator;
+
+    private final AnalyticSubscriptionService analyticSubscriptionService;
 
     private final UserSubscriptionMapper userSubscriptionMapper;
 
     private final WebClientService webClientService;
 
 
+
+
     @Override
-    @Transactional
     public Mono<ResponseSubscriptionDto> saveSubscription(Long groupId, Mono<RequestSubscriptionDto> requestSubscriptionDtoMono, Jwt jwt) {
         return requestSubscriptionDtoMono.flatMap(requestSubscriptionDto -> {
             if (requestSubscriptionDto.startDate().isAfter(requestSubscriptionDto.endDate())) return Mono.error(new ValidationException("Start date must not be after end date"));
             return webClientService.checkUserIsOwnerGroup(groupId, jwt)
-                        .then(userSubscriptionRepository
-                                .save(userSubscriptionMapper.requestSubscriptionDtoToUserSubscription(requestSubscriptionDto, groupId)))
-                        .map(userSubscriptionMapper::userSubscriptionToResponseSubscriptionDto);
+                        .then(transactionalOperator.transactional(userSubscriptionRepository
+                                .save(userSubscriptionMapper.requestSubscriptionDtoToUserSubscription(requestSubscriptionDto, groupId))
+                        ))
+                    .doOnSuccess(userSubscription ->
+                        analyticSubscriptionService.generateAnalyticSubscription(userSubscription).subscribe()
+                    )
+                    .map(userSubscriptionMapper::userSubscriptionToResponseSubscriptionDto);
         });
     }
 
@@ -48,9 +62,6 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
     @Transactional
     public Mono<Void> updateSubscription(Long groupId, Long subscriptionId, Mono<RequestUpdateSubscriptionDto> requestUpdateSubscriptionDtoMono, Jwt jwt) {
         return requestUpdateSubscriptionDtoMono.flatMap( requestUpdateSubscriptionDto -> {
-            if(requestUpdateSubscriptionDto.startDate() != null && requestUpdateSubscriptionDto.endDate() != null) {
-                if(requestUpdateSubscriptionDto.startDate().isAfter(requestUpdateSubscriptionDto.endDate())) return Mono.error(new ValidationException("Start date must not be after end date"));
-            }
             Map<SqlIdentifier, Object> updateMap = userSubscriptionMapper.addUpdateField(requestUpdateSubscriptionDto);
             if (updateMap.isEmpty())
                 return Mono.error(new ValidationException("Not a single field has been transmitted"));
@@ -64,7 +75,6 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
 
     @Override
     @Transactional(readOnly = true)
-    // TODO добавить расчет суммы сколько уже потрачено и тп
     public Mono<ResponseSubscriptionsDto> getSubscriptionsGroup(Long groupId, Jwt jwt) {
         return webClientService.checkUserInGroup(groupId, jwt)
                 .thenMany(userSubscriptionRepository.findByGroupId(groupId))
@@ -85,5 +95,13 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
     public Mono<Void> deleteSubscriptionById(Long groupId, Long subscriptionId, Jwt jwt) {
         return webClientService.checkUserIsOwnerGroup(groupId, jwt)
                 .then(userSubscriptionRepository.deleteById(subscriptionId));
+    }
+        @Override
+    public Mono<Void> renewSubscriptionById(Long groupId, Long subscriptionId, Long extensionCount, Jwt jwt) {
+        return Mono.just(extensionCount)
+                .flatMap(ex -> ex > 0? Mono.empty(): Mono.error(new ValidationException("The number of extensions is less than 0")))
+                .then(Mono.defer(() -> webClientService.checkUserIsOwnerGroup(groupId, jwt)))
+                .then(Mono.defer( () -> userSubscriptionRepository.updateEndTimeSubscriptionById(subscriptionId, extensionCount)))
+                .flatMap(count -> count == 1? Mono.empty(): Mono.error(new NoSuchElementException("Subscription is not found")));
     }
 }

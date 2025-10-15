@@ -1,8 +1,9 @@
 package com.subOne.subscriptions_service.repository;
 
-import com.subOne.subscriptions_service.dto.response.ResponseSubscriptionDto;
+import com.subOne.subscriptions_service.dto.subscription.response.ResponseSubscriptionDto;
 import com.subOne.subscriptions_service.entity.UserSubscription;
 import com.subOne.subscriptions_service.repository.update.UpdateRepository;
+import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import reactor.core.publisher.Flux;
@@ -20,4 +21,17 @@ public interface UserSubscriptionRepository extends R2dbcRepository<UserSubscrip
             where id = :id
             """)
     Mono<ResponseSubscriptionDto> findBySubscriptionId(Long id);
+
+    @Modifying
+    @Query("""
+        update user_subscriptions
+        set end_date = CASE payment_period
+            when 'DAILY' then end_date + (:extension_count || ' day')::interval
+            when 'WEEKLY' then end_date + (:extension_count || ' week')::interval
+            when 'MONTHLY' then end_date + (:extension_count || ' month')::interval
+            when 'YEARLY' then end_date + (:extension_count || ' year')::interval
+        end
+        where id = :subscriptionId
+    """)
+    Mono<Integer> updateEndTimeSubscriptionById(Long subscriptionId, Long extensionCount);
 }

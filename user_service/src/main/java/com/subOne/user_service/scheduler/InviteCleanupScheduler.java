@@ -16,7 +16,7 @@ public class InviteCleanupScheduler {
     private final GroupInviteRepository groupInviteRepository;
 
     @Scheduled(fixedRate = 60 * 10 * 1000)
-    private  void cleanExpiredInvites() {
+    public void cleanExpiredInvites() {
         Instant now = Instant.now();
         groupInviteRepository.deleteAllByExpiresAtBefore(now)
                 .doOnSuccess(v -> log.info("Expired invites deleted"))

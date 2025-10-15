@@ -1,4 +1,4 @@
-package com.subOne.subscriptions_service.dto.response;
+package com.subOne.subscriptions_service.dto.subscription.response;
 
 import java.util.List;
 
