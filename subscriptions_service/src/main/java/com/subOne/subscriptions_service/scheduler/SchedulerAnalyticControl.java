@@ -20,11 +20,11 @@ public class  SchedulerAnalyticControl {
     private final AnalyticSubscriptionRepository analyticSubscriptionRepository;
 
     // TODO при выпуска в PROD меняем аналитику каждый день в полночь
-    // TODO проверить работу
+    // TODO разобраться с количеством запросов
     // @Scheduled(cron = "0 0 0 * * *")
-    @Scheduled(cron = "0 1 * * * *")
+    @Scheduled(cron = "0 * * * * *")
     public void generateSubscriptionsAnalytic() {
-        analyticSubscriptionRepository.findSubscriptionsLastDatePaid().flatMap(subscriptionLastDatePaymentDto -> {
+        analyticSubscriptionRepository.selectSubscriptionsLastDatePaid().flatMap(subscriptionLastDatePaymentDto -> {
             PaymentPeriod paymentPeriod = PaymentPeriod.valueOf(subscriptionLastDatePaymentDto.paymentPeriod());
             TemporalAmount date = paymentPeriod.generatePeriod();
             LocalDate lasDatePaid = subscriptionLastDatePaymentDto.datePaid();
@@ -33,6 +33,7 @@ public class  SchedulerAnalyticControl {
                 AnalyticSubscription analyticSubscription = new AnalyticSubscription();
                 analyticSubscription.setDatePaid(nextDatePaid);
                 analyticSubscription.setSubscriptionId(subscriptionLastDatePaymentDto.subscriptionId());
+                analyticSubscription.setAmount(subscriptionLastDatePaymentDto.amount());
                 return Mono.just(analyticSubscription);
             }
             return Mono.empty();

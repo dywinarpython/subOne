@@ -31,6 +31,7 @@ public class GroupController {
 
     private final GroupService groupService;
 
+    // TODO ограничить общее количество групп на 5 для одного пользователя
     @Operation(
             summary = "Создание группы",
             responses = @ApiResponse(

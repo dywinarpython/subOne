@@ -27,6 +27,7 @@ import java.util.Map;
 public class UserSubscriptionController {
     private final UserSubscriptionService userSubscriptionService;
 
+    // TODO пагинация
     @Operation(
             summary = "Получение всех подписок для определенной группы",
             responses = @ApiResponse(

@@ -1,7 +1,8 @@
 package com.subOne.subscriptions_service.service_impl;
 
 import com.subOne.subscriptions_service.client.WebClientService;
-import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseAnalyticSubscriptionDto;
+import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseAnalyticsSubscriptionDto;
+import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseTotalAnalyticSubscriptionGroupDto;
 import com.subOne.subscriptions_service.entity.AnalyticSubscription;
 import com.subOne.subscriptions_service.entity.UserSubscription;
 import com.subOne.subscriptions_service.entity.enumEntity.PaymentPeriod;
@@ -30,18 +31,30 @@ public class AnalyticSubscriptionServiceImpl implements AnalyticSubscriptionServ
 
     @Override
     @Transactional(readOnly = true)
-    public Mono<ResponseAnalyticSubscriptionDto> getAnalyticById(Long groupId, Long subscriptionId, Jwt jwt) {
+    public Mono<ResponseAnalyticsSubscriptionDto> getAnalyticById(Long groupId, Long subscriptionId, Jwt jwt) {
         return webClientService.checkUserInGroup(groupId, jwt)
-                .then(analyticSubscriptionRepository.findBySubscriptionId(subscriptionId))
-                .switchIfEmpty(Mono.error(new NoSuchElementException("Information not found")));
+                .then(analyticSubscriptionRepository.selectSumAmountAndLastDateBySubscriptionId(subscriptionId))
+                .switchIfEmpty(Mono.error(new NoSuchElementException("Information not found")))
+                .flatMap(responseTotalAnalyticSubscriptionDto -> analyticSubscriptionRepository.findBySubscriptionId(subscriptionId)
+                        .collectList()
+                        .map(ls -> new ResponseAnalyticsSubscriptionDto(responseTotalAnalyticSubscriptionDto, ls)));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Mono<BigDecimal> getAlreadyPaidByGroupId(Long groupId, Jwt jwt) {
+    public Mono<ResponseTotalAnalyticSubscriptionGroupDto> getAlreadyPaidByGroupId(Long groupId, Jwt jwt) {
         return webClientService.checkUserInGroup(groupId, jwt)
-                .then(analyticSubscriptionRepository.findAllAlreadyPaidByGroupId(groupId))
-                .switchIfEmpty(Mono.just(BigDecimal.ZERO));
+                .then(analyticSubscriptionRepository.selectTotalAnalyticByGroupId(groupId))
+                .flatMap(dto -> {
+                    if(dto.approxMonthPaid() == null || dto.totalAmount() == null){
+                        return Mono.error(new NoSuchElementException("Information is not found"));
+                    }
+                    return Mono.just(new ResponseTotalAnalyticSubscriptionGroupDto(
+                            dto.totalAmount(),
+                            dto.approxMonthPaid(),
+                            dto.approxMonthPaid().multiply(BigDecimal.valueOf(12))
+                            ));
+                });
     }
 
     @Override
@@ -59,6 +72,7 @@ public class AnalyticSubscriptionServiceImpl implements AnalyticSubscriptionServ
                     AnalyticSubscription analyticSubscription = new AnalyticSubscription();
                     analyticSubscription.setSubscriptionId(userSubscription.getId());
                     analyticSubscription.setDatePaid(dateNext);
+                    analyticSubscription.setAmount(userSubscription.getAmount());
                     sink.next(analyticSubscription);
                     return dateNext.plus(step);
                 }

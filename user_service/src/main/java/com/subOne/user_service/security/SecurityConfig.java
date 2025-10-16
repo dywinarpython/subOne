@@ -18,6 +18,7 @@ public class SecurityConfig {
                 .cors(ServerHttpSecurity.CorsSpec::disable)
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
+                .logout(ServerHttpSecurity.LogoutSpec::disable)
                 .authorizeExchange(exchange ->
                                 exchange.pathMatchers("/swagger-ui/**",
                                         "/v3/api-docs/**",

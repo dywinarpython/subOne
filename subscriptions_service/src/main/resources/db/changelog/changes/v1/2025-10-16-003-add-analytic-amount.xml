@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
+    <changeSet id="2025-10-16-003-add-analytic-amount" author="Dywinar">
+        <addColumn tableName="analytic_subscriptions">
+            <column name="amount" type="decimal(15, 2)"/>
+        </addColumn>
+        <sql>
+            update analytic_subscriptions a
+            set amount = (
+                      select u.amount
+                      from user_subscriptions u
+                      where u.id = a.subscription_id
+            )
+        </sql>
+        <addNotNullConstraint tableName="analytic_subscriptions" columnName="amount"/>
+    </changeSet>
+</databaseChangeLog>

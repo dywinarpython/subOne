@@ -1,5 +1,6 @@
 package com.subOne.subscriptions_service.dto.subscription.request;
 
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Size;
 
@@ -13,6 +14,7 @@ public record RequestUpdateSubscriptionDto(
         String subscriptionName,
 
         @DecimalMin(value = "0.01", message = "Amount must be greater than zero")
+        @DecimalMax(value = "9999999999999.99", message = "Amount is too big")
         BigDecimal amount,
 
         Boolean statusStop
