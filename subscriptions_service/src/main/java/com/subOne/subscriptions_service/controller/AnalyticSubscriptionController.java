@@ -1,6 +1,6 @@
 package com.subOne.subscriptions_service.controller;
 
-import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseAnalyticsSubscriptionDto;
+import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseAnalyticPaymentSubscriptionsDto;
 import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseTotalAnalyticSubscriptionDto;
 import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseTotalAnalyticSubscriptionGroupDto;
 import com.subOne.subscriptions_service.service.AnalyticSubscriptionService;
@@ -12,10 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 @Tag(name = "Управление аналитикой подписок")
@@ -32,15 +29,32 @@ public class AnalyticSubscriptionController {
             responses = @ApiResponse(
                     responseCode = "200",
                     content = @Content(
-                            schema = @Schema(implementation = ResponseAnalyticsSubscriptionDto.class)
+                            schema = @Schema(implementation = ResponseTotalAnalyticSubscriptionDto.class)
                     )
             )
     )
     @GetMapping("/{subscriptionId}/analytic")
-    public Mono<ResponseAnalyticsSubscriptionDto> getAnalyticSubscriptionById(@PathVariable Long groupId,
+    public Mono<ResponseTotalAnalyticSubscriptionDto> getAnalyticSubscriptionById(@PathVariable Long groupId,
                                                                           @PathVariable Long subscriptionId,
                                                                           @AuthenticationPrincipal Jwt jwt){
-        return analyticSubscriptionService.getAnalyticById(groupId, subscriptionId, jwt);
+        return analyticSubscriptionService.getTotalAnalyticById(groupId, subscriptionId, jwt);
+    }
+
+    @Operation(
+            summary = "Получение данных оплаты",
+            responses = @ApiResponse(
+                    responseCode = "200",
+                    content = @Content(
+                            schema = @Schema(implementation = ResponseAnalyticPaymentSubscriptionsDto.class)
+                    )
+            )
+    )
+    @GetMapping("/{subscriptionId}/payment-info")
+    public Mono<ResponseAnalyticPaymentSubscriptionsDto> getPaymentInfoSubscriptionById(@PathVariable Long groupId,
+                                                                                        @PathVariable Long subscriptionId,
+                                                                                        @RequestParam Integer page,
+                                                                                        @AuthenticationPrincipal Jwt jwt){
+        return analyticSubscriptionService.getPaymentInfoSubscriptionById(groupId, subscriptionId, page, jwt);
     }
 
     @Operation(

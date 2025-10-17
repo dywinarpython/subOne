@@ -10,7 +10,7 @@ import reactor.core.publisher.Mono;
 public interface UserSubscriptionService {
     Mono<ResponseSubscriptionDto> saveSubscription(Long groupId, Mono<RequestSubscriptionDto> requestSubscriptionDtoMono, Jwt jwt);
     Mono<Void> updateSubscription(Long groupId, Long subscriptionId, Mono<RequestUpdateSubscriptionDto> requestUpdateSubscriptionDtoMono, Jwt jwt);
-    Mono<ResponseSubscriptionsDto> getSubscriptionsGroup(Long groupId, Jwt jwt);
+    Mono<ResponseSubscriptionsDto> getSubscriptionsGroup(Long groupId, Integer page,  Jwt jwt);
     Mono<ResponseSubscriptionDto> getSubscriptionById(Long groupId, Long subscriptionId, Jwt jwt);
     Mono<Void> deleteSubscriptionById(Long groupId, Long subscriptionId, Jwt jwt);
     Mono<Void> renewSubscriptionById(Long groupId, Long subscriptionId, Long extensionCount, Jwt jwt);

@@ -27,7 +27,6 @@ import java.util.Map;
 public class UserSubscriptionController {
     private final UserSubscriptionService userSubscriptionService;
 
-    // TODO пагинация
     @Operation(
             summary = "Получение всех подписок для определенной группы",
             responses = @ApiResponse(
@@ -38,8 +37,8 @@ public class UserSubscriptionController {
             )
     )
     @GetMapping
-    public Mono<ResponseSubscriptionsDto> getSubscriptionsGroup(@PathVariable Long groupId, @AuthenticationPrincipal Jwt jwt){
-        return userSubscriptionService.getSubscriptionsGroup(groupId, jwt);
+    public Mono<ResponseSubscriptionsDto> getSubscriptionsGroup(@PathVariable Long groupId, @RequestParam Integer page,  @AuthenticationPrincipal Jwt jwt){
+        return userSubscriptionService.getSubscriptionsGroup(groupId, page, jwt);
     }
 
     @Operation(
@@ -67,10 +66,11 @@ public class UserSubscriptionController {
             )
     )
     @PostMapping
-    public Mono<ResponseSubscriptionDto> saveSubscription(@PathVariable Long groupId,
+    public Mono<ResponseEntity<ResponseSubscriptionDto>> saveSubscription(@PathVariable Long groupId,
                                                           @Valid @RequestBody Mono<RequestSubscriptionDto> requestSubscriptionDtoMono,
                                                           @AuthenticationPrincipal Jwt jwt){
-        return userSubscriptionService.saveSubscription(groupId, requestSubscriptionDtoMono, jwt);
+        return userSubscriptionService.saveSubscription(groupId, requestSubscriptionDtoMono, jwt)
+                .map(responseSubscriptionDto -> ResponseEntity.status(201).body(responseSubscriptionDto));
     }
 
     @Operation(

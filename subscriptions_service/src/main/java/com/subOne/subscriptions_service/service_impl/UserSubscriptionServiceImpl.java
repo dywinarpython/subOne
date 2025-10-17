@@ -10,8 +10,9 @@ import com.subOne.subscriptions_service.mapper.UserSubscriptionMapper;
 import com.subOne.subscriptions_service.repository.user_subscription_repository.UserSubscriptionRepository;
 import com.subOne.subscriptions_service.service.AnalyticSubscriptionService;
 import com.subOne.subscriptions_service.service.UserSubscriptionService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -26,7 +27,6 @@ import java.util.NoSuchElementException;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class UserSubscriptionServiceImpl implements UserSubscriptionService {
 
 
@@ -38,7 +38,19 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
 
     private final WebClientService webClientService;
 
+    private final Integer pageSize;
 
+    public UserSubscriptionServiceImpl(UserSubscriptionRepository userSubscriptionRepository,
+                                       AnalyticSubscriptionService analyticSubscriptionService,
+                                       UserSubscriptionMapper userSubscriptionMapper,
+                                       WebClientService webClientService,
+                                       @Value("${spring.page.size}") Integer pageSize) {
+        this.userSubscriptionRepository = userSubscriptionRepository;
+        this.analyticSubscriptionService = analyticSubscriptionService;
+        this.userSubscriptionMapper = userSubscriptionMapper;
+        this.webClientService = webClientService;
+        this.pageSize = pageSize;
+    }
 
 
     @Override
@@ -71,9 +83,9 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
 
     @Override
     @Transactional(readOnly = true)
-    public Mono<ResponseSubscriptionsDto> getSubscriptionsGroup(Long groupId, Jwt jwt) {
+    public Mono<ResponseSubscriptionsDto> getSubscriptionsGroup(Long groupId, Integer page, Jwt jwt) {
         return webClientService.checkUserInGroup(groupId, jwt)
-                .thenMany(userSubscriptionRepository.findByGroupId(groupId))
+                .thenMany(userSubscriptionRepository.findByGroupId(groupId, PageRequest.of(page, pageSize)))
                 .collectList()
                 .map(ResponseSubscriptionsDto::new);
     }

@@ -1,14 +1,17 @@
 package com.subOne.subscriptions_service.service_impl;
 
 import com.subOne.subscriptions_service.client.WebClientService;
-import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseAnalyticsSubscriptionDto;
+import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseAnalyticPaymentSubscriptionsDto;
+import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseTotalAnalyticSubscriptionDto;
 import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseTotalAnalyticSubscriptionGroupDto;
 import com.subOne.subscriptions_service.entity.AnalyticSubscription;
 import com.subOne.subscriptions_service.entity.UserSubscription;
 import com.subOne.subscriptions_service.entity.enumEntity.PaymentPeriod;
 import com.subOne.subscriptions_service.repository.analytic_subscription_repository.AnalyticSubscriptionRepository;
 import com.subOne.subscriptions_service.service.AnalyticSubscriptionService;
-import lombok.RequiredArgsConstructor;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,23 +24,37 @@ import java.time.temporal.TemporalAmount;
 import java.util.NoSuchElementException;
 
 @Service
-@RequiredArgsConstructor
 public class AnalyticSubscriptionServiceImpl implements AnalyticSubscriptionService {
 
     private final AnalyticSubscriptionRepository analyticSubscriptionRepository;
 
+    private final Integer pageSize;
 
     private final WebClientService webClientService;
 
+    public AnalyticSubscriptionServiceImpl(AnalyticSubscriptionRepository analyticSubscriptionRepository,
+                                           @Value("${spring.page.size}") Integer pageSize,
+                                           WebClientService webClientService) {
+        this.analyticSubscriptionRepository = analyticSubscriptionRepository;
+        this.pageSize = pageSize;
+        this.webClientService = webClientService;
+    }
+
     @Override
     @Transactional(readOnly = true)
-    public Mono<ResponseAnalyticsSubscriptionDto> getAnalyticById(Long groupId, Long subscriptionId, Jwt jwt) {
+    // TODO можно закешировать
+    public Mono<ResponseTotalAnalyticSubscriptionDto> getTotalAnalyticById(Long groupId, Long subscriptionId, Jwt jwt) {
         return webClientService.checkUserInGroup(groupId, jwt)
                 .then(analyticSubscriptionRepository.selectSumAmountAndLastDateBySubscriptionId(subscriptionId))
-                .switchIfEmpty(Mono.error(new NoSuchElementException("Information not found")))
-                .flatMap(responseTotalAnalyticSubscriptionDto -> analyticSubscriptionRepository.findBySubscriptionId(subscriptionId)
-                        .collectList()
-                        .map(ls -> new ResponseAnalyticsSubscriptionDto(responseTotalAnalyticSubscriptionDto, ls)));
+                .switchIfEmpty(Mono.error(new NoSuchElementException("Information not found")));
+    }
+
+    @Override
+    public Mono<ResponseAnalyticPaymentSubscriptionsDto> getPaymentInfoSubscriptionById(Long groupId, Long subscriptionId, Integer page, Jwt jwt) {
+        return webClientService.checkUserIsOwnerGroup(groupId, jwt)
+                .then(analyticSubscriptionRepository.findBySubscriptionId(subscriptionId, PageRequest.of(page, pageSize))
+                .collectList()
+                .map(ResponseAnalyticPaymentSubscriptionsDto::new));
     }
 
     @Override
