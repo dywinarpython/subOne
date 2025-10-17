@@ -6,7 +6,7 @@ import com.subOne.subscriptions_service.dto.analytic_subscription.response.Respo
 import com.subOne.subscriptions_service.entity.AnalyticSubscription;
 import com.subOne.subscriptions_service.entity.UserSubscription;
 import com.subOne.subscriptions_service.entity.enumEntity.PaymentPeriod;
-import com.subOne.subscriptions_service.repository.AnalyticSubscriptionRepository;
+import com.subOne.subscriptions_service.repository.analytic_subscription_repository.AnalyticSubscriptionRepository;
 import com.subOne.subscriptions_service.service.AnalyticSubscriptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -41,6 +41,7 @@ public class AnalyticSubscriptionServiceImpl implements AnalyticSubscriptionServ
     }
 
     @Override
+    // TODO закешировать
     @Transactional(readOnly = true)
     public Mono<ResponseTotalAnalyticSubscriptionGroupDto> getAlreadyPaidByGroupId(Long groupId, Jwt jwt) {
         return webClientService.checkUserInGroup(groupId, jwt)
@@ -59,7 +60,6 @@ public class AnalyticSubscriptionServiceImpl implements AnalyticSubscriptionServ
 
     @Override
     @Transactional
-    // TODO разобраться с количеством запросов
     public Mono<Void> generateAnalyticSubscription(UserSubscription userSubscription) {
         LocalDate date = userSubscription.getStartDate();
         TemporalAmount step = PaymentPeriod.valueOf(userSubscription.getPaymentPeriod()).generatePeriod();
@@ -77,8 +77,8 @@ public class AnalyticSubscriptionServiceImpl implements AnalyticSubscriptionServ
                     return dateNext.plus(step);
                 }
         ).cast(AnalyticSubscription.class)
-        .buffer(20)
-        .flatMap(analyticSubscriptionRepository::saveAll)
+        .buffer(30)
+        .concatMap(analyticSubscriptionRepository::insertAllAnalyticSubscription)
         .then();
     }
 

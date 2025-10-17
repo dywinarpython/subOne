@@ -9,6 +9,6 @@ public class EndDateAfterNowValidator implements ConstraintValidator<EndDateAfte
 
     @Override
     public boolean isValid(LocalDate value, ConstraintValidatorContext context) {
-        return value == null || value.isAfter(LocalDate.now());
+        return value == null || !value.isBefore(LocalDate.now());
     }
 }

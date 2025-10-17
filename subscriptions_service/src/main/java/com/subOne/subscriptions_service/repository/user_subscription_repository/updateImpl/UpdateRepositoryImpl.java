@@ -1,6 +1,6 @@
-package com.subOne.subscriptions_service.repository.updateImpl;
+package com.subOne.subscriptions_service.repository.user_subscription_repository.updateImpl;
 
-import com.subOne.subscriptions_service.repository.update.UpdateRepository;
+import com.subOne.subscriptions_service.repository.user_subscription_repository.update.UpdateRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.relational.core.query.Criteria;
@@ -19,7 +19,7 @@ public class UpdateRepositoryImpl implements UpdateRepository {
     private final R2dbcEntityTemplate r2dbcEntityTemplate;
 
     @Override
-    public <T> Mono<Long> updateFields(Map<SqlIdentifier, Object> sqlIdentifierObjectMap, Class<T> classT, String column, Object columnValue) {
+    public <T> Mono<Long> updateFieldsByField(Map<SqlIdentifier, Object> sqlIdentifierObjectMap, Class<T> classT, String column, Object columnValue) {
         Update update = Update.from(sqlIdentifierObjectMap);
         return r2dbcEntityTemplate.update(Query.query(Criteria.where(column).is(columnValue)), update, classT);
     }

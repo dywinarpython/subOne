@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
+    <changeSet id="2025-10-17-004-update-check-constraint-end_date" author="Dywinar">
+        <sql>
+            ALTER TABLE user_subscriptions
+            DROP CONSTRAINT IF EXISTS chk_now_before_end;
+        </sql>
+        <sql>
+            ALTER TABLE user_subscriptions
+            ADD CONSTRAINT chk_now_before_end
+            CHECK (CURRENT_DATE &lt;= end_date);
+        </sql>
+    </changeSet>
+</databaseChangeLog>

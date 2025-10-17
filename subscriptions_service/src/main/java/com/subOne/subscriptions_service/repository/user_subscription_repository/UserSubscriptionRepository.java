@@ -1,8 +1,8 @@
-package com.subOne.subscriptions_service.repository;
+package com.subOne.subscriptions_service.repository.user_subscription_repository;
 
 import com.subOne.subscriptions_service.dto.subscription.response.ResponseSubscriptionDto;
 import com.subOne.subscriptions_service.entity.UserSubscription;
-import com.subOne.subscriptions_service.repository.update.UpdateRepository;
+import com.subOne.subscriptions_service.repository.user_subscription_repository.update.UpdateRepository;
 import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
@@ -34,4 +34,12 @@ public interface UserSubscriptionRepository extends R2dbcRepository<UserSubscrip
         where id = :subscriptionId
     """)
     Mono<Integer> updateEndTimeSubscriptionById(Long subscriptionId, Long extensionCount);
+
+    @Modifying
+    @Query("""
+        update user_subscriptions
+        set status = 'EXPIRED'
+        where end_date < NOW() AND status <> 'EXPIRED'
+    """)
+    Mono<Integer> updateStatusByEndTime();
 }

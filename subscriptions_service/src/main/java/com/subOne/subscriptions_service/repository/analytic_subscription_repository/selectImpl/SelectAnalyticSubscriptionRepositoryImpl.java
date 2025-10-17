@@ -1,11 +1,11 @@
-package com.subOne.subscriptions_service.repository.selectImpl;
+package com.subOne.subscriptions_service.repository.analytic_subscription_repository.selectImpl;
 
 import com.subOne.subscriptions_service.dto.analytic_subscription.SubscriptionLastDatePaymentDto;
 import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseTotalAnalyticSubscriptionDto;
 import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseTotalAnalyticSubscriptionGroupDto;
-import com.subOne.subscriptions_service.repository.select.SelectAnalyticSubscriptionRepository;
+import com.subOne.subscriptions_service.repository.analytic_subscription_repository.select.SelectAnalyticSubscriptionRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -17,11 +17,11 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class SelectAnalyticSubscriptionRepositoryImpl implements SelectAnalyticSubscriptionRepository {
 
-    private final R2dbcEntityTemplate r2dbcEntityTemplate;
+    private final DatabaseClient databaseClient;
 
     @Override
     public Flux<SubscriptionLastDatePaymentDto> selectSubscriptionsLastDatePaid() {
-        return r2dbcEntityTemplate.getDatabaseClient()
+        return databaseClient
                 .sql("""
                 select a.subscription_id,
                        u.payment_period,
@@ -29,7 +29,7 @@ public class SelectAnalyticSubscriptionRepositoryImpl implements SelectAnalyticS
                        max(a.date_paid) as datePaid
                 from analytic_subscriptions a
                 join user_subscriptions u ON a.subscription_id = u.id
-                where u.status not in ('STOP', 'DELETE')
+                where u.status not in ('STOP', 'EXPIRED')
                 group by a.subscription_id, u.payment_period, u.amount""")
                 .map((row, metadata) -> new SubscriptionLastDatePaymentDto(
                         row.get("subscription_id", Long.class),
@@ -42,8 +42,8 @@ public class SelectAnalyticSubscriptionRepositoryImpl implements SelectAnalyticS
 
     @Override
     public Mono<ResponseTotalAnalyticSubscriptionDto> selectSumAmountAndLastDateBySubscriptionId(Long subscriptionId) {
-        return r2dbcEntityTemplate.getDatabaseClient().sql(
-                """
+        return databaseClient
+                .sql("""
                 select sum(amount) as alreadyPaid, max(date_paid) as lastDatePaid
                 from analytic_subscriptions
                 where subscription_id = :subscriptionId
@@ -58,7 +58,8 @@ public class SelectAnalyticSubscriptionRepositoryImpl implements SelectAnalyticS
 
     @Override
     public Mono<ResponseTotalAnalyticSubscriptionGroupDto> selectTotalAnalyticByGroupId(Long groupId) {
-        return r2dbcEntityTemplate.getDatabaseClient().sql("""
+        return databaseClient
+                .sql("""
                         with analytic as (
                             select u.amount as amount, u.payment_period, sum(a.amount) as sum_amount
                             from analytic_subscriptions a

@@ -40,6 +40,3 @@ logging:
   level:
     org.springframework.security: DEBUG
     org.springframework.r2dbc.core: DEBUG
-    org.springframework.transaction: TRACE
-    org.springframework.r2dbc.connection: TRACE
-    org.springframework.r2dbc: DEBUG

@@ -1,4 +1,4 @@
-package com.subOne.subscriptions_service.repository.select;
+package com.subOne.subscriptions_service.repository.analytic_subscription_repository.select;
 
 import com.subOne.subscriptions_service.dto.analytic_subscription.SubscriptionLastDatePaymentDto;
 import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseTotalAnalyticSubscriptionDto;

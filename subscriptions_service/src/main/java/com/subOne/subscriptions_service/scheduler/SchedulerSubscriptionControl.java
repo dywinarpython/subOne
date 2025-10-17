@@ -2,7 +2,8 @@ package com.subOne.subscriptions_service.scheduler;
 
 import com.subOne.subscriptions_service.entity.AnalyticSubscription;
 import com.subOne.subscriptions_service.entity.enumEntity.PaymentPeriod;
-import com.subOne.subscriptions_service.repository.AnalyticSubscriptionRepository;
+import com.subOne.subscriptions_service.repository.analytic_subscription_repository.AnalyticSubscriptionRepository;
+import com.subOne.subscriptions_service.repository.user_subscription_repository.UserSubscriptionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -15,14 +16,15 @@ import java.time.temporal.TemporalAmount;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class  SchedulerAnalyticControl {
+public class  SchedulerSubscriptionControl {
 
     private final AnalyticSubscriptionRepository analyticSubscriptionRepository;
 
-    // TODO при выпуска в PROD меняем аналитику каждый день в полночь
-    // TODO разобраться с количеством запросов
-    // @Scheduled(cron = "0 0 0 * * *")
-    @Scheduled(cron = "0 * * * * *")
+    private final UserSubscriptionRepository userSubscriptionRepository;
+
+    // TODO при выпуска в PROD меняем аналитику каждый день в полночь + 10 minutes
+    // @Scheduled(cron = "0 10 0 * * *")
+    @Scheduled(cron = "2 * * * * *")
     public void generateSubscriptionsAnalytic() {
         analyticSubscriptionRepository.selectSubscriptionsLastDatePaid().flatMap(subscriptionLastDatePaymentDto -> {
             PaymentPeriod paymentPeriod = PaymentPeriod.valueOf(subscriptionLastDatePaymentDto.paymentPeriod());
@@ -37,8 +39,16 @@ public class  SchedulerAnalyticControl {
                 return Mono.just(analyticSubscription);
             }
             return Mono.empty();
-        }).buffer(20)
-        .flatMap(analyticSubscriptions ->
-                analyticSubscriptionRepository.saveAll(analyticSubscriptions).then()).subscribe();
+        }).buffer(30)
+        .concatMap(analyticSubscriptionRepository::insertAllAnalyticSubscription).subscribe();
     }
+
+
+    // TODO при выпуска в PROD меняем аналитику каждый день в полночь
+    // @Scheduled(cron = "0 0 0 * * *")
+    @Scheduled(cron = "0 * * * * *")
+    public void updateStatusSubscriptions() {
+        userSubscriptionRepository.updateStatusByEndTime().subscribe();
+    }
+
 }
