@@ -1,5 +1,6 @@
 package com.subOne.subscriptions_service.service_impl;
 
+import com.subOne.subscriptions_service.cache.CacheService;
 import com.subOne.subscriptions_service.client.WebClientService;
 import com.subOne.subscriptions_service.dto.subscription.request.RequestSubscriptionDto;
 import com.subOne.subscriptions_service.dto.subscription.request.RequestUpdateSubscriptionDto;
@@ -38,22 +39,27 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
 
     private final WebClientService webClientService;
 
+
+    private final CacheService cacheService;
+
     private final Integer pageSize;
 
     public UserSubscriptionServiceImpl(UserSubscriptionRepository userSubscriptionRepository,
                                        AnalyticSubscriptionService analyticSubscriptionService,
                                        UserSubscriptionMapper userSubscriptionMapper,
-                                       WebClientService webClientService,
+                                       WebClientService webClientService, CacheService cacheService,
                                        @Value("${spring.page.size}") Integer pageSize) {
         this.userSubscriptionRepository = userSubscriptionRepository;
         this.analyticSubscriptionService = analyticSubscriptionService;
         this.userSubscriptionMapper = userSubscriptionMapper;
         this.webClientService = webClientService;
+        this.cacheService = cacheService;
         this.pageSize = pageSize;
     }
 
 
     @Override
+    @Transactional
     public Mono<ResponseSubscriptionDto> saveSubscription(Long groupId, Mono<RequestSubscriptionDto> requestSubscriptionDtoMono, Jwt jwt) {
         return requestSubscriptionDtoMono.flatMap(requestSubscriptionDto -> {
             if (requestSubscriptionDto.startDate().isAfter(requestSubscriptionDto.endDate())) return Mono.error(new ValidationException("Start date must not be after end date"));
@@ -62,7 +68,8 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
                     .then(userSubscriptionRepository
                                 .save(userSubscriptionMapper.requestSubscriptionDtoToUserSubscription(requestSubscriptionDto, groupId)))
                     .flatMap(userSubscription -> analyticSubscriptionService.generateAnalyticSubscription(userSubscription).thenReturn(userSubscription))
-                    .map(userSubscriptionMapper::userSubscriptionToResponseSubscriptionDto);
+                    .map(userSubscriptionMapper::userSubscriptionToResponseSubscriptionDto)
+                    .flatMap(dto -> cacheService.deleteValue("ANALYTIC_GROUP::" + groupId).thenReturn(dto));
         });
     }
 
@@ -104,7 +111,9 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
         return webClientService.checkUserIsOwnerGroup(groupId, jwt)
                 .then(userSubscriptionRepository.deleteById(subscriptionId));
     }
-        @Override
+
+    @Override
+    @Transactional
     public Mono<Void> renewSubscriptionById(Long groupId, Long subscriptionId, Long extensionCount, Jwt jwt) {
         return Mono.just(extensionCount)
                 .flatMap(ex -> ex > 0? Mono.empty(): Mono.error(new ValidationException("The number of extensions is less than 0")))

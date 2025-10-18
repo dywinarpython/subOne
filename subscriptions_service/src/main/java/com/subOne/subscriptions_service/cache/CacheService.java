@@ -1,4 +1,4 @@
-package com.subOne.user_service.cache;
+package com.subOne.subscriptions_service.cache;
 
 import reactor.core.publisher.Mono;
 

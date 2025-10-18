@@ -1,4 +1,4 @@
-package com.subOne.user_service.cache;
+package com.subOne.subscriptions_service.cache;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.lettuce.core.ClientOptions;

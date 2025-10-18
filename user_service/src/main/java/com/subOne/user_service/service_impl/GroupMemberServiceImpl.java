@@ -10,7 +10,6 @@ import com.subOne.user_service.service.GroupService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -82,7 +81,6 @@ public class GroupMemberServiceImpl implements GroupMemberService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "MEMBER", key = "#jwt.getSubject() + ' ' + #groupId")
     public Mono<Boolean> checkUserInGroup(Long groupId, Jwt jwt) {
         UUID userId = UUID.fromString(jwt.getSubject());
         String memberKey = "MEMBER::" + userId + ' ' + groupId;
