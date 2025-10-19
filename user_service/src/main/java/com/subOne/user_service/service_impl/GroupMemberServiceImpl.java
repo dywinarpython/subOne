@@ -9,7 +9,6 @@ import com.subOne.user_service.service.GroupMemberService;
 import com.subOne.user_service.service.GroupService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -61,7 +60,6 @@ public class GroupMemberServiceImpl implements GroupMemberService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "MEMBER", key = "#userId + ' ' + #groupId")
     public Mono<Void> deleteMember(Long groupId, UUID userId, Jwt jwt) {
         return Mono.just(jwt.getSubject())
                 .map(UUID::fromString)
@@ -76,7 +74,7 @@ public class GroupMemberServiceImpl implements GroupMemberService {
                                             return Mono.error(new NoSuchElementException("User is not found"));
                                         return Mono.empty();
                                     }));
-                });
+                }).then(cacheService.deleteValue("MEMBER::" + userId + ' ' + groupId));
     }
 
     @Override

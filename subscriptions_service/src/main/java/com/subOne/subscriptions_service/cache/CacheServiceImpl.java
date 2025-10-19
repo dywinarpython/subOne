@@ -16,21 +16,11 @@ public class CacheServiceImpl implements CacheService {
 
     private final ReactiveRedisTemplate<String, Object> redisTemplate;
 
-    private final CacheHealthCheck cacheHealthCheck;
-
     private final ObjectMapper objectMapper;
 
     @Override
     public <T> Mono<T> getValue(Object key, Class<T> clazz) {
-        if(!cacheHealthCheck.isHealth()) {
-            log.debug("Cache unavailable, skipping get");
-            return Mono.empty();
-        }
         return redisTemplate.opsForValue().get(key.toString())
-                .doOnError(ex -> {
-                    log.warn("Cache read failed for key: {}. Error: {}", key, ex.getMessage());
-                    cacheHealthCheck.markUnhealthy();
-                })
                 .onErrorResume(ex -> Mono.empty())
                .flatMap(value -> {
                     if(value == null) return Mono.empty();
@@ -53,15 +43,7 @@ public class CacheServiceImpl implements CacheService {
 
     @Override
     public <T> Mono<Void> saveValue(String key, T value, Duration duration) {
-        if(!cacheHealthCheck.isHealth()) {
-            log.debug("Cache unavailable, skipping save");
-            return Mono.empty();
-        }
         return redisTemplate.opsForValue().set(key, value, duration)
-                .doOnError(ex -> {
-                    log.warn("Cache save failed for key: {}. Error: {}", key, ex.getMessage());
-                    cacheHealthCheck.markUnhealthy();
-                })
                 .onErrorResume(ex -> Mono.empty())
                 .flatMap(bl -> {
                     if(!bl) {
@@ -73,15 +55,7 @@ public class CacheServiceImpl implements CacheService {
 
     @Override
     public Mono<Void> deleteValue(String key) {
-        if(!cacheHealthCheck.isHealth()) {
-            log.debug("Cache unavailable, skipping delete");
-            return Mono.empty();
-        }
         return redisTemplate.delete(key)
-                .doOnError(ex -> {
-                    log.warn("Cache delete failed for key: {}. Error: {}", key, ex.getMessage());
-                    cacheHealthCheck.markUnhealthy();
-                })
                 .onErrorResume(ex -> Mono.empty())
                 .flatMap(count -> {
                     if(count == 0) {

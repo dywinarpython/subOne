@@ -1,5 +1,6 @@
 package com.subOne.subscriptions_service.client;
 
+import com.subOne.subscriptions_service.cache.CacheService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -17,32 +18,54 @@ import reactor.util.retry.Retry;
 import java.time.Duration;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.UUID;
 
 @Slf4j
 @Service
 public class WebClientServiceImpl implements WebClientService {
     private final WebClient webClient;
     private final Integer maxReties;
+    private final CacheService cacheService;
 
-    public WebClientServiceImpl(WebClient webClient, @Value("${spring.user_service.max_reties}") Integer maxReties) {
+    public WebClientServiceImpl(WebClient webClient, @Value("${spring.user_service.max_reties}") Integer maxReties, CacheService cacheService) {
         this.webClient = webClient;
         this.maxReties = maxReties;
+        this.cacheService = cacheService;
     }
 
     @Override
     public Mono<Void> checkUserInGroup(Long groupId, Jwt jwt) {
-        return requestProcessing(webClient.get()
-                .uri("groups/" + groupId + "/members/check")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt.getTokenValue())
-                .retrieve());
+        UUID userId = UUID.fromString(jwt.getSubject());
+        String memberKey = "MEMBER::" + userId + ' ' + groupId;
+        String ownerKey = "OWNER::" + groupId;
+        return cacheService.getValue(memberKey, Boolean.class)
+                .switchIfEmpty(
+                        cacheService.getValue(ownerKey, UUID.class)
+                                .map(ownerId -> ownerId.equals(userId))
+                                .switchIfEmpty(Mono.just(false))
+                ).flatMap(bl -> {
+                    if(bl) return Mono.empty();
+                    return requestProcessing(webClient.get()
+                                .uri("groups/" + groupId + "/members/check")
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt.getTokenValue())
+                                .retrieve());
+                });
     }
 
     @Override
     public Mono<Void> checkUserIsOwnerGroup(Long groupId, Jwt jwt) {
-        return requestProcessing(webClient.get()
-                .uri("groups/" + groupId + "/members/check/owner")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt.getTokenValue())
-                .retrieve());
+        UUID userId = UUID.fromString(jwt.getSubject());
+        String ownerKey = "OWNER::" + groupId;
+        return cacheService.getValue(ownerKey, UUID.class)
+                .map(ownerId -> ownerId.equals(userId))
+                .switchIfEmpty(Mono.just(false))
+                .flatMap(bl -> {
+                    if(bl) return Mono.empty();
+                    return requestProcessing(webClient.get()
+                            .uri("groups/" + groupId + "/members/check/owner")
+                            .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt.getTokenValue())
+                            .retrieve());
+                });
     }
 
 

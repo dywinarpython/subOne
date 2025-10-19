@@ -8,9 +8,6 @@ spring:
     name: user_service
   cache:
     type: redis
-    health:
-      check:
-        interval: ${REDIS_CHECK_INTERVAL:60000}  # 1 minutes
   data:
     redis:
       host: ${REDIS_HOST:localhost}

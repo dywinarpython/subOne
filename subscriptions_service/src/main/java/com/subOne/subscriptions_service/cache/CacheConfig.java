@@ -2,6 +2,8 @@ package com.subOne.subscriptions_service.cache;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.resource.ClientResources;
+import io.lettuce.core.resource.Delay;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,12 +16,21 @@ import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.RedisSerializer;
 
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
+
 @Configuration
 public class CacheConfig {
 
+    @Bean(destroyMethod = "shutdown")
+    public ClientResources clientResources() {
+        return ClientResources.builder()
+                .reconnectDelay(Delay.exponential(Duration.ofSeconds(5), Duration.ofSeconds(60), 2, TimeUnit.SECONDS))
+                .build();
+    }
 
     @Bean
-    public LettuceClientConfiguration lettuceClientConfiguration() {
+    public LettuceClientConfiguration lettuceClientConfiguration(ClientResources clientResources) {
         ClientOptions clientOptions = ClientOptions.builder()
                 .autoReconnect(true)
                 .disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS)
@@ -27,6 +38,7 @@ public class CacheConfig {
 
         return LettuceClientConfiguration.builder()
                 .clientOptions(clientOptions)
+                .clientResources(clientResources)
                 .build();
     }
 
