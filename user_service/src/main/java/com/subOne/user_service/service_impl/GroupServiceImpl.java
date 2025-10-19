@@ -11,7 +11,6 @@ import com.subOne.user_service.repository.GroupRepository;
 import com.subOne.user_service.service.GroupService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -78,12 +77,11 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "OWNER", key = "#groupId")
     // TODO при удалении группы обязательно в дальнейшем требуется удаления всех подписок
     public Mono<Void> deleteGroup(Long groupId, Jwt jwt) {
         return groupRepository.deleteByIdAndOwnerId(groupId, UUID.fromString(jwt.getSubject())).flatMap(count -> {
            if(count != 1) return checkRights(groupId).then();
-           return Mono.empty();}
+           return cacheService.deleteValue("OWNER::" + groupId);}
         );
     }
 

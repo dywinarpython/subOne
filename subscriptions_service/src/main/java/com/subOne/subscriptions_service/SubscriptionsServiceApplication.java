@@ -6,6 +6,9 @@ import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.security.*;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
+import org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration;
+import org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration;
 
 @OpenAPIDefinition(
 		info = @Info(
@@ -29,7 +32,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 				)
 		)
 )
-@SpringBootApplication
+@SpringBootApplication(exclude = {
+        RedisAutoConfiguration.class,
+        RedisReactiveAutoConfiguration.class,
+        RedisRepositoriesAutoConfiguration.class
+})
 public class SubscriptionsServiceApplication {
 
 	public static void main(String[] args) {

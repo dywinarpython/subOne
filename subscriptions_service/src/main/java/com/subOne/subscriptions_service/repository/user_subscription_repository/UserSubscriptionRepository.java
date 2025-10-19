@@ -27,8 +27,6 @@ public interface UserSubscriptionRepository extends R2dbcRepository<UserSubscrip
     @Query("""
         update user_subscriptions
         set end_date = CASE payment_period
-            when 'DAILY' then end_date + (:extension_count || ' day')::interval
-            when 'WEEKLY' then end_date + (:extension_count || ' week')::interval
             when 'MONTHLY' then end_date + (:extension_count || ' month')::interval
             when 'YEARLY' then end_date + (:extension_count || ' year')::interval
         end

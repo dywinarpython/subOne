@@ -13,6 +13,15 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${KEYCLOAK_URI:http://localhost:8080/realms/subOne}
+  cache:
+    type: redis
+    health:
+      check:
+        interval: ${REDIS_CHECK_INTERVAL:60000}  # 1 minutes
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
   liquibase:
     change-log: classpath:db/changelog/changelog-master.xml
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/subOne}

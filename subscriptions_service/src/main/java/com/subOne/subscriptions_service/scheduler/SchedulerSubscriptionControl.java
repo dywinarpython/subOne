@@ -1,5 +1,6 @@
 package com.subOne.subscriptions_service.scheduler;
 
+import com.subOne.subscriptions_service.cache.CacheService;
 import com.subOne.subscriptions_service.entity.AnalyticSubscription;
 import com.subOne.subscriptions_service.entity.enumEntity.PaymentPeriod;
 import com.subOne.subscriptions_service.repository.analytic_subscription_repository.AnalyticSubscriptionRepository;
@@ -22,24 +23,28 @@ public class  SchedulerSubscriptionControl {
 
     private final UserSubscriptionRepository userSubscriptionRepository;
 
+    private final CacheService cacheService;
+
     // TODO при выпуска в PROD меняем аналитику каждый день в полночь + 10 minutes
     // @Scheduled(cron = "0 10 0 * * *")
     @Scheduled(cron = "2 * * * * *")
     public void generateSubscriptionsAnalytic() {
         analyticSubscriptionRepository.selectSubscriptionsLastDatePaid().flatMap(subscriptionLastDatePaymentDto -> {
-            PaymentPeriod paymentPeriod = PaymentPeriod.valueOf(subscriptionLastDatePaymentDto.paymentPeriod());
-            TemporalAmount date = paymentPeriod.generatePeriod();
-            LocalDate lasDatePaid = subscriptionLastDatePaymentDto.datePaid();
-            LocalDate nextDatePaid = lasDatePaid.plus(date);
-            if(nextDatePaid.isBefore(LocalDate.now())){
-                AnalyticSubscription analyticSubscription = new AnalyticSubscription();
-                analyticSubscription.setDatePaid(nextDatePaid);
-                analyticSubscription.setSubscriptionId(subscriptionLastDatePaymentDto.subscriptionId());
-                analyticSubscription.setAmount(subscriptionLastDatePaymentDto.amount());
-                return Mono.just(analyticSubscription);
-            }
-            return Mono.empty();
-        }).buffer(30)
+                    PaymentPeriod paymentPeriod = PaymentPeriod.valueOf(subscriptionLastDatePaymentDto.paymentPeriod());
+                    TemporalAmount date = paymentPeriod.generatePeriod();
+                    LocalDate lasDatePaid = subscriptionLastDatePaymentDto.datePaid();
+                    LocalDate nextDatePaid = lasDatePaid.plus(date);
+                    if (nextDatePaid.isBefore(LocalDate.now())) {
+                        AnalyticSubscription analyticSubscription = new AnalyticSubscription();
+                        analyticSubscription.setDatePaid(nextDatePaid);
+                        analyticSubscription.setSubscriptionId(subscriptionLastDatePaymentDto.subscriptionId());
+                        analyticSubscription.setAmount(subscriptionLastDatePaymentDto.amount());
+                        cacheService.deleteValue("ANALYTIC_SUBSCRIPTION::" + subscriptionLastDatePaymentDto.subscriptionId()).subscribe();
+                        return Mono.just(analyticSubscription);
+                    }
+                    return Mono.empty();
+                }
+        ).buffer(30)
         .concatMap(analyticSubscriptionRepository::insertAllAnalyticSubscription).subscribe();
     }
 
