@@ -1,4 +1,4 @@
-package com.subOne.user_service.repository.update;
+package com.subOne.user_service.repository.user_repository.update;
 
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import reactor.core.publisher.Mono;

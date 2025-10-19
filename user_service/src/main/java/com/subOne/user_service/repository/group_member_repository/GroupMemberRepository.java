@@ -1,4 +1,4 @@
-package com.subOne.user_service.repository;
+package com.subOne.user_service.repository.group_member_repository;
 
 import com.subOne.user_service.dto.group_member.GroupMemberInfoDto;
 import com.subOne.user_service.dto.user.response.ResponseUserDto;

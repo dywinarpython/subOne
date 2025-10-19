@@ -7,7 +7,7 @@ import com.subOne.user_service.entity.User;
 import com.subOne.user_service.kafka.serviceProducer.KafkaService;
 import com.subOne.user_service.mapper.MapperUser;
 import com.subOne.user_service.dto.user.response.ResponseUserDto;
-import com.subOne.user_service.repository.UserRepository;
+import com.subOne.user_service.repository.user_repository.UserRepository;
 import com.subOne.user_service.service.UserService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jwt.Jwt;

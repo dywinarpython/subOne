@@ -1,6 +1,6 @@
-package com.subOne.user_service.repository.updateImpl;
+package com.subOne.user_service.repository.user_repository.updateImpl;
 
-import com.subOne.user_service.repository.update.UpdateRepository;
+import com.subOne.user_service.repository.user_repository.update.UpdateRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.relational.core.query.Criteria;

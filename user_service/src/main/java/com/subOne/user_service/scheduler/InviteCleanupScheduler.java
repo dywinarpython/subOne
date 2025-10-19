@@ -1,6 +1,6 @@
 package com.subOne.user_service.scheduler;
 
-import com.subOne.user_service.repository.GroupInviteRepository;
+import com.subOne.user_service.repository.group_invite_repository.GroupInviteRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;

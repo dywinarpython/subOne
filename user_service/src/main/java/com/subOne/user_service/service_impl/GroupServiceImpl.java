@@ -7,7 +7,7 @@ import com.subOne.user_service.dto.group.response.ResponseGroupDto;
 import com.subOne.user_service.dto.group.response.ResponseGroupsDto;
 import com.subOne.user_service.dto.user.response.ResponseUserDto;
 import com.subOne.user_service.mapper.MapperGroup;
-import com.subOne.user_service.repository.GroupRepository;
+import com.subOne.user_service.repository.group_repository.GroupRepository;
 import com.subOne.user_service.service.GroupService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,7 +49,7 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     public Mono<ResponseUserDto> getOwner(Long groupId) {
-        return groupRepository.findOwnerByGroupId(groupId);
+        return groupRepository.selectOwnerByGroupId(groupId);
     }
 
     @Override

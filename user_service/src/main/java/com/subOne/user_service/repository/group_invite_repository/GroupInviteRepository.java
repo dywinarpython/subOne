@@ -1,4 +1,4 @@
-package com.subOne.user_service.repository;
+package com.subOne.user_service.repository.group_invite_repository;
 
 import com.subOne.user_service.dto.group_invite.CodeDto;
 import com.subOne.user_service.entity.GroupInvite;

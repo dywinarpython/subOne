@@ -1,8 +1,8 @@
-package com.subOne.user_service.repository;
+package com.subOne.user_service.repository.group_repository;
 
 import com.subOne.user_service.dto.group.response.ResponseGroupDto;
-import com.subOne.user_service.dto.user.response.ResponseUserDto;
 import com.subOne.user_service.entity.Group;
+import com.subOne.user_service.repository.group_repository.select.SelectOwnerGroupRepository;
 import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
@@ -11,7 +11,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
-public interface GroupRepository extends R2dbcRepository<Group, Long> {
+public interface GroupRepository extends R2dbcRepository<Group, Long>, SelectOwnerGroupRepository {
 
     Mono<Integer> deleteByIdAndOwnerId(Long groupId, UUID ownerId);
 
@@ -40,14 +40,6 @@ public interface GroupRepository extends R2dbcRepository<Group, Long> {
             """
     )
     Mono<ResponseGroupDto> findGroupById(Long groupId, UUID userId);
-
-    @Query("""
-            select owner_id, u.name, u.surname, u.email
-            from groups g
-            join users u on u.user_id = g.owner_id
-            where g.id = :groupId
-            """)
-    Mono<ResponseUserDto> findOwnerByGroupId(Long groupId);
 
     @Modifying
     @Query(
