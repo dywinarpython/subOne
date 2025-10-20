@@ -62,6 +62,7 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
     @Transactional
     public Mono<ResponseSubscriptionDto> saveSubscription(Long groupId, Mono<RequestSubscriptionDto> requestSubscriptionDtoMono, Jwt jwt) {
         return requestSubscriptionDtoMono.flatMap(requestSubscriptionDto -> {
+            if(requestSubscriptionDto.startDate().equals(requestSubscriptionDto.endDate())) return Mono.error(new ValidationException("The start date must not be equal to the end date"));
             if (requestSubscriptionDto.startDate().isAfter(requestSubscriptionDto.endDate())) return Mono.error(new ValidationException("Start date must not be after end date"));
             if (requestSubscriptionDto.startDate().isBefore(LocalDate.now().minusYears(10))) return Mono.error(new ValidationException("The start date is too early"));
             return webClientService.checkUserIsOwnerGroup(groupId, jwt)
@@ -115,7 +116,7 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
 
     @Override
     @Transactional
-    public Mono<Void> deleteSubscriptionByGroupId(Long groupId) {
+    public Mono<Void> deleteSubscriptionsByGroupId(Long groupId) {
         return userSubscriptionRepository.deleteByGroupId(groupId).flatMap(count -> {
             if(count == 0) return Mono.error(new NoSuchElementException("Subscriptions is not found!"));
             return Mono.empty();

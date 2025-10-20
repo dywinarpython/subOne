@@ -13,6 +13,6 @@ public interface UserSubscriptionService {
     Mono<ResponseSubscriptionsDto> getSubscriptionsGroup(Long groupId, Integer page,  Jwt jwt);
     Mono<ResponseSubscriptionDto> getSubscriptionById(Long groupId, Long subscriptionId, Jwt jwt);
     Mono<Void> deleteSubscriptionById(Long groupId, Long subscriptionId, Jwt jwt);
-    Mono<Void> deleteSubscriptionByGroupId(Long groupId);
+    Mono<Void> deleteSubscriptionsByGroupId(Long groupId);
     Mono<Void> renewSubscriptionById(Long groupId, Long subscriptionId, Long extensionCount, Jwt jwt);
 }

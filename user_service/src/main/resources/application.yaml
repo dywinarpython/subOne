@@ -42,9 +42,13 @@ spring:
       connectTimeout: 5s
       socketTimeout: 30s
   kafka:
-    partitions: 1
+    partitions_keycloak_consumer: 1
     topicNameDeleteUser: ${KAFKA_NAME_TOPIC_DELETE_USER:delete_user}
     bootstrap-servers: ${KAFKA_SERVERS:localhost:19092,localhost:19093,localhost:19094}
+    properties:
+      enable.idempotence: true
+      request.timeout.ms: 15000
+      delivery.timeout.ms: 20000
     consumer:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
