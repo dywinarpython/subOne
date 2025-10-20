@@ -1,0 +1,16 @@
+server:
+  port: 0
+spring:
+  page:
+    size: ${PAGE_SIZE:10}
+  application:
+    name: subscriptions_service
+  liquibase:
+    change-log: classpath:db/changelog/changelog-master.xml
+    enabled: true
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.r2dbc.core: DEBUG
+    io.r2dbc.postgresql.PARAM: DEBUG
+

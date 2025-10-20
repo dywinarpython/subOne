@@ -109,7 +109,17 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
     @Transactional
     public Mono<Void> deleteSubscriptionById(Long groupId, Long subscriptionId, Jwt jwt) {
         return webClientService.checkUserIsOwnerGroup(groupId, jwt)
-                .then(userSubscriptionRepository.deleteById(subscriptionId));
+                .then(userSubscriptionRepository.deleteByIdReturningCount(subscriptionId))
+                .flatMap(count -> count == 0? Mono.error(new NoSuchElementException("Subscription is not found")): Mono.empty());
+    }
+
+    @Override
+    @Transactional
+    public Mono<Void> deleteSubscriptionByGroupId(Long groupId) {
+        return userSubscriptionRepository.deleteByGroupId(groupId).flatMap(count -> {
+            if(count == 0) return Mono.error(new NoSuchElementException("Subscriptions is not found!"));
+            return Mono.empty();
+        });
     }
 
     @Override

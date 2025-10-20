@@ -1,0 +1,85 @@
+package com.subOne.subscriptions_service.config;
+
+import com.subOne.subscriptions_service.client.WebClientService;
+import com.subOne.subscriptions_service.client.WebClientServiceImpl;
+import com.zaxxer.hikari.HikariDataSource;
+import io.r2dbc.pool.ConnectionPool;
+import io.r2dbc.pool.ConnectionPoolConfiguration;
+import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
+import io.r2dbc.postgresql.PostgresqlConnectionFactory;
+import io.r2dbc.spi.ConnectionFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.support.NoOpCacheManager;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.r2dbc.connection.R2dbcTransactionManager;
+import org.springframework.transaction.ReactiveTransactionManager;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.PostgreSQLContainer;
+import reactor.core.publisher.Mono;
+
+import javax.sql.DataSource;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+
+
+@TestConfiguration
+public class TestConfig {
+
+    @Bean
+    public ReactiveRedisConnectionFactory reactiveRedisConnectionFactory(@Qualifier("redisContainer") GenericContainer<?> redisContainer) {
+        RedisStandaloneConfiguration serverConfig = new RedisStandaloneConfiguration(redisContainer.getHost(), redisContainer.getFirstMappedPort());
+        return new LettuceConnectionFactory(serverConfig);
+    }
+
+    @Bean
+    @Primary
+    public ReactiveTransactionManager connectionFactoryTransactionManager(ConnectionFactory connectionFactory) {
+        return new R2dbcTransactionManager(connectionFactory);
+    }
+
+    @Bean public DataSource dataSource(PostgreSQLContainer<?> postgreSQLContainer){
+        HikariDataSource hikariDataSource = new HikariDataSource();
+        hikariDataSource.setJdbcUrl(postgreSQLContainer.getJdbcUrl());
+        hikariDataSource.setUsername(postgreSQLContainer.getUsername());
+        hikariDataSource.setPassword(postgreSQLContainer.getPassword());
+        return hikariDataSource;
+    }
+
+    @Bean
+    public ConnectionFactory connectionFactory(PostgreSQLContainer<?> postgreSQLContainer) {
+        PostgresqlConnectionConfiguration config = PostgresqlConnectionConfiguration.builder()
+                .host(postgreSQLContainer.getHost())
+                .port(postgreSQLContainer.getFirstMappedPort())
+                .database(postgreSQLContainer.getDatabaseName())
+                .username(postgreSQLContainer.getUsername())
+                .password(postgreSQLContainer.getPassword())
+                .build();
+        return new ConnectionPool(ConnectionPoolConfiguration
+                .builder(new PostgresqlConnectionFactory(config))
+                .build());
+    }
+    @Bean
+    @Primary
+    public WebClientService webClientService(){
+        WebClientService webClientService = mock(WebClientServiceImpl.class);
+        lenient().when(webClientService.checkUserInGroup(anyLong(), any())).thenReturn(Mono.empty());
+        lenient().when(webClientService.checkUserIsOwnerGroup(anyLong(), any())).thenReturn(Mono.empty());
+        return webClientService;
+    }
+    @Bean
+    public WebClient webClient(WebClient.Builder builder){
+        return builder
+                .build();
+    }
+}

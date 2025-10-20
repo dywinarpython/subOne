@@ -27,7 +27,7 @@ public class WebClientServiceImpl implements WebClientService {
     private final Integer maxReties;
     private final CacheService cacheService;
 
-    public WebClientServiceImpl(WebClient webClient, @Value("${spring.user_service.max_reties}") Integer maxReties, CacheService cacheService) {
+    public WebClientServiceImpl(WebClient webClient, @Value("${spring.user_service.max_reties:5}") Integer maxReties, CacheService cacheService) {
         this.webClient = webClient;
         this.maxReties = maxReties;
         this.cacheService = cacheService;
