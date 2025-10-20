@@ -71,11 +71,10 @@ public class GroupController {
             )
     )
     @GetMapping("owner/me")
-    public Mono<ResponseGroupsDto> getGroups(@AuthenticationPrincipal Jwt jwt) {
-        return groupService.getGroupsCreateUser(jwt);
+    public Mono<ResponseGroupsDto> getGroups(@RequestParam Integer page, @AuthenticationPrincipal Jwt jwt) {
+        return groupService.getGroupsCreateUser(jwt, page);
     }
 
-    // TODO: сделать пагинацию
     @Operation(
             summary = "Получение групп: пользователь член группы",
             responses = @ApiResponse(
@@ -86,8 +85,8 @@ public class GroupController {
             )
     )
     @GetMapping("/me")
-    public Mono<ResponseGroupsDto> getGroupsUserIsMember(@AuthenticationPrincipal Jwt jwt) {
-        return groupService.getGroupsUserIsMember(jwt);
+    public Mono<ResponseGroupsDto> getGroupsUserIsMember(@RequestParam Integer page, @AuthenticationPrincipal Jwt jwt) {
+        return groupService.getGroupsUserIsMember(jwt, page);
     }
 
 

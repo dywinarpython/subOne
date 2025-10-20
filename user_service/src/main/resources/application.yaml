@@ -1,6 +1,8 @@
 server:
   port: ${SERVER_PORT:8000}
 spring:
+  page:
+    size: ${PAGE_SIZE:10}
   config:
     activate:
       on-profile: default

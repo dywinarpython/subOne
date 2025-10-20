@@ -9,8 +9,9 @@ import com.subOne.user_service.dto.user.response.ResponseUserDto;
 import com.subOne.user_service.mapper.MapperGroup;
 import com.subOne.user_service.repository.group_repository.GroupRepository;
 import com.subOne.user_service.service.GroupService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -23,7 +24,6 @@ import java.util.UUID;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class GroupServiceImpl implements GroupService {
 
     private final GroupRepository groupRepository;
@@ -31,6 +31,19 @@ public class GroupServiceImpl implements GroupService {
     private final MapperGroup mapperGroup;
 
     private final CacheService cacheService;
+
+    private final Integer pageSize;
+
+    public GroupServiceImpl(GroupRepository groupRepository,
+                            MapperGroup mapperGroup,
+                            CacheService cacheService,
+                            @Value("${spring.page.size}") Integer pageSize) {
+        this.groupRepository = groupRepository;
+        this.mapperGroup = mapperGroup;
+        this.cacheService = cacheService;
+        this.pageSize = pageSize;
+    }
+
 
     @Override
     @Transactional
@@ -53,13 +66,13 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public Mono<ResponseGroupsDto> getGroupsCreateUser(Jwt jwt) {
-        return groupRepository.findByOwnerId(UUID.fromString(jwt.getSubject())).collectList().map(ResponseGroupsDto::new);
+    public Mono<ResponseGroupsDto> getGroupsCreateUser(Jwt jwt, Integer page) {
+        return groupRepository.findByOwnerId(UUID.fromString(jwt.getSubject()), PageRequest.of(page, pageSize)).collectList().map(ResponseGroupsDto::new);
     }
 
     @Override
-    public Mono<ResponseGroupsDto> getGroupsUserIsMember(Jwt jwt) {
-        return groupRepository.findGroupsUserIsMember(UUID.fromString(jwt.getSubject()))
+    public Mono<ResponseGroupsDto> getGroupsUserIsMember(Jwt jwt, Integer page) {
+        return groupRepository.findGroupsUserIsMember(UUID.fromString(jwt.getSubject()), page*pageSize, pageSize)
                 .collectList()
                 .map(ResponseGroupsDto::new);
     }

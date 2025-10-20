@@ -3,6 +3,7 @@ package com.subOne.user_service.repository.group_repository;
 import com.subOne.user_service.dto.group.response.ResponseGroupDto;
 import com.subOne.user_service.entity.Group;
 import com.subOne.user_service.repository.group_repository.select.SelectOwnerGroupRepository;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
@@ -17,15 +18,17 @@ public interface GroupRepository extends R2dbcRepository<Group, Long>, SelectOwn
 
     Mono<Boolean> existsByIdAndOwnerId(Long groupId, UUID ownerId);
 
-    Flux<ResponseGroupDto> findByOwnerId(UUID ownerId);
+    Flux<ResponseGroupDto> findByOwnerId(UUID ownerId, Pageable pageable);
 
     @Query("""
             select g.id, g.name, g.created_at, g.updated_at
             from groups g
             join group_members gm on gm.group_id = g.id
             where gm.user_id = :userId
+            offset :page
+            limit :pageSize
             """)
-    Flux<ResponseGroupDto> findGroupsUserIsMember(UUID userId);
+    Flux<ResponseGroupDto> findGroupsUserIsMember(UUID userId, Integer page, Integer pageSize);
 
     @Query(
             """

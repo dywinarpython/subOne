@@ -12,8 +12,8 @@ public interface GroupService {
     Mono<ResponseGroupDto> saveGroup(Mono<RequestGroupDto> requestGroupDtoMono, Jwt jwt);
     Mono<ResponseGroupDto> getGroupById(Long groupId, Jwt jwt);
     Mono<ResponseUserDto> getOwner(Long groupId);
-    Mono<ResponseGroupsDto> getGroupsCreateUser(Jwt jwt);
-    Mono<ResponseGroupsDto> getGroupsUserIsMember(Jwt jwt);
+    Mono<ResponseGroupsDto> getGroupsCreateUser(Jwt jwt, Integer page);
+    Mono<ResponseGroupsDto> getGroupsUserIsMember(Jwt jwt, Integer page);
     Mono<Void> updateGroup(Mono<RequestUpdateGroupDto> requestGroupDtoMono, Long groupId, Jwt jwt);
     Mono<Void> deleteGroup(Long groupId, Jwt jwt);
     Mono<Boolean> checkUserIsOwner(Long groupId, Jwt jwt);
