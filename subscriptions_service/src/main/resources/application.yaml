@@ -47,6 +47,17 @@ spring:
   user_service:
       url: ${USER_SERVICE_URL:http://localhost:8000/api/v1/}
       max_reties: ${USER_SERVICE_RETRIES:5}
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVERS:localhost:19092,localhost:19093,localhost:19094}
+    properties:
+      enable.idempotence: true
+      request.timeout.ms: 15000
+      delivery.timeout.ms: 20000
+    consumer:
+      group_id: subscriptions_service
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.LongDeserializer
+
 logging:
   level:
     org.springframework.security: DEBUG

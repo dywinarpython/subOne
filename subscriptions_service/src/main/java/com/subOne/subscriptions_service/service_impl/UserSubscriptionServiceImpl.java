@@ -114,6 +114,15 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
 
     @Override
     @Transactional
+    public Mono<Void> deleteSubscriptionByGroupId(Long groupId) {
+        return userSubscriptionRepository.deleteByGroupId(groupId).flatMap(count -> {
+            if(count == 0) return Mono.error(new NoSuchElementException("Subscriptions is not found!"));
+            return Mono.empty();
+        });
+    }
+
+    @Override
+    @Transactional
     public Mono<Void> renewSubscriptionById(Long groupId, Long subscriptionId, Long extensionCount, Jwt jwt) {
         return Mono.just(extensionCount)
                 .flatMap(ex -> ex > 0? Mono.empty(): Mono.error(new ValidationException("The number of extensions is less than 0")))

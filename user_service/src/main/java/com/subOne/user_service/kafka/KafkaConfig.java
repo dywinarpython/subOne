@@ -4,9 +4,11 @@ import com.subOne.kecyloak_dto.UserInfo;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,7 +27,7 @@ import java.util.Map;
 @Profile("!test")
 public class KafkaConfig {
 
-    @Value("${spring.kafka.partitions}")
+    @Value("${spring.kafka.partitions_keycloak_consumer}")
     private int partitions;
 
     @Autowired
@@ -59,13 +61,20 @@ public class KafkaConfig {
         return TopicBuilder.name(name).partitions(partitions).build();
     }
 
+    private NewTopic createTopic(String name, int partitions){
+        return TopicBuilder.name(name).partitions(partitions).build();
+    }
+
     @Bean
     public NewTopic messageUserTopic(){
         return createTopic("delete_user");
     }
 
     @Bean
-    public ProducerFactory<String, String> groupProducerFactory(
+    public NewTopic messageDeleteGroup() { return createTopic("delete_group", 3);}
+
+    @Bean
+    public ProducerFactory<String, String> groupStringProducerFactory(
             @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers) {
         Map<String, Object> props = new HashMap<>();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -75,7 +84,25 @@ public class KafkaConfig {
     }
 
     @Bean
-    public KafkaTemplate<String, String> messageToKeycloakDeleteUser(
+    public ProducerFactory<String, Long> groupLongProducerFactory(
+            @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers) {
+        Map<String, Object> props = new HashMap<>();
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, LongSerializer.class);
+        return new DefaultKafkaProducerFactory<>(props);
+    }
+
+
+    @Bean
+    @Qualifier("messageSendWithLong")
+    public KafkaTemplate<String, Long> messageSendWithLong(ProducerFactory<String, Long> producerFactory){
+        return new KafkaTemplate<>(producerFactory);
+    }
+
+    @Bean
+    @Qualifier("messageSendWithString")
+    public KafkaTemplate<String, String> messageSendWithString(
             ProducerFactory<String, String> producerFactory) {
         return new KafkaTemplate<>(producerFactory);
     }

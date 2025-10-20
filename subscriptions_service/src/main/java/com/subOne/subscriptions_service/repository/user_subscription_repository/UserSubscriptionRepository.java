@@ -16,6 +16,9 @@ public interface UserSubscriptionRepository extends R2dbcRepository<UserSubscrip
 
     Flux<ResponseSubscriptionDto> findByGroupId(Long groupId, Pageable pageable);
 
+    @Modifying
+    Mono<Integer> deleteByGroupId(Long groupId);
+
     @Query("""
             select id, service_name, subscription_name, start_date, end_date, payment_period, amount, status
             from user_subscriptions

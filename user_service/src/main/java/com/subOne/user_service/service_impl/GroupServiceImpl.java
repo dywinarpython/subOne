@@ -6,6 +6,7 @@ import com.subOne.user_service.dto.group.request.RequestUpdateGroupDto;
 import com.subOne.user_service.dto.group.response.ResponseGroupDto;
 import com.subOne.user_service.dto.group.response.ResponseGroupsDto;
 import com.subOne.user_service.dto.user.response.ResponseUserDto;
+import com.subOne.user_service.kafka.serviceProducer.KafkaService;
 import com.subOne.user_service.mapper.MapperGroup;
 import com.subOne.user_service.repository.group_repository.GroupRepository;
 import com.subOne.user_service.service.GroupService;
@@ -32,15 +33,18 @@ public class GroupServiceImpl implements GroupService {
 
     private final CacheService cacheService;
 
+    private final KafkaService kafkaService;
+
     private final Integer pageSize;
 
     public GroupServiceImpl(GroupRepository groupRepository,
                             MapperGroup mapperGroup,
-                            CacheService cacheService,
+                            CacheService cacheService, KafkaService kafkaService,
                             @Value("${spring.page.size}") Integer pageSize) {
         this.groupRepository = groupRepository;
         this.mapperGroup = mapperGroup;
         this.cacheService = cacheService;
+        this.kafkaService = kafkaService;
         this.pageSize = pageSize;
     }
 
@@ -90,12 +94,11 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     @Transactional
-    // TODO при удалении группы обязательно в дальнейшем требуется удаления всех подписок
     public Mono<Void> deleteGroup(Long groupId, Jwt jwt) {
         return groupRepository.deleteByIdAndOwnerId(groupId, UUID.fromString(jwt.getSubject())).flatMap(count -> {
            if(count != 1) return checkRights(groupId).then();
            return cacheService.deleteValue("OWNER::" + groupId);}
-        );
+        ).then(kafkaService.sendToTopic("delete_group", groupId));
     }
 
     @Override
