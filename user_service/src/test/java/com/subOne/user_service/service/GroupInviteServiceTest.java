@@ -6,7 +6,7 @@ import com.subOne.user_service.dto.group_invite.response.ResponseInviteCodeDto;
 import com.subOne.user_service.dto.group_member.response.ResponseMembersDto;
 import com.subOne.user_service.entity.GroupInvite;
 import com.subOne.user_service.mapper.MapperGroupInvite;
-import com.subOne.user_service.repository.GroupInviteRepository;
+import com.subOne.user_service.repository.group_invite_repository.GroupInviteRepository;
 import com.subOne.user_service.service_impl.GroupInviteServiceImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

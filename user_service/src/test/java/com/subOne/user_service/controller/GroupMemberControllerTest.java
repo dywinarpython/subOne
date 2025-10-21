@@ -4,7 +4,7 @@ import com.subOne.user_service.dto.group_member.response.ResponseMemberDto;
 import com.subOne.user_service.dto.group_member.response.ResponseMembersDto;
 import com.subOne.user_service.entity.GroupMember;
 import com.subOne.user_service.entity.User;
-import com.subOne.user_service.repository.GroupMemberRepository;
+import com.subOne.user_service.repository.group_member_repository.GroupMemberRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

@@ -31,7 +31,6 @@ public class GroupController {
 
     private final GroupService groupService;
 
-    // TODO ограничить общее количество групп на 5 для одного пользователя
     @Operation(
             summary = "Создание группы",
             responses = @ApiResponse(
@@ -93,9 +92,9 @@ public class GroupController {
     @Operation(
             summary = "Обновление информации группы"
     )
-    @PatchMapping("/{groupId}")
+    @PatchMapping
     public Mono<ResponseEntity<Map<String, String>>> updateGroup(@PathVariable Long groupId, @Valid @RequestBody Mono<RequestUpdateGroupDto> requestUpdateGroupDtoMono , @AuthenticationPrincipal Jwt jwt) {
-        return groupService.updateGroup(requestUpdateGroupDtoMono,groupId , jwt).thenReturn(ResponseEntity.ok(Map.of("message", "group is updated")));
+        return groupService.updateGroup(requestUpdateGroupDtoMono,groupId , jwt).thenReturn(ResponseEntity.ok(Map.of("message", "Group is updated")));
     }
 
 

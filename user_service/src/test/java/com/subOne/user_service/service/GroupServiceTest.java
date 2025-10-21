@@ -8,7 +8,7 @@ import com.subOne.user_service.dto.group.response.ResponseGroupsDto;
 import com.subOne.user_service.dto.user.response.ResponseUserDto;
 import com.subOne.user_service.entity.Group;
 import com.subOne.user_service.mapper.MapperGroup;
-import com.subOne.user_service.repository.GroupRepository;
+import com.subOne.user_service.repository.group_repository.GroupRepository;
 import com.subOne.user_service.service_impl.GroupServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

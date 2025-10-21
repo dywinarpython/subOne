@@ -5,7 +5,7 @@ import com.subOne.user_service.dto.user.response.ResponseUserDto;
 import com.subOne.user_service.entity.User;
 import com.subOne.user_service.kafka.serviceProducer.KafkaService;
 import com.subOne.user_service.mapper.MapperUser;
-import com.subOne.user_service.repository.UserRepository;
+import com.subOne.user_service.repository.user_repository.UserRepository;
 import com.subOne.user_service.service_impl.UserServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;

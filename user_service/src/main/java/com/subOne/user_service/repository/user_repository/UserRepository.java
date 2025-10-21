@@ -14,8 +14,8 @@ import java.util.UUID;
 public interface UserRepository extends ReactiveCrudRepository<User, Long>, UpdateRepository {
 
     Mono<ResponseUserDto> findByUserId(UUID id);
-
     Mono<Integer> deleteByUserId(UUID id);
+    Mono<Boolean> existsByUserId(UUID userId);
 
     @Modifying
     @Query("""

@@ -10,6 +10,7 @@ import com.subOne.user_service.kafka.serviceProducer.KafkaService;
 import com.subOne.user_service.mapper.MapperGroup;
 import com.subOne.user_service.repository.group_repository.GroupRepository;
 import com.subOne.user_service.service.GroupService;
+import jakarta.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
@@ -52,9 +54,12 @@ public class GroupServiceImpl implements GroupService {
     @Override
     @Transactional
     public Mono<ResponseGroupDto> saveGroup(Mono<RequestGroupDto> requestGroupDtoMono, Jwt jwt) {
-        return requestGroupDtoMono
+        return groupRepository.findCountByOwnerId(UUID.fromString(jwt.getSubject()))
+                .flatMap( count -> {
+                 if(count >= 5) return Mono.error(new ValidationException("The maximum number of groups is 5"));
+                 return requestGroupDtoMono
                 .map(requestGroupDto -> mapperGroup.requestGroupDtotoGroup(requestGroupDto, jwt.getSubject()))
-                .flatMap(groupRepository::save).map(mapperGroup::groupToResponseGroupDto);
+                .flatMap(groupRepository::save).map(mapperGroup::groupToResponseGroupDto);});
     }
 
     @Override
@@ -80,6 +85,8 @@ public class GroupServiceImpl implements GroupService {
                 .collectList()
                 .map(ResponseGroupsDto::new);
     }
+
+
 
     @Override
     @Transactional
@@ -118,6 +125,12 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
+    public Mono<Boolean> checkUserIsOwnerGroups(List<Long> groupsId, Jwt jwt) {
+        return groupRepository.findCountWhereUserIsOwnerByGroupsId(UUID.fromString(jwt.getSubject()), groupsId)
+                .flatMap(count -> count == groupsId.size()? Mono.just(Boolean.TRUE): Mono.error(new AccessDeniedException("Access is denied")));
+    }
+
+    @Override
     public Mono<Boolean> checkUserIsOwnerWithoutCacheGet(Long groupId, Jwt jwt) {
         return groupRepository.existsByIdAndOwnerId(groupId, UUID.fromString(jwt.getSubject())).flatMap(
                 exists -> {
@@ -127,6 +140,15 @@ public class GroupServiceImpl implements GroupService {
                     return checkRights(groupId).thenReturn(false);
                 });
     }
+
+    @Override
+    public Mono<Void> deleteDataRelatedGroupsByOwnerId(Jwt jwt) {
+        return groupRepository.findGroupIdByOwnerId(UUID.fromString(jwt.getSubject()))
+                .flatMap(groupId ->
+                    kafkaService.sendToTopic("delete_group" , groupId).then(cacheService.deleteValue("OWNER::" + groupId))
+                ).then();
+    }
+
 
     private Mono<ResponseGroupDto> checkRights(Long groupId) {
         return groupRepository.existsById(groupId)

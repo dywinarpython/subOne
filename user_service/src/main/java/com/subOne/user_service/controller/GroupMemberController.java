@@ -1,9 +1,11 @@
 package com.subOne.user_service.controller;
 
 import com.subOne.user_service.dto.group_member.response.ResponseMembersDto;
+import com.subOne.user_service.dto.user.request.RequestGroupsOwnershipChangesDto;
 import com.subOne.user_service.service.GroupMemberService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,9 +23,6 @@ import java.util.UUID;
 public class GroupMemberController {
     private final GroupMemberService groupMemberService;
 
-
-
-
     @Operation(summary = "Получение членов группы")
     @GetMapping
     public Mono<ResponseEntity<ResponseMembersDto>> getMembers(@PathVariable Long groupId, @AuthenticationPrincipal Jwt jwt) {
@@ -40,6 +39,16 @@ public class GroupMemberController {
     @GetMapping("/check/owner")
     public Mono<ResponseEntity<Map<String, Boolean>>> checkUserIsOwnerGroup(@PathVariable Long groupId, @AuthenticationPrincipal Jwt jwt) {
         return groupMemberService.checkUserIsOwnerGroup(groupId, jwt).thenReturn(ResponseEntity.ok(Map.of("hasAccess", true)));
+    }
+
+    @Operation(
+            summary = "Изменения владельца группы/групп"
+    )
+    @PatchMapping("/change-owners")
+    public Mono<ResponseEntity<Map<String, String>>> changesOwnerGroups(
+            @Valid @RequestBody Mono<RequestGroupsOwnershipChangesDto> requestGroupsOwnershipChangesDtoMono,
+            @AuthenticationPrincipal Jwt jwt) {
+        return groupMemberService.changesOwnerGroup(requestGroupsOwnershipChangesDtoMono, jwt).thenReturn(ResponseEntity.ok(Map.of("message", "The owners of the group have been changed")));
     }
 
     @Operation(summary = "Удаление пользователя из группы")

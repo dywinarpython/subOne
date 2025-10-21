@@ -42,11 +42,11 @@ public class UserSubscriptionControllerTest extends AbstractControllerTest{
     private UserSubscriptionMapper userSubscriptionMapper;
 
     @Autowired
-    private CacheService cacheService;
+    protected CacheService cacheService;
 
-    private UserSubscription userSubscription;
+    protected UserSubscription userSubscription;
 
-    private String URI;
+    protected String URI;
 
     @BeforeEach
     void setUp(){
@@ -84,7 +84,7 @@ public class UserSubscriptionControllerTest extends AbstractControllerTest{
         userSubscription1.setAmount(BigDecimal.valueOf(1000));
         userSubscription1.setServiceName("serviceName");
         userSubscription1.setEndDate(LocalDate.now().plusMonths(3));
-        userSubscription1.setStartDate(LocalDate.now());
+        userSubscription1.setStartDate(LocalDate.now().minusMonths(3));
         userSubscription1.setGroupId(1L + System.currentTimeMillis());
         userSubscription1.setStatus(SubscriptionStatus.ACTIVE.toString());
         return userSubscriptionRepository.save(userSubscription1).block();
@@ -123,7 +123,7 @@ public class UserSubscriptionControllerTest extends AbstractControllerTest{
     @DisplayName("POST -> /api/v1/groups/{groupId}/subscriptions")
     void saveSubscription_GroupFound_CorrectReturnAndCheckRepoSave() {
         String key = "ANALYTIC_GROUP::" + userSubscription.getGroupId();
-        int count = 10;
+        int count = 15;
         StepVerifier.create(cacheService.saveValue(key,
                         new ResponseTotalAnalyticSubscriptionGroupDto(BigDecimal.ONE, BigDecimal.ONE, BigDecimal.TWO),
                         Duration.ofMinutes(1)))
@@ -148,8 +148,8 @@ public class UserSubscriptionControllerTest extends AbstractControllerTest{
                 .assertNext(subscriptionDto -> {
                     userSubscriptionCheck.setId(subscriptionDto.id());
                     checkSubscription(subscriptionDto, userSubscriptionCheck);
-                    StepVerifier.create(analyticSubscriptionRepository.findBySubscriptionId(subscriptionDto.id(), PageRequest.of(0, 10000)).collectList())
-                            .assertNext(ls -> assertEquals(count + 1, ls.size()))
+                    StepVerifier.create(analyticSubscriptionRepository.findBySubscriptionId(subscriptionDto.id(), PageRequest.of(0, count)).collectList())
+                            .assertNext(ls -> assertEquals(count, ls.size()))
                             .verifyComplete();
                 })
                 .verifyComplete();

@@ -6,7 +6,7 @@ import com.subOne.user_service.dto.group.response.ResponseGroupDto;
 import com.subOne.user_service.dto.group.response.ResponseGroupsDto;
 import com.subOne.user_service.entity.Group;
 import com.subOne.user_service.mapper.MapperGroup;
-import com.subOne.user_service.repository.GroupRepository;
+import com.subOne.user_service.repository.group_repository.GroupRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -94,9 +94,7 @@ public class GroupControllerTest extends AbstractControllerTest{
                 .returnResult(ResponseGroupsDto.class).getResponseBody();
         StepVerifier.create(result)
                 .assertNext(
-                        responseGroupsDto -> {
-                            assertTrue(2 <= responseGroupsDto.groups().size());
-                        }
+                        responseGroupsDto -> assertTrue(2 <= responseGroupsDto.groups().size())
 
                 )
                 .verifyComplete();

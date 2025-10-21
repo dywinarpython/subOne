@@ -8,6 +8,8 @@ import com.subOne.user_service.kafka.serviceProducer.KafkaService;
 import com.subOne.user_service.mapper.MapperUser;
 import com.subOne.user_service.dto.user.response.ResponseUserDto;
 import com.subOne.user_service.repository.user_repository.UserRepository;
+import com.subOne.user_service.service.GroupMemberService;
+import com.subOne.user_service.service.GroupService;
 import com.subOne.user_service.service.UserService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -28,13 +30,17 @@ public class UserServiceImpl implements UserService {
     private final MapperUser mapperUser;
     private final String nameTopicDeleteUser;
     private final CacheService cacheService;
+    private final GroupMemberService groupMemberService;
+    private final GroupService groupService;
 
-    public UserServiceImpl(KafkaService kafkaService, UserRepository userRepository, MapperUser mapperUser, @Value("${spring.kafka.topicNameDeleteUser:delete_user}") String nameTopicDeleteUser, CacheService cacheService) {
+    public UserServiceImpl(KafkaService kafkaService, UserRepository userRepository, MapperUser mapperUser, @Value("${spring.kafka.topicNameDeleteUser:delete_user}") String nameTopicDeleteUser, CacheService cacheService, GroupMemberService groupMemberService, GroupService groupService) {
         this.kafkaService = kafkaService;
         this.userRepository = userRepository;
         this.mapperUser = mapperUser;
         this.nameTopicDeleteUser = nameTopicDeleteUser;
         this.cacheService = cacheService;
+        this.groupMemberService = groupMemberService;
+        this.groupService = groupService;
     }
 
 
@@ -76,10 +82,13 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public Mono<Void> deleteUser(Jwt jwt) {
-        return userRepository.deleteByUserId(UUID.fromString(jwt.getSubject())).flatMap(count ->
-        {
-            if(count != 1) return Mono.error(new NoSuchElementException("User is not found!"));
-            return kafkaService.sendToTopic(nameTopicDeleteUser, jwt.getSubject());
-        }).then(cacheService.deleteValue("USER::" + jwt.getSubject()));
+        return cacheService.getValue("USER::" + jwt.getSubject(), ResponseUserDto.class).thenReturn(true)
+                .switchIfEmpty(userRepository.existsByUserId(UUID.fromString(jwt.getSubject())))
+                .flatMap(bl -> bl? Mono.empty(): Mono.error(new NoSuchElementException("User is not found")))
+                .then(Mono.defer( () -> groupMemberService.existsMemberInGroupByOwnerId(jwt)))
+                .then(groupService.deleteDataRelatedGroupsByOwnerId(jwt))
+                .then(Mono.defer( () -> userRepository.deleteByUserId(UUID.fromString(jwt.getSubject()))
+                .then(kafkaService.sendToTopic(nameTopicDeleteUser, jwt.getSubject()))
+                .then(cacheService.deleteValue("USER::" + jwt.getSubject()))));
     }
 }

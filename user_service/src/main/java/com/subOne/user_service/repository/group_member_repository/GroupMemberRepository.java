@@ -3,6 +3,8 @@ package com.subOne.user_service.repository.group_member_repository;
 import com.subOne.user_service.dto.group_member.GroupMemberInfoDto;
 import com.subOne.user_service.dto.user.response.ResponseUserDto;
 import com.subOne.user_service.entity.GroupMember;
+import com.subOne.user_service.repository.group_member_repository.insert.InsertMembersRepository;
+import com.subOne.user_service.repository.group_member_repository.update.UpdateOwnerGroupRepository;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import reactor.core.publisher.Flux;
@@ -10,12 +12,19 @@ import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
-public interface GroupMemberRepository extends R2dbcRepository<GroupMember, Long> {
+public interface GroupMemberRepository extends R2dbcRepository<GroupMember, Long>, UpdateOwnerGroupRepository, InsertMembersRepository {
 
     Mono<Long> deleteByUserId(UUID userId);
 
     Mono<Boolean> existsByGroupIdAndUserId(Long groupId, UUID userId);
 
+    @Query("""
+            select group_id
+            from group_members gm
+            join groups g on gm.group_id = g.id
+            where g.owner_id = :ownerId
+            """)
+    Flux<Long> findGroupWhereExistsUserByOwnerId(UUID ownerId);
 
     @Query("""
             select u.user_id, u.name, u.surname, u.email

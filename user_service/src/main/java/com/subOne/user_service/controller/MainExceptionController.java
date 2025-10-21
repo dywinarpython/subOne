@@ -1,11 +1,13 @@
 package com.subOne.user_service.controller;
 
 
+import com.subOne.user_service.exception.ConflictException;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.core.codec.DecodingException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -58,6 +60,14 @@ public class MainExceptionController {
     public Mono<ResponseEntity<Map<String, String>>> handler(ResponseStatusException ex){
         String reason = ex.getReason() != null ? ex.getReason() : "Unexpected error";
         return Mono.just(ResponseEntity.status(ex.getStatusCode()).body(Map.of("error", reason)));
+    }
+    @ExceptionHandler(ConflictException.class)
+    public Mono<ResponseEntity<Map<String, Object>>> handler(ConflictException ex){
+        Map<String, Object> response = new HashMap<>();
+        response.put("error", ex.getMessage());
+        response.putAll(ex.getDetails());
+
+        return Mono.just(ResponseEntity.status(HttpStatus.CONFLICT).body(response));
     }
     @ExceptionHandler(AccessDeniedException.class)
     public Mono<ResponseEntity<Map<String, String>>> handler(AccessDeniedException ex){
