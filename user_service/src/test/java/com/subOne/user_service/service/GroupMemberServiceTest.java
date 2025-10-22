@@ -4,11 +4,15 @@ import com.subOne.user_service.cache.CacheService;
 import com.subOne.user_service.dto.group_member.GroupMemberInfoDto;
 import com.subOne.user_service.dto.group_member.response.ResponseMemberDto;
 import com.subOne.user_service.dto.group_member.response.ResponseMembersDto;
+import com.subOne.user_service.dto.user.request.RequestGroupOwnershipChangesDto;
+import com.subOne.user_service.dto.user.request.RequestGroupsOwnershipChangesDto;
 import com.subOne.user_service.dto.user.response.ResponseUserDto;
 import com.subOne.user_service.entity.GroupMember;
+import com.subOne.user_service.exception.ConflictException;
 import com.subOne.user_service.mapper.MapperGroupMember;
 import com.subOne.user_service.repository.group_member_repository.GroupMemberRepository;
 import com.subOne.user_service.service_impl.GroupMemberServiceImpl;
+import jakarta.validation.ValidationException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -167,7 +171,7 @@ public class GroupMemberServiceTest {
         when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
         when(groupMemberRepository.existsByGroupIdAndUserId(anyLong(), any())).thenReturn(Mono.just(false));
         when(groupService.getOwner(anyLong())).thenReturn(Mono.just(responseMembersDto.users().getFirst().user()));
-        when(groupService.checkUserIsOwner(anyLong(), any())).thenReturn(Mono.empty());
+        when(groupService.checkUserIsOwnerWithoutCacheGet(anyLong(), any())).thenReturn(Mono.empty());
         when(groupMemberRepository.findMembersIdByGroupId(anyLong()))
                 .thenReturn(Flux.fromIterable(responseMembersDto.users()
                         .stream()
@@ -182,7 +186,7 @@ public class GroupMemberServiceTest {
                 .expectNext(responseMembersDto)
                 .verifyComplete();
         verify(groupMemberRepository).existsByGroupIdAndUserId(anyLong(), any());
-        verify(groupService).checkUserIsOwner(anyLong(), any());
+        verify(groupService).checkUserIsOwnerWithoutCacheGet(anyLong(), any());
         verify(groupService).getOwner(anyLong());
         verify(groupMemberRepository).findMembersIdByGroupId(anyLong());
         verify(cacheService, times(0)).saveValue(anyString(), any(), any());
@@ -191,25 +195,27 @@ public class GroupMemberServiceTest {
 
     @Test
     @DisplayName("Удаления пользователя (он в группе, удаляет owner)")
-    void deleteUser_UserIsOwnerGroupAndUserDeleteIsMember_CorrectDeleteAndCheckRepo(){
+    void deleteMember_UserIsOwnerGroupAndUserDeleteIsMember_CorrectDeleteAndCheckRepo(){
         when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
         when(groupService.checkUserIsOwner(anyLong(), any())).thenReturn(Mono.empty());
-        when(groupMemberRepository.deleteByUserId(any())).thenReturn(Mono.just(1L));
+        when(groupMemberRepository.deleteByUserIdAndGroupId(any(), anyLong())).thenReturn(Mono.just(1L));
+        when(cacheService.deleteValue(anyString())).thenReturn(Mono.empty());
 
         Mono<Void> result = groupMemberService.deleteMember(1L, UUID.randomUUID(), jwt);
 
         StepVerifier.create(result)
                 .verifyComplete();
         verify(groupService).checkUserIsOwner(anyLong(), any());
-        verify(groupMemberRepository).deleteByUserId(any());
+        verify(groupMemberRepository).deleteByUserIdAndGroupId(any(), anyLong());
+        verify(cacheService).deleteValue(anyString());
     }
 
     @Test
     @DisplayName("Удаления пользователя (user is not found, удаляет owner)")
-    void deleteUser_UserIsOwnerGroupAndUserIsNotOwner_CorrectDeleteAndCheckRepo(){
+    void deleteMember_UserIsOwnerGroupAndUserIsNotFound_CorrectDeleteAndCheckRepo(){
         when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
         when(groupService.checkUserIsOwner(anyLong(), any())).thenReturn(Mono.empty());
-        when(groupMemberRepository.deleteByUserId(any())).thenReturn(Mono.just(0L));
+        when(groupMemberRepository.deleteByUserIdAndGroupId(any(), anyLong())).thenReturn(Mono.just(0L));
 
         Mono<Void> result = groupMemberService.deleteMember(1L, UUID.randomUUID(), jwt);
 
@@ -218,7 +224,229 @@ public class GroupMemberServiceTest {
                     assertEquals(NoSuchElementException.class, throwable.getClass())
                 ).verify();
         verify(groupService).checkUserIsOwner(anyLong(), any());
-        verify(groupMemberRepository).deleteByUserId(any());
+        verify(groupMemberRepository).deleteByUserIdAndGroupId(any(), anyLong());
+        verify(cacheService, times(0)).deleteValue(anyString());
+    }
+
+    @Test
+    void checkUserInGroup_GroupFoundAndUserMemberAndCacheFoundMember_CorrectCheckAndCheckRepo(){
+        when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
+        when(cacheService.getValue(any(), any())).thenReturn(Mono.just(Boolean.TRUE));
+
+        Mono<Boolean> result = groupMemberService.checkUserInGroup(1L, jwt);
+
+        StepVerifier.create(result)
+                .expectNext(Boolean.TRUE)
+                .verifyComplete();
+        verify(cacheService).getValue(any(), any());
+    }
+
+    @Test
+    void checkUserInGroup_GroupFoundAndUserOwnerAndCacheFoundOwner_CorrectCheckAndCheckRepo(){
+        when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
+        when(cacheService.getValue(any(), any()))
+                .thenReturn(Mono.empty())
+                .thenReturn(Mono.just(UUID.fromString(jwt.getSubject())));
+
+        Mono<Boolean> result = groupMemberService.checkUserInGroup(1L, jwt);
+
+        StepVerifier.create(result)
+                .expectNext(Boolean.TRUE)
+                .verifyComplete();
+        verify(cacheService, times(2)).getValue(any(), any());
+    }
+
+    @Test
+    void checkUserInGroup_GroupFoundAndUserMemberAndCacheNotFound_CorrectCheckAndCheckRepo(){
+        when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
+        when(cacheService.getValue(any(), any())).thenReturn(Mono.empty());
+        when(groupMemberRepository.existsByGroupIdAndUserId(anyLong(), any())).thenReturn(Mono.just(Boolean.TRUE));
+        when(cacheService.saveValue(anyString(), any(), any())).thenReturn(Mono.empty());
+
+        Mono<Boolean> result = groupMemberService.checkUserInGroup(1L, jwt);
+
+        StepVerifier.create(result)
+                .expectNext(Boolean.TRUE)
+                .verifyComplete();
+        verify(cacheService, times(2)).getValue(any(), any());
+        verify(groupMemberRepository).existsByGroupIdAndUserId(anyLong(), any());
+        verify(cacheService).saveValue(anyString(), any(), any());
+        verify(groupService, times(0)).checkUserIsOwnerWithoutCacheGet(anyLong(), any());
+    }
+
+    @Test
+    void checkUserInGroup_GroupFoundAndUserOwnerAndCacheNotFound_CorrectCheckAndCheckRepo(){
+        when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
+        when(cacheService.getValue(any(), any())).thenReturn(Mono.empty());
+        when(groupMemberRepository.existsByGroupIdAndUserId(anyLong(), any())).thenReturn(Mono.just(Boolean.FALSE));
+        when(groupService.checkUserIsOwnerWithoutCacheGet(anyLong(), any())).thenReturn(Mono.just(Boolean.TRUE));
+
+        Mono<Boolean> result = groupMemberService.checkUserInGroup(1L, jwt);
+
+        StepVerifier.create(result)
+                .expectNext(Boolean.TRUE)
+                .verifyComplete();
+        verify(cacheService, times(2)).getValue(any(), any());
+        verify(groupMemberRepository).existsByGroupIdAndUserId(anyLong(), any());
+        verify(cacheService, times(0)).saveValue(anyString(), any(), any());
+        verify(groupService).checkUserIsOwnerWithoutCacheGet(anyLong(), any());
+    }
+
+    @Test
+    void checkUserInGroup_GroupFoundAndUserNotMemberAndCacheNotFound_CorrectCheckAndCheckRepo(){
+        when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
+        when(cacheService.getValue(any(), any())).thenReturn(Mono.empty());
+        when(groupMemberRepository.existsByGroupIdAndUserId(anyLong(), any())).thenReturn(Mono.just(Boolean.FALSE));
+        when(groupService.checkUserIsOwnerWithoutCacheGet(anyLong(), any())).thenReturn(Mono.just(Boolean.FALSE));
+
+        Mono<Boolean> result = groupMemberService.checkUserInGroup(1L, jwt);
+
+        StepVerifier.create(result)
+                .expectNext(Boolean.FALSE)
+                .verifyComplete();
+        verify(cacheService, times(2)).getValue(any(), any());
+        verify(groupMemberRepository).existsByGroupIdAndUserId(anyLong(), any());
+        verify(cacheService, times(0)).saveValue(anyString(), any(), any());
+        verify(groupService).checkUserIsOwnerWithoutCacheGet(anyLong(), any());
+    }
+
+
+    @Test
+    void checkUserIsOwnerGroup_GroupFoundAndUserOwner_CheckService(){
+        when(groupService.checkUserIsOwner(anyLong(), any())).thenReturn(Mono.just(Boolean.TRUE));
+
+        Mono<Boolean> result = groupMemberService.checkUserIsOwnerGroup(anyLong(), any());
+
+        StepVerifier.create(result)
+                .expectNext(Boolean.TRUE)
+                .verifyComplete();
+
+        verify(groupService).checkUserIsOwner(anyLong(), any());
+    }
+
+    @Test
+    void checkUserIsOwnerGroup_GroupFoundAndUserNoOwner_CheckService(){
+        when(groupService.checkUserIsOwner(anyLong(), any())).thenReturn(Mono.just(Boolean.FALSE));
+
+        Mono<Boolean> result = groupMemberService.checkUserIsOwnerGroup(anyLong(), any());
+
+        StepVerifier.create(result)
+                .expectNext(Boolean.FALSE)
+                .verifyComplete();
+
+        verify(groupService).checkUserIsOwner(anyLong(), any());
+    }
+
+    @Test
+    void existsMemberInGroupByOwnerId_UserNotHaveGroupWhereMember_CorrectReturnAndCheckRepo(){
+        when(groupMemberRepository.findGroupWhereExistsUserByOwnerId(any())).thenReturn(Flux.empty());
+        when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
+
+        Mono<Void> result = groupMemberService.existsMemberInGroupByOwnerId(jwt);
+
+        StepVerifier.create(result)
+                .verifyComplete();
+        verify(groupMemberRepository).findGroupWhereExistsUserByOwnerId(any());
+    }
+
+    @Test
+    void existsMemberInGroupByOwnerId_UserHaveGroupWhereMember_NoCorrectReturnAndCheckRepo(){
+        when(groupMemberRepository.findGroupWhereExistsUserByOwnerId(any())).thenReturn(Flux.fromIterable(List.of(1L, 2L, 3L)));
+        when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
+
+        Mono<Void> result = groupMemberService.existsMemberInGroupByOwnerId(jwt);
+
+        StepVerifier.create(result)
+                .expectErrorSatisfies(throwable -> assertEquals(ConflictException.class, throwable.getClass()))
+                .verify();
+        verify(groupMemberRepository).findGroupWhereExistsUserByOwnerId(any());
+    }
+
+    @Test
+    @DisplayName("Изменение собственника (owner -> yes, cache -> all get, user -> are member)")
+    void changesOwnerGroup_UserOwnerGroupsAndUsersAreMemberAndCacheGetAll_CorrectChangesAndCheckRepo(){
+        RequestGroupsOwnershipChangesDto requestGroupsOwnershipChangesDto = new RequestGroupsOwnershipChangesDto(
+                List.of(
+                        new RequestGroupOwnershipChangesDto(UUID.randomUUID(), 1L),
+                        new RequestGroupOwnershipChangesDto(UUID.randomUUID(), 2L),
+                        new RequestGroupOwnershipChangesDto(UUID.randomUUID(), 3L)
+                )
+        );
+        when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
+        when(groupService.checkUserIsOwnerGroups(any(), any())).thenReturn(Mono.empty());
+        when(cacheService.getValue(any(), any())).thenReturn(Mono.just(Boolean.TRUE));
+        when(groupMemberRepository.deleteAllByUserGroupPairs(any())).thenReturn(Mono.empty());
+        when(groupMemberRepository.updateOwnerGroup(any())).thenReturn(Mono.empty());
+        when(groupMemberRepository.insertAllMembers(any(), any())).thenReturn(Mono.empty());
+        when(cacheService.deleteValue(anyString())).thenReturn(Mono.empty());
+
+        Mono<Void> result = groupMemberService.changesOwnerGroup(Mono.just(requestGroupsOwnershipChangesDto), jwt);
+
+        StepVerifier.create(result)
+                .verifyComplete();
+        verify(groupService).checkUserIsOwnerGroups(any(), any());
+        verify(cacheService, times(3)).getValue(any(), any());
+        verify(groupMemberRepository, times(0)).existsByGroupIdAndUserId(anyLong(), any());
+        verify(groupMemberRepository).deleteAllByUserGroupPairs(any());
+        verify(groupMemberRepository).updateOwnerGroup(any());
+        verify(groupMemberRepository).insertAllMembers(any(), any());
+        verify(cacheService, times(6)).deleteValue(anyString());
+    }
+
+    @Test
+    @DisplayName("Изменение собственника (owner -> yes, cache -> not all get, last user not member)")
+    void changesOwnerGroup_UserOwnerGroupsAndLasUserNotMemberAndCacheGetAll_NotCorrectChangesAndCheckRepo(){
+        RequestGroupsOwnershipChangesDto requestGroupsOwnershipChangesDto = new RequestGroupsOwnershipChangesDto(
+                List.of(
+                        new RequestGroupOwnershipChangesDto(UUID.randomUUID(), 1L),
+                        new RequestGroupOwnershipChangesDto(UUID.randomUUID(), 2L),
+                        new RequestGroupOwnershipChangesDto(UUID.randomUUID(), 3L)
+                )
+        );
+        when(groupService.checkUserIsOwnerGroups(any(), any())).thenReturn(Mono.empty());
+        when(cacheService.getValue(any(), any())).thenReturn(Mono.empty());
+        when(groupMemberRepository.existsByGroupIdAndUserId(anyLong(), any()))
+                .thenReturn(Mono.just(Boolean.TRUE))
+                .thenReturn(Mono.just(Boolean.TRUE))
+                .thenReturn(Mono.just(Boolean.FALSE));
+
+        Mono<Void> result = groupMemberService.changesOwnerGroup(Mono.just(requestGroupsOwnershipChangesDto), jwt);
+
+        StepVerifier.create(result)
+                .expectErrorSatisfies(throwable -> assertEquals(NoSuchElementException.class, throwable.getClass()))
+                .verify();
+        verify(groupService).checkUserIsOwnerGroups(any(), any());
+        verify(cacheService, times(3)).getValue(any(), any());
+        verify(groupMemberRepository, times(3)).existsByGroupIdAndUserId(anyLong(), any());
+        verify(groupMemberRepository, times(0)).deleteByUserIdAndGroupId(any(), anyLong());
+        verify(groupMemberRepository, times(0)).updateOwnerGroup(any());
+        verify(groupMemberRepository, times(0)).insertAllMembers(any(), any());
+        verify(cacheService, times(0)).deleteValue(anyString());
+    }
+
+    @Test
+    void changesOwnerGroup_GroupsIdDublicated_NotCorrectChangesAndCheckRepo(){
+        RequestGroupsOwnershipChangesDto requestGroupsOwnershipChangesDto = new RequestGroupsOwnershipChangesDto(
+                List.of(
+                        new RequestGroupOwnershipChangesDto(UUID.randomUUID(), 1L),
+                        new RequestGroupOwnershipChangesDto(UUID.randomUUID(), 1L),
+                        new RequestGroupOwnershipChangesDto(UUID.randomUUID(), 1L)
+                )
+        );
+
+
+        Mono<Void> result = groupMemberService.changesOwnerGroup(Mono.just(requestGroupsOwnershipChangesDto), jwt);
+
+        StepVerifier.create(result)
+                .expectErrorSatisfies(throwable -> assertEquals(ValidationException.class, throwable.getClass()))
+                .verify();
+        verify(groupService, times(0)).checkUserIsOwnerGroups(any(), any());
+        verify(cacheService, times(0)).getValue(any(), any());
+        verify(groupMemberRepository, times(0)).existsByGroupIdAndUserId(anyLong(), any());
+        verify(groupMemberRepository, times(0)).deleteByUserIdAndGroupId(any(), anyLong());
+        verify(groupMemberRepository, times(0)).updateOwnerGroup(any());
+        verify(groupMemberRepository, times(0)).insertAllMembers(any(), any());
+        verify(cacheService, times(0)).deleteValue(anyString());
     }
 
 }

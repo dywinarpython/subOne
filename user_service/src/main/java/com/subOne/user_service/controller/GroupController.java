@@ -92,7 +92,7 @@ public class GroupController {
     @Operation(
             summary = "Обновление информации группы"
     )
-    @PatchMapping
+    @PatchMapping("/{groupsId}")
     public Mono<ResponseEntity<Map<String, String>>> updateGroup(@PathVariable Long groupId, @Valid @RequestBody Mono<RequestUpdateGroupDto> requestUpdateGroupDtoMono , @AuthenticationPrincipal Jwt jwt) {
         return groupService.updateGroup(requestUpdateGroupDtoMono,groupId , jwt).thenReturn(ResponseEntity.ok(Map.of("message", "Group is updated")));
     }

@@ -1,6 +1,8 @@
 server:
   port: 0
 spring:
+  page:
+      size: 10
   application:
     name: user_service
   liquibase:

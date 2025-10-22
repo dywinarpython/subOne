@@ -26,11 +26,11 @@ public interface GroupRepository extends R2dbcRepository<Group, Long>, SelectOwn
             from groups
             where owner_id = :ownerId
             """)
-    Flux<Long> findGroupIdByOwnerId(UUID ownerId);
+    Flux<Long> findGroupsIdByOwnerId(UUID ownerId);
 
     @Query("""
             select count(*)
-            from user_service.groups g
+            from groups g
             where g.owner_id = :ownerId and g.id in (:groupsId)
             """)
     Mono<Long> findCountWhereUserIsOwnerByGroupsId(UUID ownerId, List<Long> groupsId);

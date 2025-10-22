@@ -3,6 +3,7 @@ package com.subOne.user_service.repository.group_member_repository;
 import com.subOne.user_service.dto.group_member.GroupMemberInfoDto;
 import com.subOne.user_service.dto.user.response.ResponseUserDto;
 import com.subOne.user_service.entity.GroupMember;
+import com.subOne.user_service.repository.group_member_repository.delete.DeleteAllByPairsRepository;
 import com.subOne.user_service.repository.group_member_repository.insert.InsertMembersRepository;
 import com.subOne.user_service.repository.group_member_repository.update.UpdateOwnerGroupRepository;
 import org.springframework.data.r2dbc.repository.Query;
@@ -12,9 +13,11 @@ import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
-public interface GroupMemberRepository extends R2dbcRepository<GroupMember, Long>, UpdateOwnerGroupRepository, InsertMembersRepository {
+public interface GroupMemberRepository extends R2dbcRepository<GroupMember, Long>, UpdateOwnerGroupRepository, InsertMembersRepository, DeleteAllByPairsRepository {
 
-    Mono<Long> deleteByUserId(UUID userId);
+
+
+    Mono<Long> deleteByUserIdAndGroupId(UUID userId, Long groupId);
 
     Mono<Boolean> existsByGroupIdAndUserId(Long groupId, UUID userId);
 

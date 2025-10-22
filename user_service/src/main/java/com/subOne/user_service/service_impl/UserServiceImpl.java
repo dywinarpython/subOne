@@ -63,10 +63,11 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public Mono<ResponseUserDto> getUserById(Jwt jwt) {
         return cacheService.getValue("USER::" + jwt.getSubject(), ResponseUserDto.class)
-                .switchIfEmpty(
+                .switchIfEmpty( Mono.defer( ()  ->
                         userRepository.findByUserId(UUID.fromString(jwt.getSubject()))
                         .switchIfEmpty(Mono.error(new NoSuchElementException("User is not found!")))
-                        .flatMap(dto -> cacheService.saveValue("USER::" + jwt.getSubject(), dto, Duration.ofMinutes(15)).thenReturn(dto)));
+                        .flatMap(dto -> cacheService.saveValue("USER::" + jwt.getSubject(), dto, Duration.ofMinutes(15)).thenReturn(dto)))
+                );
     }
 
     @Override
@@ -82,11 +83,12 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public Mono<Void> deleteUser(Jwt jwt) {
-        return cacheService.getValue("USER::" + jwt.getSubject(), ResponseUserDto.class).thenReturn(true)
-                .switchIfEmpty(userRepository.existsByUserId(UUID.fromString(jwt.getSubject())))
+        return cacheService.getValue("USER::" + jwt.getSubject(), ResponseUserDto.class)
+                .map(responseUserDto -> responseUserDto.userId().equals(UUID.fromString(jwt.getSubject())))
+                .switchIfEmpty(Mono.defer(() -> userRepository.existsByUserId(UUID.fromString(jwt.getSubject()))))
                 .flatMap(bl -> bl? Mono.empty(): Mono.error(new NoSuchElementException("User is not found")))
                 .then(Mono.defer( () -> groupMemberService.existsMemberInGroupByOwnerId(jwt)))
-                .then(groupService.deleteDataRelatedGroupsByOwnerId(jwt))
+                .then(Mono.defer( () -> groupService.deleteDataRelatedGroupsByOwnerId(jwt)))
                 .then(Mono.defer( () -> userRepository.deleteByUserId(UUID.fromString(jwt.getSubject()))
                 .then(kafkaService.sendToTopic(nameTopicDeleteUser, jwt.getSubject()))
                 .then(cacheService.deleteValue("USER::" + jwt.getSubject()))));

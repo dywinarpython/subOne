@@ -42,9 +42,9 @@ spring:
       connectTimeout: 5s
       socketTimeout: 30s
   kafka:
-    partitions_keycloak_consumer: 1
+    partitions_keycloak_consumer: 3
     topicNameDeleteUser: ${KAFKA_NAME_TOPIC_DELETE_USER:delete_user}
-    bootstrap-servers: ${KAFKA_SERVERS:localhost:19092,localhost:19093,localhost:19094}
+    bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
     properties:
       enable.idempotence: true
       request.timeout.ms: 15000

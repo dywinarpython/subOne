@@ -24,7 +24,7 @@ public class InsertMembersRepositoryImpl implements InsertMembersRepository {
             query.append("(:group_id").append(i);
             query.append(", :user_id").append("),");
         }
-        query.deleteCharAt(query.length() -1);
+        query.deleteCharAt(query.length() - 1);
         DatabaseClient.GenericExecuteSpec spec = databaseClient.sql(query.toString());
         for (int i = 0; i < groupsId.size(); i++) {
             spec = spec.bind("group_id" + i, groupsId.get(i));

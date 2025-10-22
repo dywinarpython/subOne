@@ -105,7 +105,7 @@ public class GroupServiceImpl implements GroupService {
         return groupRepository.deleteByIdAndOwnerId(groupId, UUID.fromString(jwt.getSubject())).flatMap(count -> {
            if(count != 1) return checkRights(groupId).then();
            return cacheService.deleteValue("OWNER::" + groupId);}
-        ).then(kafkaService.sendToTopic("delete_group", groupId));
+        ).then(Mono.defer( () -> kafkaService.sendToTopic("delete_group", groupId)));
     }
 
     @Override
@@ -125,9 +125,9 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public Mono<Boolean> checkUserIsOwnerGroups(List<Long> groupsId, Jwt jwt) {
+    public Mono<Void> checkUserIsOwnerGroups(List<Long> groupsId, Jwt jwt) {
         return groupRepository.findCountWhereUserIsOwnerByGroupsId(UUID.fromString(jwt.getSubject()), groupsId)
-                .flatMap(count -> count == groupsId.size()? Mono.just(Boolean.TRUE): Mono.error(new AccessDeniedException("Access is denied")));
+                .flatMap(count -> count == groupsId.size()? Mono.empty(): Mono.error(new AccessDeniedException("Access is denied")));
     }
 
     @Override
@@ -143,7 +143,7 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     public Mono<Void> deleteDataRelatedGroupsByOwnerId(Jwt jwt) {
-        return groupRepository.findGroupIdByOwnerId(UUID.fromString(jwt.getSubject()))
+        return groupRepository.findGroupsIdByOwnerId(UUID.fromString(jwt.getSubject()))
                 .flatMap(groupId ->
                     kafkaService.sendToTopic("delete_group" , groupId).then(cacheService.deleteValue("OWNER::" + groupId))
                 ).then();

@@ -19,7 +19,7 @@ public interface GroupService {
     Mono<Void> updateGroup(Mono<RequestUpdateGroupDto> requestGroupDtoMono, Long groupId, Jwt jwt);
     Mono<Void> deleteGroup(Long groupId, Jwt jwt);
     Mono<Boolean> checkUserIsOwner(Long groupId, Jwt jwt);
-    Mono<Boolean> checkUserIsOwnerGroups(List<Long> groupsId, Jwt jwt);
+    Mono<Void> checkUserIsOwnerGroups(List<Long> groupsId, Jwt jwt);
     Mono<Boolean> checkUserIsOwnerWithoutCacheGet(Long groupId, Jwt jwt);
     Mono<Void> deleteDataRelatedGroupsByOwnerId(Jwt jwt);
 }
