@@ -64,7 +64,7 @@ public class MainExceptionController {
     @ExceptionHandler(ConflictException.class)
     public Mono<ResponseEntity<Map<String, Object>>> handler(ConflictException ex){
         Map<String, Object> response = new HashMap<>();
-        response.put("error", ex.getMessage());
+        response.put("conflict", ex.getMessage());
         response.putAll(ex.getDetails());
 
         return Mono.just(ResponseEntity.status(HttpStatus.CONFLICT).body(response));

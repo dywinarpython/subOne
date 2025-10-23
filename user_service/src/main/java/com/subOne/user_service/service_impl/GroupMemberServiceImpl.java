@@ -13,12 +13,10 @@ import com.subOne.user_service.service.GroupService;
 import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
@@ -48,8 +46,8 @@ public class GroupMemberServiceImpl implements GroupMemberService {
     public Mono<ResponseMembersDto> addUser(UUID userId, Long groupId) {
         return groupMemberRepository.findExistUserInGroupAndCountMemberInGroup(userId, groupId)
                 .flatMap( dto -> {
-                    if (dto.exist()) return Mono.error(new ResponseStatusException(HttpStatus.CONFLICT, "User is already a member of the group"));
-                    if (dto.count() >= 5) return Mono.error(new ResponseStatusException(HttpStatus.CONFLICT, "There can be no more than 5 members of the group (the owner is not considered)"));
+                    if (dto.exist()) return Mono.error(new ConflictException("User is already a member of the group", Map.of()));
+                    if (dto.count() >= 5) return Mono.error(new ConflictException("There can be no more than 5 members of the group (the owner is not considered)", Map.of()));
                     return Mono.empty();
                 })
                 .then(Mono.defer(() -> groupMemberRepository.save(mapperGroupMember.userIdAndGroupIdToGroupMember(userId, groupId))))

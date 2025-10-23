@@ -20,7 +20,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -98,7 +97,7 @@ public class GroupMemberServiceTest {
         Mono<ResponseMembersDto> result = groupMemberService.addUser(any(), anyLong());
 
         StepVerifier.create(result)
-                .expectErrorSatisfies(throwable -> assertEquals(ResponseStatusException.class, throwable.getClass()))
+                .expectErrorSatisfies(throwable -> assertEquals(ConflictException.class, throwable.getClass()))
                 .verify();
         verify(groupMemberRepository).findExistUserInGroupAndCountMemberInGroup(any(), anyLong());
         verify(groupMemberRepository, times(0)).save(any());
@@ -115,7 +114,7 @@ public class GroupMemberServiceTest {
         Mono<ResponseMembersDto> responseMembersDtoMono = groupMemberService.addUser(any(), anyLong());
 
         StepVerifier.create(responseMembersDtoMono)
-                .expectErrorSatisfies(throwable -> assertEquals(ResponseStatusException.class, throwable.getClass()))
+                .expectErrorSatisfies(throwable -> assertEquals(ConflictException.class, throwable.getClass()))
                 .verify();
         verify(groupMemberRepository).findExistUserInGroupAndCountMemberInGroup(any(), anyLong());
         verify(groupMemberRepository, times(0)).save(any());

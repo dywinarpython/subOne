@@ -6,6 +6,7 @@ import com.subOne.user_service.dto.user.response.ResponseUserDto;
 import org.springframework.security.oauth2.jwt.Jwt;
 import reactor.core.publisher.Mono;
 
+import java.util.UUID;
 
 
 public interface UserService {
@@ -14,4 +15,5 @@ public interface UserService {
     Mono<ResponseUserDto> getUserById(Jwt jwt);
     Mono<Void> updateUser(Mono<RequestUpdateUserDto> requestUpdateUserDto, Jwt jwt);
     Mono<Void> deleteUser(Jwt jwt);
+    Mono<Boolean> checkVerifyEmail(UUID userId);
 }

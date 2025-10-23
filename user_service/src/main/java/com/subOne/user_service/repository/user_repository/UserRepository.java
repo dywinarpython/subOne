@@ -16,6 +16,7 @@ public interface UserRepository extends ReactiveCrudRepository<User, Long>, Upda
     Mono<ResponseUserDto> findByUserId(UUID id);
     Mono<Integer> deleteByUserId(UUID id);
     Mono<Boolean> existsByUserId(UUID userId);
+    Mono<Boolean> existsByUserIdAndVerifyEmailTrue(UUID userId);
 
     @Modifying
     @Query("""

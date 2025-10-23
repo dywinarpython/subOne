@@ -25,16 +25,16 @@ import static org.springframework.security.test.web.reactive.server.SecurityMock
 public class GroupControllerTest extends AbstractControllerTest{
 
     @Autowired
-    private GroupRepository groupRepository;
+    protected GroupRepository groupRepository;
 
     @Autowired
     private MapperGroup mapperGroup;
 
     @Autowired
-    private CacheService cacheService;
+    protected CacheService cacheService;
 
 
-    private final String requestMapping = "/api/v1/groups";
+    private final String URI = "/api/v1/groups";
 
     protected Group group;
 
@@ -61,7 +61,7 @@ public class GroupControllerTest extends AbstractControllerTest{
     void createGroup_UserIsCreated_CorrectResult(){
         Flux<ResponseGroupDto> result = webTestClient
                 .post()
-                .uri(requestMapping)
+                .uri(URI)
                 .bodyValue(new RequestGroupDto("groupTests"))
                 .exchange()
                 .expectStatus().isCreated()
@@ -76,7 +76,7 @@ public class GroupControllerTest extends AbstractControllerTest{
     void getGroupById_GroupIsCreated_CorrectResult(){
         Flux<ResponseGroupDto> result = webTestClient
                 .get()
-                .uri(requestMapping + "/" + group.getId())
+                .uri(URI + "/" + group.getId())
                 .exchange()
                 .expectStatus().isOk()
                 .returnResult(ResponseGroupDto.class).getResponseBody();
@@ -93,7 +93,7 @@ public class GroupControllerTest extends AbstractControllerTest{
 
         Flux<ResponseGroupsDto> result = webTestClient
                 .get()
-                .uri(requestMapping + "/owner/me?page=" + 0)
+                .uri(URI + "/owner/me?page=" + 0)
                 .exchange()
                 .expectStatus().isOk()
                 .returnResult(ResponseGroupsDto.class).getResponseBody();
@@ -110,7 +110,7 @@ public class GroupControllerTest extends AbstractControllerTest{
     void getGroupsUserIsMember_UserIsNotMember_CorrectReturn(){
         Flux<ResponseGroupsDto> result = webTestClient
                 .get()
-                .uri(requestMapping + "/me?page=" + 0)
+                .uri(URI + "/me?page=" + 0)
                 .exchange()
                 .expectStatus().isOk()
                 .returnResult(ResponseGroupsDto.class).getResponseBody();
@@ -131,7 +131,7 @@ public class GroupControllerTest extends AbstractControllerTest{
         RequestUpdateGroupDto requestUpdateGroupDto = new RequestUpdateGroupDto("groupTestNewName");
         webTestClient
                 .patch()
-                .uri(requestMapping + "/" + group.getId())
+                .uri(URI + "/" + group.getId())
                 .bodyValue(requestUpdateGroupDto)
                 .exchange()
                 .expectStatus().isOk();
@@ -147,7 +147,7 @@ public class GroupControllerTest extends AbstractControllerTest{
         RequestUpdateGroupDto requestUpdateGroupDto = new RequestUpdateGroupDto("groupTestNewName");
         webTestClient
                 .patch()
-                .uri(requestMapping + "/" + 1000)
+                .uri(URI + "/" + 1000)
                 .bodyValue(requestUpdateGroupDto)
                 .exchange()
                 .expectStatus().isNotFound();
@@ -165,7 +165,7 @@ public class GroupControllerTest extends AbstractControllerTest{
         webTestClient
                 .mutateWith(mockJwt().jwt(jwt))
                 .patch()
-                .uri(requestMapping + "/" + group.getId())
+                .uri(URI + "/" + group.getId())
                 .bodyValue(requestUpdateGroupDto)
                 .exchange()
                 .expectStatus().isForbidden();
@@ -176,10 +176,9 @@ public class GroupControllerTest extends AbstractControllerTest{
     @Test
     void deleteGroup_GroupIsFound_CorrectDelete(){
         cacheService.saveValue("OWNER::" + group.getId(), user.getUserId(), Duration.ofMinutes(10)).block();
-        RequestUpdateGroupDto requestUpdateGroupDto = new RequestUpdateGroupDto("groupTestNewName");
         webTestClient
                 .delete()
-                .uri(requestMapping + "/" + group.getId())
+                .uri(URI + "/" + group.getId())
                 .exchange()
                 .expectStatus().isNoContent();
 
@@ -194,10 +193,9 @@ public class GroupControllerTest extends AbstractControllerTest{
     @DisplayName("DELETE -> /api/v1/groups/{groupId} group is not found")
     @Test
     void deleteGroup_GroupIsNotFound_NotCorrectDelete(){
-        RequestUpdateGroupDto requestUpdateGroupDto = new RequestUpdateGroupDto("groupTestNewName");
         webTestClient
                 .delete()
-                .uri(requestMapping + "/" + 1000)
+                .uri(URI + "/" + 1000)
                 .exchange()
                 .expectStatus().isNotFound();
     }

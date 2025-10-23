@@ -1,7 +1,5 @@
 package com.subOne.user_service.config;
 
-import com.subOne.user_service.kafka.serviceProducer.KafkaService;
-import com.subOne.user_service.kafka.serviceProducer.KafkaServiceImpl;
 import com.zaxxer.hikari.HikariDataSource;
 import io.r2dbc.pool.ConnectionPool;
 import io.r2dbc.pool.ConnectionPoolConfiguration;
@@ -19,14 +17,8 @@ import org.springframework.r2dbc.connection.R2dbcTransactionManager;
 import org.springframework.transaction.ReactiveTransactionManager;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
-import reactor.core.publisher.Mono;
 
 import javax.sql.DataSource;
-
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mock;
-
 
 @TestConfiguration
 public class TestConfig {
@@ -64,14 +56,4 @@ public class TestConfig {
                 .builder(new PostgresqlConnectionFactory(config))
                 .build());
     }
-
-    @Primary
-    @Bean
-    public KafkaService kafkaService(){
-        KafkaService kafkaService = mock(KafkaServiceImpl.class);
-        lenient().when(kafkaService.sendToTopic(anyString(), anyString())).thenReturn(Mono.empty());
-        lenient().when(kafkaService.sendToTopic(anyString(), anyLong())).thenReturn(Mono.empty());
-        return kafkaService;
-    }
-
 }

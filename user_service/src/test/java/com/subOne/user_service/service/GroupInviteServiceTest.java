@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
@@ -48,15 +49,19 @@ public class GroupInviteServiceTest {
     private GroupInviteRepository groupInviteRepository;
 
     @Mock
+    private UserService userService;
+
+    @Mock
     private CacheService cacheService;
 
     @Mock
     private Jwt jwt;
 
     @Test
-    void addUserByCode_CodeIsCorrectAndUserIsNotMember_CorrectAddAndCheckRepo(){
+    void addUserByCode_CodeIsCorrectAndUserIsNotMemberAndVerifyEmailAndCacheNotFound_CorrectAddAndCheckRepo(){
         ResponseMembersDto responseMembersDto = new ResponseMembersDto(List.of());
         when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
+        when(userService.checkVerifyEmail(any())).thenReturn(Mono.just(Boolean.TRUE));
         when(groupInviteRepository.findGroupIdByCode(any())).thenReturn(Mono.just(1L));
         when(groupMemberService.addUser(any(), anyLong())).thenReturn(Mono.just(responseMembersDto));
         when(cacheService.getValue(anyString(), any())).thenReturn(Mono.empty());
@@ -66,13 +71,51 @@ public class GroupInviteServiceTest {
         StepVerifier.create(result)
                 .expectNext(responseMembersDto)
                 .verifyComplete();
+        verify(userService).checkVerifyEmail(any());
         verify(groupInviteRepository).findGroupIdByCode(any());
+        verify(groupMemberService).addUser(any(), anyLong());
+        verify(cacheService).getValue(anyString(), any());
+    }
+    @Test
+    void addUserByCode_CodeIsCorrectAndUserIsNotMemberAndVerifyEmailAndCacheFound_CorrectAddAndCheckRepo(){
+        ResponseMembersDto responseMembersDto = new ResponseMembersDto(List.of());
+        when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
+        when(userService.checkVerifyEmail(any())).thenReturn(Mono.just(Boolean.TRUE));
+        when(groupMemberService.addUser(any(), anyLong())).thenReturn(Mono.just(responseMembersDto));
+        when(cacheService.getValue(anyString(), any())).thenReturn(Mono.just(1L));
+
+        Mono<ResponseMembersDto> result = groupInviteService.addUserByCode(UUID.randomUUID(), jwt);
+
+        StepVerifier.create(result)
+                .expectNext(responseMembersDto)
+                .verifyComplete();
+        verify(userService).checkVerifyEmail(any());
+        verify(groupInviteRepository, times(0)).findGroupIdByCode(any());
         verify(groupMemberService).addUser(any(), anyLong());
         verify(cacheService).getValue(anyString(), any());
     }
 
     @Test
+    void addUserByCode_UserNotVerifyEmail_NotCorrectAddAndCheckRepo(){
+        when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
+        when(userService.checkVerifyEmail(any())).thenReturn(Mono.just(Boolean.FALSE));
+
+        Mono<ResponseMembersDto> result = groupInviteService.addUserByCode(UUID.randomUUID(), jwt);
+
+        StepVerifier.create(result)
+                .expectErrorSatisfies(throwable ->
+                        assertEquals(AccessDeniedException.class, throwable.getClass()))
+                .verify();
+        verify(userService).checkVerifyEmail(any());
+        verify(groupInviteRepository, times(0)).findGroupIdByCode(any());
+        verify(groupMemberService, times(0)).addUser(any(), anyLong());
+        verify(cacheService, times(0)).getValue(anyString(), any());
+    }
+
+    @Test
     void addUserByCode_CodeIsNotCorrect_NotCorrectAddAndCheckRepo(){
+        when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
+        when(userService.checkVerifyEmail(any())).thenReturn(Mono.just(Boolean.TRUE));
         when(groupInviteRepository.findGroupIdByCode(any())).thenReturn(Mono.empty());
         when(cacheService.getValue(anyString(), any())).thenReturn(Mono.empty());
 
@@ -82,6 +125,7 @@ public class GroupInviteServiceTest {
                 .expectErrorSatisfies(throwable ->
                         assertEquals(ResponseStatusException.class, throwable.getClass()))
                 .verify();
+        verify(userService).checkVerifyEmail(any());
         verify(groupInviteRepository).findGroupIdByCode(any());
         verify(groupMemberService, times(0)).addUser(any(), anyLong());
         verify(cacheService).getValue(anyString(), any());

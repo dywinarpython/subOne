@@ -79,7 +79,7 @@ public class InviteControllerTest extends AbstractControllerTest{
     }
 
     @Test
-    @DisplayName("ПРОВЕРКА POST -> /api/v1/invitations/join")
+    @DisplayName("POST -> /api/v1/invitations/join")
     void joinGroupByCode_UserIsFoundAndUserIsNotMemberGroup_CorrectSave(){
 
         jwt = Jwt.withTokenValue("dummy-token")
@@ -110,7 +110,20 @@ public class InviteControllerTest extends AbstractControllerTest{
     }
 
     @Test
-    @DisplayName("ПРОВЕРКА POST -> /api/v1/invitations/join (user is owner)")
+    @DisplayName("POST -> /api/v1/invitations/join (user not verify email)")
+    void joinGroupByCode_UserNotVerifyEmail_NotCorrectSave(){
+        user.setVerifyEmail(false);
+        userRepository.save(user).block();
+
+        webTestClient
+                .post()
+                .uri(requestMapping + "/join?code=" + groupInvite.getCode())
+                .exchange()
+                .expectStatus().isEqualTo(403);
+    }
+
+    @Test
+    @DisplayName("POST -> /api/v1/invitations/join (user is owner)")
     void joinGroupByCode_UserIsOwnerGroup_NotCorrectSave(){
        webTestClient
                 .post()
@@ -120,7 +133,7 @@ public class InviteControllerTest extends AbstractControllerTest{
     }
 
     @Test
-    @DisplayName("ПРОВЕРКА POST -> /api/v1/invitations/join (user is memberGroup)")
+    @DisplayName("POST -> /api/v1/invitations/join (user is memberGroup)")
     void joinGroupByCode_UserIsMemberGroup_NotCorrectSave(){
         jwt = Jwt.withTokenValue("dummy-token")
                 .header("alg", "none")
@@ -146,7 +159,7 @@ public class InviteControllerTest extends AbstractControllerTest{
     }
 
     @Test
-    @DisplayName("ПРОВЕРКА POST -> /api/v1/invitations/join (code is not valid)")
+    @DisplayName("POST -> /api/v1/invitations/join (code is not valid)")
     void joinGroupByCode_CodeIsNotValid_NotCorrectSave(){
         webTestClient
                 .post()
@@ -157,7 +170,7 @@ public class InviteControllerTest extends AbstractControllerTest{
 
 
     @Test
-    @DisplayName("ПРОВЕРКА GET -> /api/v1/invitations/{groupId}")
+    @DisplayName("GET -> /api/v1/invitations/{groupId}")
     void getCodeByGroupId_CodeIsNotCreatedAndGroupIsFound_CorrectReturnAndSave(){
 
         StepVerifier.create(groupInviteRepository.deleteById(groupInvite.getGroupId()))
@@ -179,7 +192,7 @@ public class InviteControllerTest extends AbstractControllerTest{
 
 
     @Test
-    @DisplayName("ПРОВЕРКА GET -> /api/v1/invitations/{groupId} (код просрочен)")
+    @DisplayName("GET -> /api/v1/invitations/{groupId} (код просрочен)")
     void getCodeByGroupId_CodeIsCreatedButOverdueAndGroupIsFound_CorrectReturnAndSave(){
         groupInvite.setExpiresAt(LocalDateTime.now().plusMinutes(5));
         StepVerifier.create(groupInviteRepository.save(groupInvite))
@@ -201,7 +214,7 @@ public class InviteControllerTest extends AbstractControllerTest{
     }
 
     @Test
-    @DisplayName("ПРОВЕРКА GET -> /api/v1/invitations/{groupId} (group is not found)")
+    @DisplayName("GET -> /api/v1/invitations/{groupId} (group is not found)")
     void getCodeByGroupId_GroupIsNotFound_NotCorrectReturnAndSave(){
         webTestClient
                 .get()

@@ -18,25 +18,25 @@ import java.util.UUID;
 
 @Tag(name = "Управление участниками группы")
 @RestController
-@RequestMapping("/api/v1/groups/{groupId}/members")
+@RequestMapping("/api/v1/groups")
 @RequiredArgsConstructor
 public class GroupMemberController {
     private final GroupMemberService groupMemberService;
 
     @Operation(summary = "Получение членов группы")
-    @GetMapping
+    @GetMapping("/{groupId}/members")
     public Mono<ResponseEntity<ResponseMembersDto>> getMembers(@PathVariable Long groupId, @AuthenticationPrincipal Jwt jwt) {
         return groupMemberService.getUsers(groupId, jwt).map(ResponseEntity::ok);
     }
 
     @Operation(summary = "Проверка пользователь член группы")
-    @GetMapping("/check")
+    @GetMapping("{groupId}/members/check")
     public Mono<ResponseEntity<Map<String, Boolean>>> checkUserInGroup(@PathVariable Long groupId, @AuthenticationPrincipal Jwt jwt) {
         return groupMemberService.checkUserInGroup(groupId, jwt).thenReturn(ResponseEntity.ok(Map.of("hasAccess", true)));
     }
 
     @Operation(summary = "Проверка пользователь собственник группы")
-    @GetMapping("/check/owner")
+    @GetMapping("{groupId}/members/check/owner")
     public Mono<ResponseEntity<Map<String, Boolean>>> checkUserIsOwnerGroup(@PathVariable Long groupId, @AuthenticationPrincipal Jwt jwt) {
         return groupMemberService.checkUserIsOwnerGroup(groupId, jwt).thenReturn(ResponseEntity.ok(Map.of("hasAccess", true)));
     }
@@ -52,7 +52,7 @@ public class GroupMemberController {
     }
 
     @Operation(summary = "Удаление пользователя из группы")
-    @DeleteMapping("/{userId}")
+    @DeleteMapping("{groupId}/members/{userId}")
     public Mono<ResponseEntity<Void>> deleteMember(
             @PathVariable Long groupId,
             @PathVariable UUID userId,

@@ -86,8 +86,6 @@ public class GroupServiceImpl implements GroupService {
                 .map(ResponseGroupsDto::new);
     }
 
-
-
     @Override
     @Transactional
     public Mono<Void> updateGroup(Mono<RequestUpdateGroupDto> requestGroupDtoMono, Long groupId, Jwt jwt) {

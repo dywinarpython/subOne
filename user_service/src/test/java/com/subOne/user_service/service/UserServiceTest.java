@@ -251,4 +251,28 @@ public class UserServiceTest {
         verify(kafkaService, times(0)).sendToTopic(anyString(), anyString());
         verify(cacheService, times(0)).deleteValue(anyString());
     }
+
+    @Test
+    void checkVerifyEmail_UserVerifyEmail_CheckReturnAndRepo(){
+         when(userRepository.existsByUserIdAndVerifyEmailTrue(any())).thenReturn(Mono.just(Boolean.TRUE));
+
+         Mono<Boolean> result = userService.checkVerifyEmail(UUID.randomUUID());
+
+         StepVerifier.create(result)
+                 .expectNext(Boolean.TRUE)
+                 .verifyComplete();
+         verify(userRepository).existsByUserIdAndVerifyEmailTrue(any());
+    }
+
+    @Test
+    void checkVerifyEmail_UserNotVerifyEmail_CheckReturnAndRepo(){
+        when(userRepository.existsByUserIdAndVerifyEmailTrue(any())).thenReturn(Mono.just(Boolean.FALSE));
+
+        Mono<Boolean> result = userService.checkVerifyEmail(UUID.randomUUID());
+
+        StepVerifier.create(result)
+                .expectNext(Boolean.FALSE)
+                .verifyComplete();
+        verify(userRepository).existsByUserIdAndVerifyEmailTrue(any());
+    }
 }

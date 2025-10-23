@@ -90,7 +90,12 @@ public class UserServiceImpl implements UserService {
                 .then(Mono.defer( () -> groupMemberService.existsMemberInGroupByOwnerId(jwt)))
                 .then(Mono.defer( () -> groupService.deleteDataRelatedGroupsByOwnerId(jwt)))
                 .then(Mono.defer( () -> userRepository.deleteByUserId(UUID.fromString(jwt.getSubject()))
-                .then(kafkaService.sendToTopic(nameTopicDeleteUser, jwt.getSubject()))
-                .then(cacheService.deleteValue("USER::" + jwt.getSubject()))));
+                .then(Mono.defer( () -> kafkaService.sendToTopic(nameTopicDeleteUser, jwt.getSubject())))
+                .then(Mono.defer( () -> cacheService.deleteValue("USER::" + jwt.getSubject())))));
+    }
+
+    @Override
+    public Mono<Boolean> checkVerifyEmail(UUID userId) {
+        return userRepository.existsByUserIdAndVerifyEmailTrue(userId);
     }
 }
