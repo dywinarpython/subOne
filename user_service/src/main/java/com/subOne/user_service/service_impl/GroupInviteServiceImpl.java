@@ -8,8 +8,10 @@ import com.subOne.user_service.repository.group_invite_repository.GroupInviteRep
 import com.subOne.user_service.service.GroupInviteService;
 import com.subOne.user_service.service.GroupMemberService;
 import com.subOne.user_service.service.GroupService;
+import com.subOne.user_service.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,11 +36,15 @@ public class GroupInviteServiceImpl implements GroupInviteService {
 
     private final CacheService cacheService;
 
+    private final UserService userService;
+
     @Override
     @Transactional
     public Mono<ResponseMembersDto> addUserByCode(UUID code, Jwt jwt) {
-        return cacheService.getValue("CODE::" + code, Long.class)
-                .switchIfEmpty(groupInviteRepository.findGroupIdByCode(code))
+        return userService.checkVerifyEmail(UUID.fromString(jwt.getSubject()))
+                .flatMap(bl -> bl? Mono.empty(): Mono.error(new AccessDeniedException("Email not verified")))
+                .then(Mono.defer(() -> cacheService.getValue("CODE::" + code, Long.class)))
+                .switchIfEmpty(Mono.defer(() -> groupInviteRepository.findGroupIdByCode(code)))
                 .flatMap(groupId ->
                         groupMemberService.addUser(UUID.fromString(jwt.getSubject()), groupId))
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.GONE, "Invite code has expired")));

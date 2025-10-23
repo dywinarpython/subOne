@@ -10,6 +10,7 @@ import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface GroupRepository extends R2dbcRepository<Group, Long>, SelectOwnerGroupRepository {
@@ -19,6 +20,27 @@ public interface GroupRepository extends R2dbcRepository<Group, Long>, SelectOwn
     Mono<Boolean> existsByIdAndOwnerId(Long groupId, UUID ownerId);
 
     Flux<ResponseGroupDto> findByOwnerId(UUID ownerId, Pageable pageable);
+
+    @Query("""
+            select id
+            from groups
+            where owner_id = :ownerId
+            """)
+    Flux<Long> findGroupsIdByOwnerId(UUID ownerId);
+
+    @Query("""
+            select count(*)
+            from groups g
+            where g.owner_id = :ownerId and g.id in (:groupsId)
+            """)
+    Mono<Long> findCountWhereUserIsOwnerByGroupsId(UUID ownerId, List<Long> groupsId);
+
+    @Query("""
+            select count(*)
+            from groups g
+            where owner_id = :ownerId
+            """)
+    Mono<Integer> findCountByOwnerId(UUID ownerId);
 
     @Query("""
             select g.id, g.name, g.created_at, g.updated_at

@@ -50,19 +50,19 @@ public class AnalyticSubscriptionServiceImpl implements AnalyticSubscriptionServ
     public Mono<ResponseTotalAnalyticSubscriptionDto> getTotalAnalyticById(Long groupId, Long subscriptionId, Jwt jwt) {
         return webClientService.checkUserInGroup(groupId, jwt)
                 .then(Mono.defer(() -> cacheService.getValue("ANALYTIC_SUBSCRIPTION::" + subscriptionId, ResponseTotalAnalyticSubscriptionDto.class)))
-                .switchIfEmpty(analyticSubscriptionRepository.selectSumAmountAndLastDateBySubscriptionId(subscriptionId)
+                .switchIfEmpty(Mono.defer(() -> analyticSubscriptionRepository.selectSumAmountAndLastDateBySubscriptionId(subscriptionId)
                         .flatMap(dto -> cacheService
                                 .saveValue("ANALYTIC_SUBSCRIPTION::" + subscriptionId, dto, Duration.ofMinutes(30))
                                 .thenReturn(dto)
                         )
                         .switchIfEmpty(Mono.error(new NoSuchElementException("Information not found")))
-                );
+                ));
     }
 
     @Override
     @Transactional(readOnly = true)
     public Mono<ResponseAnalyticPaymentSubscriptionsDto> getPaymentInfoSubscriptionById(Long groupId, Long subscriptionId, Integer page, Jwt jwt) {
-        return webClientService.checkUserIsOwnerGroup(groupId, jwt)
+        return webClientService.checkUserInGroup(groupId, jwt)
                 .then(analyticSubscriptionRepository.findBySubscriptionId(subscriptionId, PageRequest.of(page, pageSize))
                 .collectList()
                 .map(ResponseAnalyticPaymentSubscriptionsDto::new));
@@ -73,7 +73,7 @@ public class AnalyticSubscriptionServiceImpl implements AnalyticSubscriptionServ
     public Mono<ResponseTotalAnalyticSubscriptionGroupDto> getAlreadyPaidByGroupId(Long groupId, Jwt jwt) {
         return webClientService.checkUserInGroup(groupId, jwt)
                 .then(Mono.defer(() -> cacheService.getValue("ANALYTIC_GROUP::" + groupId, ResponseTotalAnalyticSubscriptionGroupDto.class)))
-                .switchIfEmpty(analyticSubscriptionRepository.selectTotalAnalyticByGroupId(groupId)
+                .switchIfEmpty(Mono.defer( () -> analyticSubscriptionRepository.selectTotalAnalyticByGroupId(groupId)
                             .flatMap(dto -> {
                                 if(dto.approxMonthPaid() == null || dto.totalAmount() == null){
                                     return Mono.error(new NoSuchElementException("Information is not found"));
@@ -84,7 +84,7 @@ public class AnalyticSubscriptionServiceImpl implements AnalyticSubscriptionServ
                                         dto.approxMonthPaid().multiply(BigDecimal.valueOf(12))
                                         ));
                             }).flatMap(dto -> cacheService.saveValue("ANALYTIC_GROUP::" + groupId, dto, Duration.ofMinutes(30)).thenReturn(dto))
-                );
+                ));
     }
 
     @Override

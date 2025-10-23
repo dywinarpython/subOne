@@ -2,6 +2,7 @@ package com.subOne.user_service.controller;
 
 import com.subOne.user_service.dto.user.request.RequestUpdateUserDto;
 import com.subOne.user_service.dto.user.response.ResponseUserDto;
+import com.subOne.user_service.dto.user.response.ResponseVerifyEmailDto;
 import com.subOne.user_service.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
+import java.util.UUID;
 
 @Tag(name = "Управление пользователями")
 @RestController
@@ -57,5 +59,19 @@ public class UserController {
     @DeleteMapping("/me")
     public Mono<ResponseEntity<Void>> deleteUser(@AuthenticationPrincipal Jwt jwt) {
         return userService.deleteUser(jwt).thenReturn(ResponseEntity.noContent().build());
+    }
+
+    @Operation(
+            summary = "Проверка верификации почты пользователя",
+            responses = @ApiResponse(
+                    responseCode = "200",
+                    content = @Content(
+                            array = @ArraySchema(schema = @Schema(implementation = ResponseVerifyEmailDto.class))
+                    )
+            )
+    )
+    @GetMapping("/me/verify_email")
+    public Mono<ResponseVerifyEmailDto> checkVerifyEmail(@AuthenticationPrincipal Jwt jwt) {
+        return userService.checkVerifyEmail(UUID.fromString(jwt.getSubject())).map(ResponseVerifyEmailDto::new);
     }
 }

@@ -7,12 +7,14 @@ import com.subOne.user_service.dto.group.response.ResponseGroupDto;
 import com.subOne.user_service.dto.group.response.ResponseGroupsDto;
 import com.subOne.user_service.dto.user.response.ResponseUserDto;
 import com.subOne.user_service.entity.Group;
+import com.subOne.user_service.kafka.serviceProducer.KafkaService;
 import com.subOne.user_service.mapper.MapperGroup;
-import com.subOne.user_service.repository.GroupRepository;
+import com.subOne.user_service.repository.group_repository.GroupRepository;
 import com.subOne.user_service.service_impl.GroupServiceImpl;
+import jakarta.validation.ValidationException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
@@ -35,7 +37,6 @@ public class GroupServiceTest {
     @Mock
     private GroupRepository groupRepository;
 
-
     @Mock
     private Jwt jwt;
 
@@ -45,8 +46,15 @@ public class GroupServiceTest {
     @Mock
     private CacheService cacheService;
 
-    @InjectMocks
+    @Mock
+    private KafkaService kafkaService;
+
     private GroupServiceImpl groupService;
+
+    @BeforeEach
+    void setUp(){
+        groupService = new GroupServiceImpl(groupRepository, mapperGroup, cacheService, kafkaService, 10);
+    }
 
     @Test
     void saveGroup_GroupInfoCorrect_CorrectSaveAndCheckRepo() {
@@ -64,6 +72,7 @@ public class GroupServiceTest {
                 .thenReturn(mappedGroup);
         when(groupRepository.save(any())).thenReturn(Mono.just(mappedGroup));
         when(mapperGroup.groupToResponseGroupDto(any())).thenReturn(responseGroupDto);
+        when(groupRepository.findCountByOwnerId(any())).thenReturn(Mono.just(0));
 
         Mono<ResponseGroupDto> result = groupService.saveGroup(requestMono, jwt);
 
@@ -71,7 +80,31 @@ public class GroupServiceTest {
                 .expectNext(responseGroupDto)
                 .verifyComplete();
 
+        verify(groupRepository).findCountByOwnerId(any());
         verify(groupRepository).save(mappedGroup);
+    }
+
+    @Test
+    void saveGroup_UserHaveFiveGroup_CorrectSaveAndCheckRepo() {
+        RequestGroupDto requestDto = new RequestGroupDto("groupTest");
+        Mono<RequestGroupDto> requestMono = Mono.just(requestDto);
+        Group mappedGroup = new Group();
+        mappedGroup.setName("groupTest");
+        mappedGroup.setOwnerId(UUID.randomUUID());
+        ResponseGroupDto responseGroupDto = new ResponseGroupDto(
+                1L, "groupTest", OffsetDateTime.now(), null
+        );
+
+        when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
+        when(groupRepository.findCountByOwnerId(any())).thenReturn(Mono.just(5));
+
+        Mono<ResponseGroupDto> result = groupService.saveGroup(requestMono, jwt);
+
+        StepVerifier.create(result)
+                .expectErrorSatisfies(throwable -> assertEquals(ValidationException.class, throwable.getClass()))
+                .verify();
+        verify(groupRepository).findCountByOwnerId(any());
+        verify(groupRepository, times(0)).save(mappedGroup);
     }
 
     @Test
@@ -125,7 +158,7 @@ public class GroupServiceTest {
     @Test
     void getOwner_GroupIsFound_CorrectReturnAndCheckRepo(){
         ResponseUserDto responseUserDto = new ResponseUserDto(UUID.randomUUID(), "testName", "surname", "email");
-        when(groupRepository.findOwnerByGroupId(anyLong())).thenReturn(Mono.just(responseUserDto));
+        when(groupRepository.selectOwnerByGroupId(anyLong())).thenReturn(Mono.just(responseUserDto));
 
         Mono<ResponseUserDto> result = groupService.getOwner(anyLong());
 
@@ -133,7 +166,7 @@ public class GroupServiceTest {
                 .expectNext(responseUserDto)
                 .verifyComplete();
 
-        verify(groupRepository).findOwnerByGroupId(anyLong());
+        verify(groupRepository).selectOwnerByGroupId(anyLong());
     }
 
     @Test
@@ -141,16 +174,16 @@ public class GroupServiceTest {
         ResponseGroupsDto responseGroupsDto = new ResponseGroupsDto(
                 List.of(new ResponseGroupDto(1L, "testName", OffsetDateTime.now(), OffsetDateTime.now()))
         );
-        when(groupRepository.findByOwnerId(any())).thenReturn(Flux.fromIterable(responseGroupsDto.groups()));
+        when(groupRepository.findByOwnerId(any(), any())).thenReturn(Flux.fromIterable(responseGroupsDto.groups()));
         when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
 
-        Mono<ResponseGroupsDto> result = groupService.getGroupsCreateUser(jwt);
+        Mono<ResponseGroupsDto> result = groupService.getGroupsCreateUser(jwt, 0);
 
         StepVerifier.create(result)
                 .expectNext(responseGroupsDto)
                 .verifyComplete();
 
-        verify(groupRepository).findByOwnerId(any());
+        verify(groupRepository).findByOwnerId(any(), any());
     }
 
     @Test
@@ -158,16 +191,16 @@ public class GroupServiceTest {
         ResponseGroupsDto responseGroupsDto = new ResponseGroupsDto(
                 List.of(new ResponseGroupDto(1L, "testName", OffsetDateTime.now(), OffsetDateTime.now()))
         );
-        when(groupRepository.findGroupsUserIsMember(any())).thenReturn(Flux.fromIterable(responseGroupsDto.groups()));
+        when(groupRepository.findGroupsUserIsMember(any(), anyInt(), anyInt())).thenReturn(Flux.fromIterable(responseGroupsDto.groups()));
         when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
 
-        Mono<ResponseGroupsDto> result = groupService.getGroupsUserIsMember(jwt);
+        Mono<ResponseGroupsDto> result = groupService.getGroupsUserIsMember(jwt, 0);
 
         StepVerifier.create(result)
                 .expectNext(responseGroupsDto)
                 .verifyComplete();
 
-        verify(groupRepository).findGroupsUserIsMember(any());
+        verify(groupRepository).findGroupsUserIsMember(any(), anyInt(), anyInt());
     }
 
 
@@ -227,6 +260,8 @@ public class GroupServiceTest {
     void deleteGroup_GroupIsFoundAndUserIsOwner_CorrectDeleteAndCheckRepo(){
         when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
         when(groupRepository.deleteByIdAndOwnerId(anyLong(), any())).thenReturn(Mono.just(1));
+        when(cacheService.deleteValue(anyString())).thenReturn(Mono.empty());
+        when(kafkaService.sendToTopic(anyString(), anyLong())).thenReturn(Mono.empty());
 
         Mono<Void> result = groupService.deleteGroup( 2L, jwt);
 
@@ -234,6 +269,8 @@ public class GroupServiceTest {
                 .verifyComplete();
         verify(groupRepository).deleteByIdAndOwnerId(anyLong(), any());
         verify(groupRepository, times(0)).existsById(anyLong());
+        verify(cacheService).deleteValue(anyString());
+        verify(kafkaService).sendToTopic(anyString(), anyLong());
     }
 
     @Test
@@ -250,6 +287,8 @@ public class GroupServiceTest {
                 .verify();
         verify(groupRepository).deleteByIdAndOwnerId(anyLong(), any());
         verify(groupRepository).existsById(anyLong());
+        verify(cacheService, times(0)).deleteValue(anyString());
+        verify(kafkaService, times(0)).sendToTopic(anyString(), anyLong());
     }
 
     @Test
@@ -266,6 +305,8 @@ public class GroupServiceTest {
                 .verify();
         verify(groupRepository).deleteByIdAndOwnerId(anyLong(), any());
         verify(groupRepository).existsById(anyLong());
+        verify(cacheService, times(0)).deleteValue(anyString());
+        verify(kafkaService, times(0)).sendToTopic(anyString(), anyLong());
     }
 
     @Test
@@ -323,5 +364,114 @@ public class GroupServiceTest {
         verify(cacheService, times(0)).saveValue(anyString(), any(), any());
         verify(cacheService).getValue(anyString(), any());
     }
+    @Test
+    void checkUserIsOwnerGroups_GroupsFoundAndUserIsOwnerGroups_CorrectCheckAndCheckRepo(){
+        List<Long> groupsId = List.of(1L, 2L, 3L);
+        when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
+        when(groupRepository.findCountWhereUserIsOwnerByGroupsId(any(), any())).thenReturn(Mono.just((long) groupsId.size()));
+
+        Mono<Void> result = groupService.checkUserIsOwnerGroups(groupsId, jwt);
+
+        StepVerifier.create(result)
+                .verifyComplete();
+        verify(groupRepository).findCountWhereUserIsOwnerByGroupsId(any(), any());
+    }
+    @Test
+    void checkUserIsOwnerGroups_GroupsFoundAndUserIsOwnerNotAllGroups_NotCorrectCheckAndCheckRepo(){
+        when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
+        when(groupRepository.findCountWhereUserIsOwnerByGroupsId(any(), any())).thenReturn(Mono.just(0L));
+
+        Mono<Void> result = groupService.checkUserIsOwnerGroups(List.of(1L, 2L, 3L), jwt);
+
+        StepVerifier.create(result)
+                .expectErrorSatisfies(throwable -> assertEquals(AccessDeniedException.class, throwable.getClass()))
+                .verify();
+        verify(groupRepository).findCountWhereUserIsOwnerByGroupsId(any(), any());
+    }
+
+    @Test
+    void checkUserIsOwnerWithoutCacheGet_GroupIsFoundAndUserIsOwner_CorrectResultAndCheckRepo(){
+        when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
+        when(groupRepository.existsByIdAndOwnerId(anyLong(), any())).thenReturn(Mono.just(true));
+        when(cacheService.saveValue(anyString(), any(), any())).thenReturn(Mono.empty());
+
+        Mono<Boolean> result = groupService.checkUserIsOwnerWithoutCacheGet(1L, jwt);
+
+        StepVerifier.create(result)
+                .expectNext(true)
+                .verifyComplete();
+        verify(groupRepository).existsByIdAndOwnerId(anyLong(), any());
+        verify(groupRepository, times(0)).existsById(anyLong());
+        verify(cacheService).saveValue(anyString(), any(), any());
+        verify(cacheService, times(0)).getValue(anyString(), any());
+    }
+
+    @Test
+    void checkUserIsOwnerWithoutCacheGet_GroupIsFoundAndUserIsNoOwner_NoCorrectResultAndCheckRepo(){
+        when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
+        when(groupRepository.existsByIdAndOwnerId(anyLong(), any())).thenReturn(Mono.just(false));
+        when(groupRepository.existsById(anyLong())).thenReturn(Mono.just(true));
+
+        Mono<Boolean> result = groupService.checkUserIsOwnerWithoutCacheGet(1L, jwt);
+
+        StepVerifier.create(result)
+                .expectErrorSatisfies(throwable ->
+                        assertEquals(AccessDeniedException.class, throwable.getClass()))
+                .verify();
+        verify(groupRepository).existsByIdAndOwnerId(anyLong(), any());
+        verify(groupRepository).existsById(anyLong());
+        verify(cacheService, times(0)).saveValue(anyString(), any(), any());
+        verify(cacheService, times(0)).getValue(anyString(), any());
+    }
+
+    @Test
+    void checkUserIsOwnerWithoutCacheGet_GroupIsNotFound_NoCorrectResultAndCheckRepo(){
+        when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
+        when(groupRepository.existsByIdAndOwnerId(anyLong(), any())).thenReturn(Mono.just(false));
+        when(groupRepository.existsById(anyLong())).thenReturn(Mono.just(false));
+
+        Mono<Boolean> result = groupService.checkUserIsOwnerWithoutCacheGet(1L, jwt);
+
+        StepVerifier.create(result)
+                .expectErrorSatisfies(throwable ->
+                        assertEquals(NoSuchElementException.class, throwable.getClass()))
+                .verify();
+        verify(groupRepository).existsByIdAndOwnerId(anyLong(), any());
+        verify(groupRepository).existsById(anyLong());
+        verify(cacheService, times(0)).saveValue(anyString(), any(), any());
+        verify(cacheService, times(0)).getValue(anyString(), any());
+    }
+
+    @Test
+    void deleteDataRelatedGroupsByOwnerId_GroupsFoundAndUserIsOwnerGroups_Correct(){
+        List<Long> groupsId = List.of(1L, 2L);
+        when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
+        when(groupRepository.findGroupsIdByOwnerId(any())).thenReturn(Flux.fromIterable(groupsId));
+        when(kafkaService.sendToTopic(anyString(), anyLong())).thenReturn(Mono.empty());
+        when(cacheService.deleteValue(anyString())).thenReturn(Mono.empty());
+
+        Mono<Void> result = groupService.deleteDataRelatedGroupsByOwnerId(jwt);
+
+        StepVerifier.create(result)
+                .verifyComplete();
+        verify(groupRepository).findGroupsIdByOwnerId(any());
+        verify(kafkaService, times(groupsId.size())).sendToTopic(anyString(), anyLong());
+        verify(cacheService, times(groupsId.size())).deleteValue(anyString());
+    }
+
+    @Test
+    void deleteDataRelatedGroupsByOwnerId_GroupsNotFound_Correct(){
+        when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
+        when(groupRepository.findGroupsIdByOwnerId(any())).thenReturn(Flux.fromIterable(List.of()));
+
+        Mono<Void> result = groupService.deleteDataRelatedGroupsByOwnerId(jwt);
+
+        StepVerifier.create(result)
+                .verifyComplete();
+        verify(groupRepository).findGroupsIdByOwnerId(any());
+        verify(kafkaService, times(0)).sendToTopic(anyString(), anyLong());
+        verify(cacheService, times(0)).deleteValue(anyString());
+    }
+
 
 }

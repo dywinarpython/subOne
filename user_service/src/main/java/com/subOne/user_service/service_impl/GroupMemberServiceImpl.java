@@ -3,24 +3,30 @@ package com.subOne.user_service.service_impl;
 import com.subOne.user_service.cache.CacheService;
 import com.subOne.user_service.dto.group_member.response.ResponseMemberDto;
 import com.subOne.user_service.dto.group_member.response.ResponseMembersDto;
+import com.subOne.user_service.dto.user.request.RequestGroupOwnershipChangesDto;
+import com.subOne.user_service.dto.user.request.RequestGroupsOwnershipChangesDto;
+import com.subOne.user_service.exception.ConflictException;
 import com.subOne.user_service.mapper.MapperGroupMember;
 import com.subOne.user_service.repository.group_member_repository.GroupMemberRepository;
 import com.subOne.user_service.service.GroupMemberService;
 import com.subOne.user_service.service.GroupService;
+import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuples;
 
 import java.time.Duration;
+import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -40,8 +46,8 @@ public class GroupMemberServiceImpl implements GroupMemberService {
     public Mono<ResponseMembersDto> addUser(UUID userId, Long groupId) {
         return groupMemberRepository.findExistUserInGroupAndCountMemberInGroup(userId, groupId)
                 .flatMap( dto -> {
-                    if (dto.exist()) return Mono.error(new ResponseStatusException(HttpStatus.CONFLICT, "User is already a member of the group"));
-                    if (dto.count() >= 5) return Mono.error(new ResponseStatusException(HttpStatus.CONFLICT, "There can be no more than 5 members of the group (the owner is not considered)"));
+                    if (dto.exist()) return Mono.error(new ConflictException("User is already a member of the group", Map.of()));
+                    if (dto.count() >= 5) return Mono.error(new ConflictException("There can be no more than 5 members of the group (the owner is not considered)", Map.of()));
                     return Mono.empty();
                 })
                 .then(Mono.defer(() -> groupMemberRepository.save(mapperGroupMember.userIdAndGroupIdToGroupMember(userId, groupId))))
@@ -68,13 +74,13 @@ public class GroupMemberServiceImpl implements GroupMemberService {
                         return Mono.error(new AccessDeniedException("The user cannot delete himself"));
                     }
                     return groupService.checkUserIsOwner(groupId, jwt)
-                            .then(groupMemberRepository.deleteByUserId(userId)
+                            .then(groupMemberRepository.deleteByUserIdAndGroupId(userId, groupId)
                                     .flatMap(count -> {
                                         if (count == 0)
                                             return Mono.error(new NoSuchElementException("User is not found"));
                                         return Mono.empty();
                                     }));
-                }).then(cacheService.deleteValue("MEMBER::" + userId + ' ' + groupId));
+                }).then(Mono.defer( () -> cacheService.deleteValue("MEMBER::" + userId + ' ' + groupId)));
     }
 
     @Override
@@ -85,9 +91,9 @@ public class GroupMemberServiceImpl implements GroupMemberService {
         String ownerKey = "OWNER::" + groupId;
         return cacheService.getValue(memberKey, Boolean.class)
                 .switchIfEmpty(
-                        cacheService.getValue(ownerKey, UUID.class)
+                        Mono.defer( () -> cacheService.getValue(ownerKey, UUID.class)
                                 .map(ownerId -> ownerId.equals(userId))
-                                .switchIfEmpty(Mono.just(false))
+                                .switchIfEmpty(Mono.just(false)))
                 )
                 .flatMap(isMemberOrOwner -> {
                     if (isMemberOrOwner) return Mono.just(true);
@@ -107,6 +113,59 @@ public class GroupMemberServiceImpl implements GroupMemberService {
         return groupService.checkUserIsOwner(groupId, jwt);
     }
 
+    @Override
+    public Mono<Void> existsMemberInGroupByOwnerId(Jwt jwt) {
+        return groupMemberRepository.findGroupWhereExistsUserByOwnerId(UUID.fromString(jwt.getSubject()))
+                .collectList()
+                .flatMap(groupsId -> groupsId.isEmpty() ? Mono.empty(): Mono.error(new ConflictException("Group has members and cannot be deleted", Map.of("groupsId", groupsId))))
+                .then();
+    }
+
+    @Override
+    @Transactional
+    public Mono<Void> changesOwnerGroup(Mono<RequestGroupsOwnershipChangesDto> requestGroupsOwnershipChangesDtoMono, Jwt jwt) {
+        return requestGroupsOwnershipChangesDtoMono
+                .flatMap(dtos -> {
+                    List<RequestGroupOwnershipChangesDto> dto = dtos.groupOwnershipChanges();
+                    if(dto.size() == dto.stream().map(RequestGroupOwnershipChangesDto::groupId).collect(Collectors.toSet()).size()){
+                        return Mono.just(dto);
+                    }
+                    return Mono.error(new ValidationException("The group IDs are not unique or empty"));
+                })
+                .flatMap(dto ->
+                        groupService.checkUserIsOwnerGroups(dto.stream().map(RequestGroupOwnershipChangesDto::groupId).toList(), jwt)
+                                    .thenReturn(dto))
+                .flatMapMany(Flux::fromIterable)
+                .flatMap(dto ->
+                        checkUserIsMemberGroup(dto.userId(), dto.groupId()))
+                .collectList()
+                .flatMap(dtos ->
+                        groupMemberRepository.deleteAllByUserGroupPairs(dtos.stream().map(dto -> Tuples.of(dto.userId(), dto.groupId())).toList())
+                                .thenReturn(dtos))
+                .flatMap(ls -> groupMemberRepository.updateOwnerGroup(ls)
+                        .then(groupMemberRepository.insertAllMembers(ls.stream().map(RequestGroupOwnershipChangesDto::groupId).toList(),UUID.fromString(jwt.getSubject())))
+                        .thenReturn(ls))
+                .flatMapMany(Flux::fromIterable)
+                .flatMap(dto ->
+                        cacheService.deleteValue("MEMBER::" + dto.userId() + ' ' + dto.groupId()).then(cacheService.deleteValue("OWNER::" + dto.groupId())))
+                .then();
+    }
+
+    private Mono<RequestGroupOwnershipChangesDto> checkUserIsMemberGroup(UUID userId, Long groupId){
+        String memberKey = "MEMBER::" + userId + ' ' + groupId;
+        return cacheService.getValue(memberKey, Boolean.class)
+                .switchIfEmpty(Mono.just(Boolean.FALSE))
+                .flatMap(isMember -> {
+                    if (isMember) return Mono.just(new RequestGroupOwnershipChangesDto(userId, groupId));
+                    return groupMemberRepository.existsByGroupIdAndUserId(groupId, userId)
+                            .flatMap(exists -> {
+                                if (exists) {
+                                    return Mono.just(new RequestGroupOwnershipChangesDto(userId, groupId));
+                                }
+                                return Mono.error(new NoSuchElementException("Member: " + userId + " is not found"));
+                            });
+                });
+    }
 
     private Mono<ResponseMembersDto> getUsersAndOwner(Long groupId){
         return groupService.getOwner(groupId).flatMap( ownerId -> {

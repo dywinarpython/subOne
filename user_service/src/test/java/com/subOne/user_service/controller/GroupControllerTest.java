@@ -1,12 +1,13 @@
 package com.subOne.user_service.controller;
 
+import com.subOne.user_service.cache.CacheService;
 import com.subOne.user_service.dto.group.request.RequestGroupDto;
 import com.subOne.user_service.dto.group.request.RequestUpdateGroupDto;
 import com.subOne.user_service.dto.group.response.ResponseGroupDto;
 import com.subOne.user_service.dto.group.response.ResponseGroupsDto;
 import com.subOne.user_service.entity.Group;
 import com.subOne.user_service.mapper.MapperGroup;
-import com.subOne.user_service.repository.GroupRepository;
+import com.subOne.user_service.repository.group_repository.GroupRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
+import java.time.Duration;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -23,13 +25,16 @@ import static org.springframework.security.test.web.reactive.server.SecurityMock
 public class GroupControllerTest extends AbstractControllerTest{
 
     @Autowired
-    private GroupRepository groupRepository;
+    protected GroupRepository groupRepository;
 
     @Autowired
     private MapperGroup mapperGroup;
 
+    @Autowired
+    protected CacheService cacheService;
 
-    private final String requestMapping = "/api/v1/groups";
+
+    private final String URI = "/api/v1/groups";
 
     protected Group group;
 
@@ -51,12 +56,12 @@ public class GroupControllerTest extends AbstractControllerTest{
                 .verifyComplete();
     }
 
-    @DisplayName("ПРОВЕРКА -> POST /api/v1/groups")
+    @DisplayName("POST -> /api/v1/groups")
     @Test
     void createGroup_UserIsCreated_CorrectResult(){
         Flux<ResponseGroupDto> result = webTestClient
                 .post()
-                .uri(requestMapping)
+                .uri(URI)
                 .bodyValue(new RequestGroupDto("groupTests"))
                 .exchange()
                 .expectStatus().isCreated()
@@ -66,12 +71,12 @@ public class GroupControllerTest extends AbstractControllerTest{
                 .verifyComplete();
     }
 
-    @DisplayName("ПРОВЕРКА GET -> /api/v1/groups/{groupId}")
+    @DisplayName("GET -> /api/v1/groups/{groupId}")
     @Test
     void getGroupById_GroupIsCreated_CorrectResult(){
         Flux<ResponseGroupDto> result = webTestClient
                 .get()
-                .uri(requestMapping + "/" + group.getId())
+                .uri(URI + "/" + group.getId())
                 .exchange()
                 .expectStatus().isOk()
                 .returnResult(ResponseGroupDto.class).getResponseBody();
@@ -80,7 +85,7 @@ public class GroupControllerTest extends AbstractControllerTest{
                 .verifyComplete();
     }
 
-    @DisplayName("ПРОВЕРКА GET -> /api/v1/groups/owner/me")
+    @DisplayName("GET -> /api/v1/groups/owner/me?page=")
     @Test
     void getGroups_GroupsIsCreated_CorrectReturn(){
         groupRepository.save(mapperGroup
@@ -88,26 +93,24 @@ public class GroupControllerTest extends AbstractControllerTest{
 
         Flux<ResponseGroupsDto> result = webTestClient
                 .get()
-                .uri(requestMapping + "/owner/me")
+                .uri(URI + "/owner/me?page=" + 0)
                 .exchange()
                 .expectStatus().isOk()
                 .returnResult(ResponseGroupsDto.class).getResponseBody();
         StepVerifier.create(result)
                 .assertNext(
-                        responseGroupsDto -> {
-                            assertTrue(2 <= responseGroupsDto.groups().size());
-                        }
+                        responseGroupsDto -> assertTrue(2 <= responseGroupsDto.groups().size())
 
                 )
                 .verifyComplete();
     }
 
-    @DisplayName("ПРОВЕРКА GET -> /api/v1/groups/me")
+    @DisplayName("GET -> /api/v1/groups/me?page=")
     @Test
     void getGroupsUserIsMember_UserIsNotMember_CorrectReturn(){
         Flux<ResponseGroupsDto> result = webTestClient
                 .get()
-                .uri(requestMapping + "/me")
+                .uri(URI + "/me?page=" + 0)
                 .exchange()
                 .expectStatus().isOk()
                 .returnResult(ResponseGroupsDto.class).getResponseBody();
@@ -122,13 +125,13 @@ public class GroupControllerTest extends AbstractControllerTest{
                 .verifyComplete();
     }
 
-    @DisplayName("ПРОВЕРКА PATCH -> /api/v1/groups/{groupId}")
+    @DisplayName("PATCH -> /api/v1/groups/{groupId}")
     @Test
     void updateGroup_GroupIsFound_CorrectUpdate(){
         RequestUpdateGroupDto requestUpdateGroupDto = new RequestUpdateGroupDto("groupTestNewName");
         webTestClient
                 .patch()
-                .uri(requestMapping + "/" + group.getId())
+                .uri(URI + "/" + group.getId())
                 .bodyValue(requestUpdateGroupDto)
                 .exchange()
                 .expectStatus().isOk();
@@ -138,19 +141,19 @@ public class GroupControllerTest extends AbstractControllerTest{
                 .verifyComplete();
     }
 
-    @DisplayName("ПРОВЕРКА PATCH -> /api/v1/groups/{groupId} group is not found")
+    @DisplayName("PATCH -> /api/v1/groups/{groupId} group is not found")
     @Test
     void updateGroup_GroupIsNotFound_NotCorrectUpdate(){
         RequestUpdateGroupDto requestUpdateGroupDto = new RequestUpdateGroupDto("groupTestNewName");
         webTestClient
                 .patch()
-                .uri(requestMapping + "/" + 1000)
+                .uri(URI + "/" + 1000)
                 .bodyValue(requestUpdateGroupDto)
                 .exchange()
                 .expectStatus().isNotFound();
     }
 
-    @DisplayName("ПРОВЕРКА PATCH -> /api/v1/groups/{groupId} access denied")
+    @DisplayName("PATCH -> /api/v1/groups/{groupId} access denied")
     @Test
     void updateGroup_GroupIsFoundUserIsNotOwner_NotCorrectUpdate(){
         jwt = Jwt.withTokenValue("dummy-token")
@@ -162,35 +165,37 @@ public class GroupControllerTest extends AbstractControllerTest{
         webTestClient
                 .mutateWith(mockJwt().jwt(jwt))
                 .patch()
-                .uri(requestMapping + "/" + group.getId())
+                .uri(URI + "/" + group.getId())
                 .bodyValue(requestUpdateGroupDto)
                 .exchange()
                 .expectStatus().isForbidden();
     }
 
 
-    @DisplayName("ПРОВЕРКА DELETE -> /api/v1/groups/{groupId}")
+    @DisplayName("DELETE -> /api/v1/groups/{groupId}")
     @Test
     void deleteGroup_GroupIsFound_CorrectDelete(){
-        RequestUpdateGroupDto requestUpdateGroupDto = new RequestUpdateGroupDto("groupTestNewName");
+        cacheService.saveValue("OWNER::" + group.getId(), user.getUserId(), Duration.ofMinutes(10)).block();
         webTestClient
                 .delete()
-                .uri(requestMapping + "/" + group.getId())
+                .uri(URI + "/" + group.getId())
                 .exchange()
                 .expectStatus().isNoContent();
 
         StepVerifier.create(groupRepository.findById(group.getId()))
                 .expectNextCount(0)
                 .verifyComplete();
+        StepVerifier.create(cacheService.getValue("OWNER::" + group.getId(), UUID.class))
+                .expectNextCount(0)
+                .verifyComplete();
     }
 
-    @DisplayName("ПРОВЕРКА DELETE -> /api/v1/groups/{groupId} group is not found")
+    @DisplayName("DELETE -> /api/v1/groups/{groupId} group is not found")
     @Test
     void deleteGroup_GroupIsNotFound_NotCorrectDelete(){
-        RequestUpdateGroupDto requestUpdateGroupDto = new RequestUpdateGroupDto("groupTestNewName");
         webTestClient
                 .delete()
-                .uri(requestMapping + "/" + 1000)
+                .uri(URI + "/" + 1000)
                 .exchange()
                 .expectStatus().isNotFound();
     }
