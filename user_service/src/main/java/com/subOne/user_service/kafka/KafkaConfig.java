@@ -7,6 +7,7 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.apache.kafka.common.serialization.UUIDSerializer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +22,7 @@ import org.springframework.kafka.support.serializer.JsonDeserializer;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 // TODO настроить параллельность при обработки в consumer (Consumer)
 @Configuration
@@ -74,6 +76,9 @@ public class KafkaConfig {
     public NewTopic messageDeleteGroup() { return createTopic("delete_group", 3);}
 
     @Bean
+    public NewTopic notifications() { return createTopic("notification_user", 3);}
+
+    @Bean
     public ProducerFactory<String, String> groupStringProducerFactory(
             @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers) {
         Map<String, Object> props = new HashMap<>();
@@ -93,6 +98,21 @@ public class KafkaConfig {
         return new DefaultKafkaProducerFactory<>(props);
     }
 
+    @Bean
+    public ProducerFactory<UUID, String> notificationsUUIDProducerFactory(
+            @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers) {
+        Map<String, Object> props = new HashMap<>();
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, UUIDSerializer.class);
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        return new DefaultKafkaProducerFactory<>(props);
+    }
+
+    @Bean
+    @Qualifier("messageSendWithUUIDKey")
+    public KafkaTemplate<UUID, String> messageSendWithUUIDKey(ProducerFactory<UUID, String> producerFactory){
+        return new KafkaTemplate<>(producerFactory);
+    }
 
     @Bean
     @Qualifier("messageSendWithLong")

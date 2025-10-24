@@ -16,7 +16,7 @@ public class KafkaHandlerServiceImpl implements KafkaHandlerService {
 
 
     @Override
-    @KafkaListener(topics = {"add_member", "delete_member", "payment_subscription", "changes_owner"}, concurrency = "3")
+    @KafkaListener(topics = "notification_user", concurrency = "3")
     public void saveNotification(ConsumerRecord<UUID, String> record) {
             notificationService.saveNotification(record);
     }

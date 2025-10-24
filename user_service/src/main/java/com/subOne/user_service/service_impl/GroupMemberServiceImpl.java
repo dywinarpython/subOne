@@ -6,6 +6,7 @@ import com.subOne.user_service.dto.group_member.response.ResponseMembersDto;
 import com.subOne.user_service.dto.user.request.RequestGroupOwnershipChangesDto;
 import com.subOne.user_service.dto.user.request.RequestGroupsOwnershipChangesDto;
 import com.subOne.user_service.exception.ConflictException;
+import com.subOne.user_service.kafka.serviceProducer.KafkaService;
 import com.subOne.user_service.mapper.MapperGroupMember;
 import com.subOne.user_service.repository.group_member_repository.GroupMemberRepository;
 import com.subOne.user_service.service.GroupMemberService;
@@ -41,6 +42,9 @@ public class GroupMemberServiceImpl implements GroupMemberService {
 
     private final GroupMemberRepository groupMemberRepository;
 
+    private final KafkaService kafkaService;
+
+
 
     @Override
     public Mono<ResponseMembersDto> addUser(UUID userId, Long groupId) {
@@ -61,9 +65,6 @@ public class GroupMemberServiceImpl implements GroupMemberService {
                 .then(Mono.defer(() -> getUsersAndOwner(groupId)));
     }
 
-
-
-
     @Override
     @Transactional
     public Mono<Void> deleteMember(Long groupId, UUID userId, Jwt jwt) {
@@ -80,7 +81,9 @@ public class GroupMemberServiceImpl implements GroupMemberService {
                                             return Mono.error(new NoSuchElementException("User is not found"));
                                         return Mono.empty();
                                     }));
-                }).then(Mono.defer( () -> cacheService.deleteValue("MEMBER::" + userId + ' ' + groupId)));
+                    })
+                .then(Mono.defer( () -> cacheService.deleteValue("MEMBER::" + userId + ' ' + groupId)))
+                .then(Mono.defer(() -> kafkaService.sendToTopic("notification_user", userId, "Вы были удалены из группы")));
     }
 
     @Override
@@ -146,8 +149,10 @@ public class GroupMemberServiceImpl implements GroupMemberService {
                         .then(groupMemberRepository.insertAllMembers(ls.stream().map(RequestGroupOwnershipChangesDto::groupId).toList(),UUID.fromString(jwt.getSubject())))
                         .thenReturn(ls))
                 .flatMapMany(Flux::fromIterable)
-                .flatMap(dto ->
-                        cacheService.deleteValue("MEMBER::" + dto.userId() + ' ' + dto.groupId()).then(cacheService.deleteValue("OWNER::" + dto.groupId())))
+                .flatMap(dto -> {
+                        kafkaService.sendToTopic("notification_user", dto.userId(), "Вы теперь собственник группы: " + dto.groupId()).subscribe();
+                        return cacheService.deleteValue("MEMBER::" + dto.userId() + ' ' + dto.groupId()).then(cacheService.deleteValue("OWNER::" + dto.groupId()));
+                })
                 .then();
     }
 

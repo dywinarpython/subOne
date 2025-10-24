@@ -25,6 +25,7 @@ public class  SchedulerSubscriptionControl {
 
     private final CacheService cacheService;
 
+
     // TODO при выпуска в PROD меняем аналитику каждый день в полночь + 10 minutes
     // @Scheduled(cron = "0 10 0 * * *")
     @Scheduled(cron = "2 * * * * *")

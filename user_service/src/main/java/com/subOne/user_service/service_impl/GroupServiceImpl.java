@@ -70,8 +70,15 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Mono<ResponseUserDto> getOwner(Long groupId) {
         return groupRepository.selectOwnerByGroupId(groupId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Mono<UUID> getOwnerId(Long groupId) {
+        return groupRepository.findOwnerIdByGroupId(groupId);
     }
 
     @Override

@@ -35,7 +35,7 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     @Transactional(readOnly = true)
     public ResponseNotificationsDto findByUserId(Jwt jwt, Integer page) {
-        return new ResponseNotificationsDto(notificationRepository.findByUserIdOrderByCreatedAt(UUID.fromString(jwt.getSubject()), PageRequest.of(page, pageSize)));
+        return new ResponseNotificationsDto(notificationRepository.findByUserIdOrderByCreatedAtDesc(UUID.fromString(jwt.getSubject()), PageRequest.of(page, pageSize)));
     }
 
     @Override

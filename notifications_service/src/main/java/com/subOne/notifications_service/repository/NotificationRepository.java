@@ -9,5 +9,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
-    List<ResponseNotificationDto> findByUserIdOrderByCreatedAt(UUID userId, Pageable pageable);
+    List<ResponseNotificationDto> findByUserIdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
 }

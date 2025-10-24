@@ -22,6 +22,13 @@ public interface GroupRepository extends R2dbcRepository<Group, Long>, SelectOwn
     Flux<ResponseGroupDto> findByOwnerId(UUID ownerId, Pageable pageable);
 
     @Query("""
+            select owner_id
+            from groups
+            where id = :groupId
+            """)
+    Mono<UUID> findOwnerIdByGroupId(Long groupId);
+
+    @Query("""
             select id
             from groups
             where owner_id = :ownerId
