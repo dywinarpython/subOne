@@ -1,6 +1,6 @@
 package com.subOne.user_service.service;
 
-import com.subOne.kecyloak_dto.UserInfo;
+import com.subOne.keycloak_dto.UserInfo;
 import com.subOne.user_service.dto.user.request.RequestUpdateUserDto;
 import com.subOne.user_service.dto.user.response.ResponseUserDto;
 import org.springframework.security.oauth2.jwt.Jwt;

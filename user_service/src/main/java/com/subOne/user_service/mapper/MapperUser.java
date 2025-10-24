@@ -1,6 +1,6 @@
 package com.subOne.user_service.mapper;
 
-import com.subOne.kecyloak_dto.UserInfo;
+import com.subOne.keycloak_dto.UserInfo;
 import com.subOne.user_service.dto.user.request.RequestUpdateUserDto;
 import com.subOne.user_service.entity.User;
 import jakarta.validation.ValidationException;

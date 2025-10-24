@@ -1,6 +1,6 @@
 package com.subOne.user_service.kafka;
 
-import com.subOne.kecyloak_dto.UserInfo;
+import com.subOne.keycloak_dto.UserInfo;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -42,8 +42,8 @@ public class KafkaConfig {
                 env.getProperty("spring.kafka.consumer.group-id"));
         cfg.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         cfg.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
-        cfg.put(JsonDeserializer.TRUSTED_PACKAGES, "com.subOne.kecyloak_dto");
-        cfg.put(JsonDeserializer.VALUE_DEFAULT_TYPE, "com.subOne.kecyloak_dto.UserInfo");
+        cfg.put(JsonDeserializer.TRUSTED_PACKAGES, "com.subOne.keycloak_dto");
+        cfg.put(JsonDeserializer.VALUE_DEFAULT_TYPE, "com.subOne.keycloak_dto.UserInfo");
 
         return new DefaultKafkaConsumerFactory<>(cfg);
     }
