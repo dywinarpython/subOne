@@ -3,6 +3,7 @@ package com.subOne.user_service.controller;
 import com.subOne.user_service.dto.group.request.RequestGroupDto;
 import com.subOne.user_service.dto.group.request.RequestUpdateGroupDto;
 import com.subOne.user_service.dto.group.response.ResponseGroupDto;
+import com.subOne.user_service.dto.group.response.ResponseGroupOwnerIdDto;
 import com.subOne.user_service.dto.group.response.ResponseGroupsDto;
 import com.subOne.user_service.service.GroupService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -72,6 +73,20 @@ public class GroupController {
     @GetMapping("owner/me")
     public Mono<ResponseGroupsDto> getGroups(@RequestParam Integer page, @AuthenticationPrincipal Jwt jwt) {
         return groupService.getGroupsCreateUser(jwt, page);
+    }
+
+    @Operation(
+            summary = "Получение id собственника группы",
+            responses = @ApiResponse(
+                    responseCode = "200",
+                    content = @Content(
+                            array = @ArraySchema(schema = @Schema(implementation = ResponseGroupOwnerIdDto.class))
+                    )
+            )
+    )
+    @GetMapping("/{groupId}/owner")
+    public Mono<ResponseGroupOwnerIdDto> getOwnerIdByGroupId(@PathVariable Long groupId) {
+        return groupService.getOwnerId(groupId).map(ResponseGroupOwnerIdDto::new);
     }
 
     @Operation(

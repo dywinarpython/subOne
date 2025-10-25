@@ -1,4 +1,4 @@
-package com.subOne.notifications_service.dto.response;
+package com.subOne.notifications_service.dto.notification.response;
 
 import java.util.List;
 

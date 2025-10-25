@@ -1,5 +1,6 @@
 package com.subOne.notifications_service.kafka;
 
+import com.subOne.kafka_dto.KafkaDtoPaymentSubscription;
 import com.subOne.keycloak_dto.UserInfo;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -43,6 +44,30 @@ public class KafkaConfig {
         ConcurrentKafkaListenerContainerFactory<String, UserInfo> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(userInfoConsumerFactory());
+        factory.setConcurrency(3);
+        return factory;
+    }
+
+
+    @Bean
+    public ConsumerFactory<String, KafkaDtoPaymentSubscription> paymentConsumerFactory() {
+        Map<String, Object> cfg = new HashMap<>();
+        cfg.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                env.getProperty("spring.kafka.bootstrap-servers"));
+        cfg.put(ConsumerConfig.GROUP_ID_CONFIG,
+                env.getProperty("spring.kafka.consumer.group-id"));
+        cfg.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        cfg.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
+        cfg.put(JsonDeserializer.TRUSTED_PACKAGES, "com.subOne.kafka_dto");
+        cfg.put(JsonDeserializer.VALUE_DEFAULT_TYPE, "com.subOne.kafka_dto.KafkaDtoPaymentSubscription");
+        return new DefaultKafkaConsumerFactory<>(cfg);
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, KafkaDtoPaymentSubscription> paymentKafkaListenerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, KafkaDtoPaymentSubscription> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(paymentConsumerFactory());
         factory.setConcurrency(3);
         return factory;
     }

@@ -9,7 +9,8 @@ import java.util.UUID;
 
 @Getter
 @Setter
-@Entity(name = "notifications")
+@Entity
+@Table(name = "notifications")
 public class Notification {
 
     @Id
@@ -18,4 +19,5 @@ public class Notification {
     private UUID userId;
     private String message;
     private OffsetDateTime createdAt;
+    private Boolean read;
 }

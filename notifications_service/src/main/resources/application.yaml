@@ -11,6 +11,16 @@ spring:
     name:  notifications_service
   security:
     oauth2:
+      client:
+        registration:
+          discovery:
+            provider: keycloak
+            client-id: ${CLIENT_ID_CREDENTIALS}
+            client-secret: ${CLIENT_SECRET_CREDENTIALS}
+            authorization-grant-type: client_credentials
+        provider:
+          keycloak:
+            issuer-uri: ${KEYCLOAK_URI:http://localhost:8080/realms/subOne}
       resourceserver:
         jwt:
           issuer-uri: ${KEYCLOAK_URI:http://localhost:8080/realms/subOne}
@@ -36,8 +46,6 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.UUIDDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       group-id: notification-service
-      properties:
-        spring:
-          json:
-            trusted:
-              packages: "*"
+  user_service:
+    url: ${USER_SERVICE_URL:http://localhost:8000/api/v1/}
+    max_reties: ${USER_SERVICE_RETRIES:5}

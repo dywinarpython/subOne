@@ -14,11 +14,15 @@ public interface MapperNotification {
     @Mappings(value = {
             @Mapping(target = "message", expression = "java(record.value())"),
             @Mapping(target = "userId", expression = "java(record.key())"),
-            @Mapping(target = "createdAt", expression = "java(java.time.OffsetDateTime.now())")
+            @Mapping(target = "createdAt", expression = "java(java.time.OffsetDateTime.now())"),
+            @Mapping(target = "read",expression = "java(Boolean.FALSE)")
     })
     Notification messageDtoToNotification(ConsumerRecord<UUID, String> record);
 
-    @Mapping(target = "createdAt", expression = "java(java.time.OffsetDateTime.now())")
+    @Mappings(value = {
+            @Mapping(target = "createdAt", expression = "java(java.time.OffsetDateTime.now())"),
+            @Mapping(target = "read",expression = "java(Boolean.FALSE)")
+    })
     Notification parametersToNotification(String message, UUID userId);
 
 

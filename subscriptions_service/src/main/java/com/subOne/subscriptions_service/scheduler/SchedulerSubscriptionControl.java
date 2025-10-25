@@ -1,8 +1,10 @@
 package com.subOne.subscriptions_service.scheduler;
 
+import com.subOne.kafka_dto.KafkaDtoPaymentSubscription;
 import com.subOne.subscriptions_service.cache.CacheService;
 import com.subOne.subscriptions_service.entity.AnalyticSubscription;
 import com.subOne.subscriptions_service.entity.enumEntity.PaymentPeriod;
+import com.subOne.subscriptions_service.kafka.producer.KafkaService;
 import com.subOne.subscriptions_service.repository.analytic_subscription_repository.AnalyticSubscriptionRepository;
 import com.subOne.subscriptions_service.repository.user_subscription_repository.UserSubscriptionRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,8 @@ public class  SchedulerSubscriptionControl {
     private final UserSubscriptionRepository userSubscriptionRepository;
 
     private final CacheService cacheService;
+
+    private final KafkaService kafkaService;
 
 
     // TODO при выпуска в PROD меняем аналитику каждый день в полночь + 10 minutes
@@ -56,5 +60,20 @@ public class  SchedulerSubscriptionControl {
     public void updateStatusSubscriptions() {
         userSubscriptionRepository.updateStatusByEndTime().subscribe();
     }
+
+    @Scheduled(cron = "0 0 12 * * *")
+    public void sendMessageWithPaymentInfo() {
+        analyticSubscriptionRepository
+                .selectSubscriptionsIdAndGroupByLastDatePaid()
+                .filter(dto -> {
+                    PaymentPeriod paymentPeriod = PaymentPeriod.valueOf(dto.paymentPeriod());
+                    TemporalAmount period = paymentPeriod.generatePeriod();
+                    LocalDate nextDatePaid = dto.datePaid().plus(period);
+                    return nextDatePaid.isBefore(LocalDate.now().plusDays(2));})
+                .doOnNext(dto -> kafkaService.sendToTopic("payment_subscription",
+                        new KafkaDtoPaymentSubscription(dto.subscriptionId(), dto.groupId())).subscribe())
+                .subscribe();
+    }
+
 
 }

@@ -122,13 +122,7 @@ public class KafkaConfig {
 
     @Bean
     @Qualifier("messageSendWithString")
-    public KafkaTemplate<String, String> messageSendWithString(
-            ProducerFactory<String, String> producerFactory) {
+    public KafkaTemplate<String, String> messageSendWithString(ProducerFactory<String, String> producerFactory) {
         return new KafkaTemplate<>(producerFactory);
     }
-
-
-
-
-
 }

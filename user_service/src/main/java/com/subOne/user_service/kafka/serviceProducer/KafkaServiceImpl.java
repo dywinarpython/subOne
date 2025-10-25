@@ -37,4 +37,5 @@ public class KafkaServiceImpl implements KafkaService {
     public Mono<Void> sendToTopic(String nameTopic, UUID userId, String message) {
         return Mono.fromFuture(kafkaTemplateUUID.send(nameTopic, userId, message)).then();
     }
+
 }
