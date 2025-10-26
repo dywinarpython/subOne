@@ -1,5 +1,6 @@
 package com.subOne.user_service.kafka.serviceProducer;
 
+import com.subOne.kafka_dto.SendNotificationDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -20,8 +21,8 @@ public class KafkaServiceImpl implements KafkaService {
     private KafkaTemplate<String, Long> kafkaTemplateLong;
 
     @Autowired
-    @Qualifier("messageSendWithUUIDKey")
-    private KafkaTemplate<UUID, String> kafkaTemplateUUID;
+    @Qualifier("messageSendWithUUIDKeyNotification")
+    private KafkaTemplate<UUID, SendNotificationDto> kafkaDtoSendNotificationKafkaTemplate;
 
     @Override
     public Mono<Void> sendToTopic(String nameTopic, String value) {
@@ -34,8 +35,8 @@ public class KafkaServiceImpl implements KafkaService {
     }
 
     @Override
-    public Mono<Void> sendToTopic(String nameTopic, UUID userId, String message) {
-        return Mono.fromFuture(kafkaTemplateUUID.send(nameTopic, userId, message)).then();
+    public Mono<Void> sendToTopic(String nameTopic, UUID userId, SendNotificationDto kafkaDtoSendNotification) {
+        return Mono.fromFuture(kafkaDtoSendNotificationKafkaTemplate.send(nameTopic, userId, kafkaDtoSendNotification)).then();
     }
 
 }

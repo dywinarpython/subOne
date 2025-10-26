@@ -1,5 +1,7 @@
 package com.subOne.notifications_service.entity;
 
+import com.subOne.notification.NotificationTargetType;
+import com.subOne.notification.NotificationType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,7 +19,11 @@ public class Notification {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private UUID userId;
-    private String message;
     private OffsetDateTime createdAt;
     private Boolean read;
+    @Enumerated(EnumType.STRING)
+    private NotificationType notificationType;
+    @Enumerated(EnumType.STRING)
+    private NotificationTargetType notificationTargetType;
+    private Long targetId;
 }

@@ -1,5 +1,8 @@
 package com.subOne.user_service.service_impl;
 
+import com.subOne.kafka_dto.SendNotificationDto;
+import com.subOne.notification.NotificationTargetType;
+import com.subOne.notification.NotificationType;
 import com.subOne.user_service.cache.CacheService;
 import com.subOne.user_service.dto.group_invite.response.ResponseInviteCodeDto;
 import com.subOne.user_service.dto.group_member.response.ResponseMembersDto;
@@ -50,13 +53,10 @@ public class GroupInviteServiceImpl implements GroupInviteService {
                 .switchIfEmpty(Mono.defer(() -> groupInviteRepository.findGroupIdByCode(code)))
                 .flatMap(groupId ->
                         groupMemberService.addUser(UUID.fromString(jwt.getSubject()), groupId)
-                                .map(response -> {
-                                    groupService.getOwnerId(groupId).flatMap(ownerId -> kafkaService
-                                            .sendToTopic("notification_user",
-                                                    ownerId,
-                                                    "У вас новый пользователь в группе: " + groupId)).subscribe();
-                                    return response;
-                                })
+                                .flatMap(response -> groupService.getOwnerId(groupId).flatMap(ownerId ->
+                                        kafkaService.sendToTopic("notification_user",
+                                                ownerId,
+                                                new SendNotificationDto(NotificationType.ADD_MEMBER, NotificationTargetType.GROUP, groupId))).thenReturn(response))
                 )
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.GONE, "Invite code has expired")));
     }

@@ -1,6 +1,7 @@
 package com.subOne.notifications_service.kafka.kafka_handlerImpl;
 
 import com.subOne.kafka_dto.KafkaDtoPaymentSubscription;
+import com.subOne.kafka_dto.SendNotificationDto;
 import com.subOne.keycloak_dto.UserInfo;
 import com.subOne.notifications_service.kafka.kafka_handler.KafkaHandlerService;
 import com.subOne.notifications_service.service.NotificationService;
@@ -17,8 +18,8 @@ public class KafkaHandlerServiceImpl implements KafkaHandlerService {
 
 
     @Override
-    @KafkaListener(topics = "notification_user", concurrency = "3")
-    public void saveNotification(ConsumerRecord<UUID, String> record) {
+    @KafkaListener(topics = "notification_user", containerFactory = "notificationKafkaListenerFactory")
+    public void saveNotification(ConsumerRecord<UUID, SendNotificationDto> record) {
             notificationService.saveNotification(record);
     }
 
@@ -29,7 +30,7 @@ public class KafkaHandlerServiceImpl implements KafkaHandlerService {
     }
 
     @Override
-    @KafkaListener(topics = "payment_subscription", concurrency = "3", containerFactory = "paymentKafkaListenerFactory")
+    @KafkaListener(topics = "payment_subscription", containerFactory = "paymentKafkaListenerFactory")
     public void saveNotificationPaymentSubscription(KafkaDtoPaymentSubscription kafkaDtoPaymentSubscription) {
         notificationService.saveNotificationPaymentSubscription(kafkaDtoPaymentSubscription);
     }

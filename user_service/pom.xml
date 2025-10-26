@@ -58,6 +58,11 @@
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 			<scope>test</scope>
 		</dependency>
+        <dependency>
+            <groupId>org.project</groupId>
+            <artifactId>subOne-kafka-dto</artifactId>
+            <version>1.0.0</version>
+        </dependency>
 	</dependencies>
 	<build>
 		<plugins>

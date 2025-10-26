@@ -71,8 +71,8 @@ public class GroupController {
             )
     )
     @GetMapping("owner/me")
-    public Mono<ResponseGroupsDto> getGroups(@RequestParam Integer page, @AuthenticationPrincipal Jwt jwt) {
-        return groupService.getGroupsCreateUser(jwt, page);
+    public Mono<ResponseGroupsDto> getGroups(@AuthenticationPrincipal Jwt jwt) {
+        return groupService.getGroupsCreateUser(jwt);
     }
 
     @Operation(

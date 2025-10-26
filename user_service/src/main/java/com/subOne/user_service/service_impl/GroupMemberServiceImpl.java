@@ -1,5 +1,8 @@
 package com.subOne.user_service.service_impl;
 
+import com.subOne.kafka_dto.SendNotificationDto;
+import com.subOne.notification.NotificationTargetType;
+import com.subOne.notification.NotificationType;
 import com.subOne.user_service.cache.CacheService;
 import com.subOne.user_service.dto.group_member.response.ResponseMemberDto;
 import com.subOne.user_service.dto.group_member.response.ResponseMembersDto;
@@ -83,7 +86,7 @@ public class GroupMemberServiceImpl implements GroupMemberService {
                                     }));
                     })
                 .then(Mono.defer( () -> cacheService.deleteValue("MEMBER::" + userId + ' ' + groupId)))
-                .then(Mono.defer(() -> kafkaService.sendToTopic("notification_user", userId, "Вы были удалены из группы")));
+                .then(Mono.defer(() -> kafkaService.sendToTopic("notification_user", userId, new SendNotificationDto(NotificationType.DELETE_MEMBER, null, null))));
     }
 
     @Override
@@ -150,7 +153,7 @@ public class GroupMemberServiceImpl implements GroupMemberService {
                         .thenReturn(ls))
                 .flatMapMany(Flux::fromIterable)
                 .flatMap(dto -> {
-                        kafkaService.sendToTopic("notification_user", dto.userId(), "Вы теперь собственник группы: " + dto.groupId()).subscribe();
+                        kafkaService.sendToTopic("notification_user", dto.userId(), new SendNotificationDto(NotificationType.CHANGE_OWNER, NotificationTargetType.GROUP, dto.groupId())).subscribe();
                         return cacheService.deleteValue("MEMBER::" + dto.userId() + ' ' + dto.groupId()).then(cacheService.deleteValue("OWNER::" + dto.groupId()));
                 })
                 .then();

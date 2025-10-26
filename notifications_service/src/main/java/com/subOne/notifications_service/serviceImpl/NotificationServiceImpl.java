@@ -1,7 +1,10 @@
 package com.subOne.notifications_service.serviceImpl;
 
 import com.subOne.kafka_dto.KafkaDtoPaymentSubscription;
+import com.subOne.kafka_dto.SendNotificationDto;
 import com.subOne.keycloak_dto.UserInfo;
+import com.subOne.notification.NotificationTargetType;
+import com.subOne.notification.NotificationType;
 import com.subOne.notifications_service.client.service.RestTemplateService;
 import com.subOne.notifications_service.dto.notification.request.RequestUpdateNotificationsDto;
 import com.subOne.notifications_service.dto.notification.response.ResponseNotificationsCountDto;
@@ -58,37 +61,34 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     @Transactional
-    public void saveNotification(ConsumerRecord<UUID, String> record) {
+    public void saveNotification(ConsumerRecord<UUID, SendNotificationDto> record) {
         Notification notification = notificationRepository.save(mapperNotification.messageDtoToNotification(record));
         simpMessagingTemplate.convertAndSendToUser(
                 notification.getUserId().toString(),
                 "/queue/notifications",
-                notification.getMessage()
+                record.value()
         );
     }
 
     @Override
     @Transactional
     public void saveNotification(UserInfo userInfo) {
-        String message = userInfo.name() +
-                ", спасибо, за регистрацию, теперь у вас есть множество возможностей анализировать подписки и многое другое.";
-        Notification notification = notificationRepository.save(mapperNotification.parametersToNotification(message, userInfo.userId()));
-        simpMessagingTemplate.convertAndSendToUser(
-                notification.getUserId().toString(),
-                "/queue/notifications",
-                notification.getMessage());
+        notificationRepository.save(
+                mapperNotification.parametersToNotification(userInfo.userId(), NotificationType.CREATE_USER, null, null)
+        );
     }
 
     @Override
     public void saveNotificationPaymentSubscription(KafkaDtoPaymentSubscription kafkaDtoPaymentSubscription) {
             UUID ownerId = restTemplateService.getOwnerIdByGroupId(kafkaDtoPaymentSubscription.groupId());
             if(ownerId == null) return;
-            String message = "Завтра произойдет оплата подписки: " + kafkaDtoPaymentSubscription.subscriptionId();
-            Notification notification = notificationRepository.save(mapperNotification.parametersToNotification(message, ownerId));
+            Notification notification = notificationRepository.save(
+                    mapperNotification.parametersToNotification(ownerId, NotificationType.PAYEMNT_SUBSCRIPTION, NotificationTargetType.SUBSCRIPTION, kafkaDtoPaymentSubscription.subscriptionId())
+            );
             simpMessagingTemplate.convertAndSendToUser(
                     notification.getUserId().toString(),
                     "/queue/notifications",
-                    notification.getMessage());
+                    new SendNotificationDto(notification.getNotificationType(), notification.getNotificationTargetType(), notification.getTargetId()));
     }
 
     @Override

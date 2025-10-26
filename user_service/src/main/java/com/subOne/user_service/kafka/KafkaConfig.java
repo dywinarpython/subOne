@@ -1,5 +1,6 @@
 package com.subOne.user_service.kafka;
 
+import com.subOne.kafka_dto.SendNotificationDto;
 import com.subOne.keycloak_dto.UserInfo;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -19,6 +20,7 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.*;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
+import org.springframework.kafka.support.serializer.JsonSerializer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -99,18 +101,18 @@ public class KafkaConfig {
     }
 
     @Bean
-    public ProducerFactory<UUID, String> notificationsUUIDProducerFactory(
+    public ProducerFactory<UUID, SendNotificationDto> notificationsUUIDProducerFactory(
             @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers) {
         Map<String, Object> props = new HashMap<>();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, UUIDSerializer.class);
-        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         return new DefaultKafkaProducerFactory<>(props);
     }
 
     @Bean
-    @Qualifier("messageSendWithUUIDKey")
-    public KafkaTemplate<UUID, String> messageSendWithUUIDKey(ProducerFactory<UUID, String> producerFactory){
+    @Qualifier("messageSendWithUUIDKeyNotification")
+    public KafkaTemplate<UUID, SendNotificationDto> messageSendWithUUIDKey(ProducerFactory<UUID, SendNotificationDto> producerFactory){
         return new KafkaTemplate<>(producerFactory);
     }
 
