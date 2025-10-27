@@ -83,7 +83,7 @@ public class NotificationServiceImpl implements NotificationService {
             UUID ownerId = restTemplateService.getOwnerIdByGroupId(kafkaDtoPaymentSubscription.groupId());
             if(ownerId == null) return;
             Notification notification = notificationRepository.save(
-                    mapperNotification.parametersToNotification(ownerId, NotificationType.PAYEMNT_SUBSCRIPTION, NotificationTargetType.SUBSCRIPTION, kafkaDtoPaymentSubscription.subscriptionId())
+                    mapperNotification.parametersToNotification(ownerId, kafkaDtoPaymentSubscription.notificationType(), NotificationTargetType.SUBSCRIPTION, kafkaDtoPaymentSubscription.subscriptionId())
             );
             simpMessagingTemplate.convertAndSendToUser(
                     notification.getUserId().toString(),

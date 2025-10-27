@@ -1,6 +1,7 @@
 package com.subOne.subscriptions_service.scheduler;
 
 import com.subOne.kafka_dto.KafkaDtoPaymentSubscription;
+import com.subOne.notification.NotificationType;
 import com.subOne.subscriptions_service.cache.CacheService;
 import com.subOne.subscriptions_service.entity.AnalyticSubscription;
 import com.subOne.subscriptions_service.entity.enumEntity.PaymentPeriod;
@@ -61,7 +62,7 @@ public class  SchedulerSubscriptionControl {
         userSubscriptionRepository.updateStatusByEndTime().subscribe();
     }
 
-    @Scheduled(cron = "0 0 12 * * *")
+    @Scheduled(cron = "0 0 9 * * *")
     public void sendMessageWithPaymentInfo() {
         analyticSubscriptionRepository
                 .selectSubscriptionsIdAndGroupByLastDatePaid()
@@ -71,9 +72,20 @@ public class  SchedulerSubscriptionControl {
                     LocalDate nextDatePaid = dto.datePaid().plus(period);
                     return nextDatePaid.isBefore(LocalDate.now().plusDays(2));})
                 .doOnNext(dto -> kafkaService.sendToTopic("payment_subscription",
-                        new KafkaDtoPaymentSubscription(dto.subscriptionId(), dto.groupId())).subscribe())
+                        new KafkaDtoPaymentSubscription(dto.subscriptionId(), dto.groupId(), NotificationType.PAYEMNT_SUBSCRIPTION)).subscribe())
                 .subscribe();
     }
+
+    @Scheduled(cron = "0 0 8 * * *")
+    public void sendMessageWithAlreadyPaymentInfo() {
+        analyticSubscriptionRepository
+                .selectSubscriptionsIdAndGroupByLastDatePaid()
+                .filter(dto -> dto.datePaid().equals(LocalDate.now()))
+                .doOnNext(dto -> kafkaService.sendToTopic("payment_subscription",
+                        new KafkaDtoPaymentSubscription(dto.subscriptionId(), dto.groupId(), NotificationType.ALREADY_PAYEMNT_SUBS)).subscribe())
+                .subscribe();
+    }
+
 
 
 }
