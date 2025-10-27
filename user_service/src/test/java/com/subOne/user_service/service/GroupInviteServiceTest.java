@@ -5,6 +5,7 @@ import com.subOne.user_service.dto.group_invite.CodeDto;
 import com.subOne.user_service.dto.group_invite.response.ResponseInviteCodeDto;
 import com.subOne.user_service.dto.group_member.response.ResponseMembersDto;
 import com.subOne.user_service.entity.GroupInvite;
+import com.subOne.user_service.kafka.serviceProducer.KafkaService;
 import com.subOne.user_service.mapper.MapperGroupInvite;
 import com.subOne.user_service.repository.group_invite_repository.GroupInviteRepository;
 import com.subOne.user_service.service_impl.GroupInviteServiceImpl;
@@ -55,6 +56,9 @@ public class GroupInviteServiceTest {
     private CacheService cacheService;
 
     @Mock
+    private KafkaService kafkaService;
+
+    @Mock
     private Jwt jwt;
 
     @Test
@@ -65,6 +69,8 @@ public class GroupInviteServiceTest {
         when(groupInviteRepository.findGroupIdByCode(any())).thenReturn(Mono.just(1L));
         when(groupMemberService.addUser(any(), anyLong())).thenReturn(Mono.just(responseMembersDto));
         when(cacheService.getValue(anyString(), any())).thenReturn(Mono.empty());
+        when(kafkaService.sendToTopic(anyString(), any(), any())).thenReturn(Mono.empty());
+        when(groupService.getOwnerId(anyLong())).thenReturn(Mono.just(UUID.randomUUID()));
 
         Mono<ResponseMembersDto> result = groupInviteService.addUserByCode(UUID.randomUUID(), jwt);
 
@@ -74,7 +80,9 @@ public class GroupInviteServiceTest {
         verify(userService).checkVerifyEmail(any());
         verify(groupInviteRepository).findGroupIdByCode(any());
         verify(groupMemberService).addUser(any(), anyLong());
+        verify(groupService).getOwnerId(anyLong());
         verify(cacheService).getValue(anyString(), any());
+        verify(kafkaService).sendToTopic(anyString(), any(), any());
     }
     @Test
     void addUserByCode_CodeIsCorrectAndUserIsNotMemberAndVerifyEmailAndCacheFound_CorrectAddAndCheckRepo(){
@@ -83,6 +91,8 @@ public class GroupInviteServiceTest {
         when(userService.checkVerifyEmail(any())).thenReturn(Mono.just(Boolean.TRUE));
         when(groupMemberService.addUser(any(), anyLong())).thenReturn(Mono.just(responseMembersDto));
         when(cacheService.getValue(anyString(), any())).thenReturn(Mono.just(1L));
+        when(kafkaService.sendToTopic(anyString(), any(), any())).thenReturn(Mono.empty());
+        when(groupService.getOwnerId(anyLong())).thenReturn(Mono.just(UUID.randomUUID()));
 
         Mono<ResponseMembersDto> result = groupInviteService.addUserByCode(UUID.randomUUID(), jwt);
 
@@ -91,8 +101,10 @@ public class GroupInviteServiceTest {
                 .verifyComplete();
         verify(userService).checkVerifyEmail(any());
         verify(groupInviteRepository, times(0)).findGroupIdByCode(any());
+        verify(groupService).getOwnerId(anyLong());
         verify(groupMemberService).addUser(any(), anyLong());
         verify(cacheService).getValue(anyString(), any());
+        verify(kafkaService).sendToTopic(anyString(), any(), any());
     }
 
     @Test

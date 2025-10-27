@@ -64,7 +64,7 @@ public class NotificationsController {
             )
     )
     @GetMapping("/count")
-    public ResponseNotificationsCountDto getCountNotifications(@AuthenticationPrincipal Jwt jwt){
+    public ResponseNotificationsCountDto getCountNotificationsNew(@AuthenticationPrincipal Jwt jwt){
         return notificationService.findCountNotReadNotifications(jwt);
     }
 
@@ -72,7 +72,7 @@ public class NotificationsController {
             summary = "Обновление уведомлений (прочитать)"
     )
     @PatchMapping
-    public ResponseEntity<Map<String, String>> getNotifications(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody RequestUpdateNotificationsDto requestUpdateNotificationsDto){
+    public ResponseEntity<Map<String, String>> updateNotifications(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody RequestUpdateNotificationsDto requestUpdateNotificationsDto){
         notificationService.readNotification(requestUpdateNotificationsDto, jwt);
         return ResponseEntity.ok(Map.of("message", "notification updated"));
     }

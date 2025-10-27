@@ -77,7 +77,8 @@ public class GroupServiceImpl implements GroupService {
     @Override
     @Transactional(readOnly = true)
     public Mono<UUID> getOwnerId(Long groupId) {
-        return groupRepository.findOwnerIdByGroupId(groupId);
+        return groupRepository.findOwnerIdByGroupId(groupId)
+                .switchIfEmpty(Mono.error(new NoSuchElementException("Group is not found")));
     }
 
     @Override

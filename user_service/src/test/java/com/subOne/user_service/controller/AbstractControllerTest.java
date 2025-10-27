@@ -26,8 +26,7 @@ import reactor.test.StepVerifier;
 
 import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.lenient;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt;
 
@@ -57,6 +56,7 @@ public abstract class AbstractControllerTest {
     void setUp(){
         lenient().when(kafkaService.sendToTopic(anyString(), anyString())).thenReturn(Mono.empty());
         lenient().when(kafkaService.sendToTopic(anyString(), anyLong())).thenReturn(Mono.empty());
+        lenient().when(kafkaService.sendToTopic(anyString(), any(), any())).thenReturn(Mono.empty());
 
         UUID userId = UUID.randomUUID();
         jwt = Jwt.withTokenValue("dummy-token")

@@ -9,6 +9,7 @@ import com.subOne.user_service.dto.user.request.RequestGroupsOwnershipChangesDto
 import com.subOne.user_service.dto.user.response.ResponseUserDto;
 import com.subOne.user_service.entity.GroupMember;
 import com.subOne.user_service.exception.ConflictException;
+import com.subOne.user_service.kafka.serviceProducer.KafkaService;
 import com.subOne.user_service.mapper.MapperGroupMember;
 import com.subOne.user_service.repository.group_member_repository.GroupMemberRepository;
 import com.subOne.user_service.service_impl.GroupMemberServiceImpl;
@@ -49,6 +50,9 @@ public class GroupMemberServiceTest {
 
     @Mock
     private CacheService cacheService;
+
+    @Mock
+    private KafkaService kafkaService;
 
     @InjectMocks
     private GroupMemberServiceImpl groupMemberService;
@@ -199,6 +203,7 @@ public class GroupMemberServiceTest {
         when(groupService.checkUserIsOwner(anyLong(), any())).thenReturn(Mono.empty());
         when(groupMemberRepository.deleteByUserIdAndGroupId(any(), anyLong())).thenReturn(Mono.just(1L));
         when(cacheService.deleteValue(anyString())).thenReturn(Mono.empty());
+        when(kafkaService.sendToTopic(anyString(), any(), any())).thenReturn(Mono.empty());
 
         Mono<Void> result = groupMemberService.deleteMember(1L, UUID.randomUUID(), jwt);
 
@@ -207,6 +212,7 @@ public class GroupMemberServiceTest {
         verify(groupService).checkUserIsOwner(anyLong(), any());
         verify(groupMemberRepository).deleteByUserIdAndGroupId(any(), anyLong());
         verify(cacheService).deleteValue(anyString());
+        verify(kafkaService).sendToTopic(anyString(), any(), any());
     }
 
     @Test
@@ -225,6 +231,7 @@ public class GroupMemberServiceTest {
         verify(groupService).checkUserIsOwner(anyLong(), any());
         verify(groupMemberRepository).deleteByUserIdAndGroupId(any(), anyLong());
         verify(cacheService, times(0)).deleteValue(anyString());
+        verify(kafkaService, times(0)).sendToTopic(anyString(), any(), any());
     }
 
     @Test
@@ -378,6 +385,7 @@ public class GroupMemberServiceTest {
         when(groupMemberRepository.updateOwnerGroup(any())).thenReturn(Mono.empty());
         when(groupMemberRepository.insertAllMembers(any(), any())).thenReturn(Mono.empty());
         when(cacheService.deleteValue(anyString())).thenReturn(Mono.empty());
+        when(kafkaService.sendToTopic(anyString(), any(), any())).thenReturn(Mono.empty());
 
         Mono<Void> result = groupMemberService.changesOwnerGroup(Mono.just(requestGroupsOwnershipChangesDto), jwt);
 
@@ -390,6 +398,7 @@ public class GroupMemberServiceTest {
         verify(groupMemberRepository).updateOwnerGroup(any());
         verify(groupMemberRepository).insertAllMembers(any(), any());
         verify(cacheService, times(6)).deleteValue(anyString());
+        verify(kafkaService, times(requestGroupsOwnershipChangesDto.groupOwnershipChanges().size())).sendToTopic(anyString(), any(), any());
     }
 
     @Test
@@ -421,6 +430,7 @@ public class GroupMemberServiceTest {
         verify(groupMemberRepository, times(0)).updateOwnerGroup(any());
         verify(groupMemberRepository, times(0)).insertAllMembers(any(), any());
         verify(cacheService, times(0)).deleteValue(anyString());
+        verify(kafkaService, times(0)).sendToTopic(anyString(), any(), any());
     }
 
     @Test
@@ -446,6 +456,7 @@ public class GroupMemberServiceTest {
         verify(groupMemberRepository, times(0)).updateOwnerGroup(any());
         verify(groupMemberRepository, times(0)).insertAllMembers(any(), any());
         verify(cacheService, times(0)).deleteValue(anyString());
+        verify(kafkaService, times(0)).sendToTopic(anyString(), any(), any());
     }
 
 }

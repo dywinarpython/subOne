@@ -1,0 +1,18 @@
+spring:
+  page:
+    size: ${PAGE_SIZE:10}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  liquibase:
+    change-log: classpath:db/changelog/changelog-master.xml
+
+  user_service:
+    url: ${USER_SERVICE_URL:http://localhost:8000/api/v1/}
+    max_reties: ${USER_SERVICE_RETRIES:5}
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

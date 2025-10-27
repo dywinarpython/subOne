@@ -26,7 +26,7 @@ public class KafkaHandlerServiceImpl implements KafkaHandlerService {
     @Override
     @KafkaListener(topics = "create_user", containerFactory = "userInfoKafkaListenerFactory")
     public void saveNotificationCreateUser(UserInfo userInfo) {
-        notificationService.saveNotification(userInfo);
+        notificationService.saveNotificationCreateUser(userInfo);
     }
 
     @Override

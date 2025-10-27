@@ -4,6 +4,7 @@ import com.subOne.user_service.cache.CacheService;
 import com.subOne.user_service.dto.group.request.RequestGroupDto;
 import com.subOne.user_service.dto.group.request.RequestUpdateGroupDto;
 import com.subOne.user_service.dto.group.response.ResponseGroupDto;
+import com.subOne.user_service.dto.group.response.ResponseGroupOwnerIdDto;
 import com.subOne.user_service.dto.group.response.ResponseGroupsDto;
 import com.subOne.user_service.entity.Group;
 import com.subOne.user_service.mapper.MapperGroup;
@@ -105,6 +106,31 @@ public class GroupControllerTest extends AbstractControllerTest{
                 .verifyComplete();
     }
 
+    @DisplayName("GET -> /api/v1/groups/{groupId}/owner")
+    @Test
+    void getOwnerIdByGroupId_GroupFound_CorrectReturn(){
+        Flux<ResponseGroupOwnerIdDto> result = webTestClient
+                .get()
+                .uri(URI + "/" + group.getId() + "/owner")
+                .exchange()
+                .expectStatus().isOk()
+                .returnResult(ResponseGroupOwnerIdDto.class).getResponseBody();
+
+        StepVerifier.create(result)
+                .assertNext(dto -> assertEquals(dto.ownerId(), user.getUserId()))
+                .verifyComplete();
+    }
+
+    @DisplayName("GET -> /api/v1/groups/{groupId}/owner (group not found)")
+    @Test
+    void getOwnerIdByGroupId_GroupNotFound_CorrectReturn(){
+        webTestClient
+                .get()
+                .uri(URI + "/" + System.currentTimeMillis() + "/owner")
+                .exchange()
+                .expectStatus().isNotFound();
+    }
+
     @DisplayName("GET -> /api/v1/groups/me?page=")
     @Test
     void getGroupsUserIsMember_UserIsNotMember_CorrectReturn(){
@@ -114,6 +140,7 @@ public class GroupControllerTest extends AbstractControllerTest{
                 .exchange()
                 .expectStatus().isOk()
                 .returnResult(ResponseGroupsDto.class).getResponseBody();
+
         StepVerifier.create(result)
                 .assertNext(
                         responseGroupsDto -> {

@@ -16,7 +16,7 @@ public interface NotificationService {
     ResponseNotificationsDto findReadNotificationsByUserId(Jwt jwt, Integer page);
     ResponseNotificationsCountDto findCountNotReadNotifications(Jwt jwt);
     void saveNotification(ConsumerRecord<UUID, SendNotificationDto> record);
-    void saveNotification(UserInfo userInfo);
+    void saveNotificationCreateUser(UserInfo userInfo);
     void saveNotificationPaymentSubscription(KafkaDtoPaymentSubscription kafkaDtoPaymentSubscription);
     void readNotification(RequestUpdateNotificationsDto requestUpdateNotificationsDto, Jwt jwt);
 }

@@ -14,8 +14,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +25,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.Map;
 
+@Slf4j
 @Tag(name = "Управление группами")
 @RestController
 @RequestMapping("/api/v1/groups")
@@ -72,10 +75,11 @@ public class GroupController {
     )
     @GetMapping("owner/me")
     public Mono<ResponseGroupsDto> getGroups(@AuthenticationPrincipal Jwt jwt) {
-        return groupService.getGroupsCreateUser(jwt);
+      return groupService.getGroupsCreateUser(jwt);
     }
 
     @Operation(
+            description = "Получение id пользователя доступно только при межсерверном взаимодействии",
             summary = "Получение id собственника группы",
             responses = @ApiResponse(
                     responseCode = "200",
@@ -85,6 +89,7 @@ public class GroupController {
             )
     )
     @GetMapping("/{groupId}/owner")
+    @PreAuthorize("hasRole('CLIENT_SERVICE_NOTIFICATION_SERVICE')")
     public Mono<ResponseGroupOwnerIdDto> getOwnerIdByGroupId(@PathVariable Long groupId) {
         return groupService.getOwnerId(groupId).map(ResponseGroupOwnerIdDto::new);
     }

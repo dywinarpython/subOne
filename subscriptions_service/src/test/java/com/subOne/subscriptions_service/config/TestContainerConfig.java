@@ -13,7 +13,7 @@ public class TestContainerConfig {
     @Bean(initMethod = "start", destroyMethod = "stop")
     public PostgreSQLContainer<?> postgreSQLContainer(){
         return new PostgreSQLContainer<>("postgres:latest")
-                .withDatabaseName("user_service");
+                .withDatabaseName("subscriptions_service");
     }
 
     @Bean(initMethod = "start", destroyMethod = "stop")

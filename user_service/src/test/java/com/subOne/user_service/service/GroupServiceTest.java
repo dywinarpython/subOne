@@ -170,20 +170,47 @@ public class GroupServiceTest {
     }
 
     @Test
+    void getOwnerId_GroupFound_CorrectReturnAndCheckRepo(){
+        UUID userId = UUID.randomUUID();
+        when(groupRepository.findOwnerIdByGroupId(anyLong())).thenReturn(Mono.just(userId));
+
+        Mono<UUID> result = groupService.getOwnerId(0L);
+
+        StepVerifier.create(result)
+                .expectNext(userId)
+                .verifyComplete();
+
+        verify(groupRepository).findOwnerIdByGroupId(anyLong());
+    }
+
+    @Test
+    void getOwnerId_GroupNotFound_CorrectReturnAndCheckRepo(){
+        when(groupRepository.findOwnerIdByGroupId(anyLong())).thenReturn(Mono.empty());
+
+        Mono<UUID> result = groupService.getOwnerId(0L);
+
+        StepVerifier.create(result)
+                .expectErrorSatisfies(throwable -> assertEquals(NoSuchElementException.class, throwable.getClass()))
+                .verify();
+
+        verify(groupRepository).findOwnerIdByGroupId(anyLong());
+    }
+
+    @Test
     void getGroupsCreateUser_GroupOneIsCreate_CorrectReturnAndCheckRepo(){
         ResponseGroupsDto responseGroupsDto = new ResponseGroupsDto(
                 List.of(new ResponseGroupDto(1L, "testName", OffsetDateTime.now(), OffsetDateTime.now()))
         );
-        when(groupRepository.findByOwnerId(any(), any())).thenReturn(Flux.fromIterable(responseGroupsDto.groups()));
+        when(groupRepository.findByOwnerId(any())).thenReturn(Flux.fromIterable(responseGroupsDto.groups()));
         when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
 
-        Mono<ResponseGroupsDto> result = groupService.getGroupsCreateUser(jwt, 0);
+        Mono<ResponseGroupsDto> result = groupService.getGroupsCreateUser(jwt);
 
         StepVerifier.create(result)
                 .expectNext(responseGroupsDto)
                 .verifyComplete();
 
-        verify(groupRepository).findByOwnerId(any(), any());
+        verify(groupRepository).findByOwnerId(any());
     }
 
     @Test
