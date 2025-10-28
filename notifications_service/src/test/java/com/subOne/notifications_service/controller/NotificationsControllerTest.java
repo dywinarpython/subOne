@@ -1,12 +1,10 @@
-package com.subOne.notifications_service;
+package com.subOne.notifications_service.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.subOne.notification.NotificationTargetType;
 import com.subOne.notification.NotificationType;
+import com.subOne.notifications_service.BaseIntegrationTest;
 import com.subOne.notifications_service.client.serviceImpl.RestTemplateServiceImpl;
-import com.subOne.notifications_service.config.TestConfig;
-import com.subOne.notifications_service.config.TestContainerConfig;
-import com.subOne.notifications_service.config.TestSecurityConfig;
 import com.subOne.notifications_service.dto.notification.request.RequestUpdateNotificationsDto;
 import com.subOne.notifications_service.dto.notification.response.ResponseNotificationDto;
 import com.subOne.notifications_service.dto.notification.response.ResponseNotificationsCountDto;
@@ -14,19 +12,12 @@ import com.subOne.notifications_service.dto.notification.response.ResponseNotifi
 import com.subOne.notifications_service.entity.Notification;
 import com.subOne.notifications_service.mapper.MapperNotification;
 import com.subOne.notifications_service.repository.NotificationRepository;
-import com.subOne.notifications_service.websocket.serviceImpl.WebSocketSendMessageServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -41,18 +32,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@ActiveProfiles("test")
-@Import(value = {TestConfig.class, TestContainerConfig.class, TestSecurityConfig.class})
-@EnableAutoConfiguration(exclude = {KafkaAutoConfiguration.class})
-@AutoConfigureMockMvc
-class NotificationsControllerTest {
+class NotificationsControllerTest extends BaseIntegrationTest {
 
     @MockitoBean
     private RestTemplateServiceImpl restTemplateService;
-
-    @MockitoBean
-    private WebSocketSendMessageServiceImpl webSocketSendMessageService;
 
     @Autowired
     private MockMvc mockMvc;

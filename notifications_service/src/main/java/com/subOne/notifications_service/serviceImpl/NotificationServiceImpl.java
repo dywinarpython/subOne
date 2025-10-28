@@ -51,11 +51,13 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ResponseNotificationsDto findReadNotificationsByUserId(Jwt jwt, Integer page) {
         return new ResponseNotificationsDto(notificationRepository.findByUserIdAndReadTrueOrderByCreatedAtDesc(UUID.fromString(jwt.getSubject()), PageRequest.of(page, pageSize)));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ResponseNotificationsCountDto findCountNotReadNotifications(Jwt jwt) {
         return new ResponseNotificationsCountDto(notificationRepository.countByUserId(UUID.fromString(jwt.getSubject())));
     }
@@ -80,6 +82,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
+    @Transactional
     public void saveNotificationPaymentSubscription(KafkaDtoPaymentSubscription kafkaDtoPaymentSubscription) {
             UUID ownerId = restTemplateService.getOwnerIdByGroupId(kafkaDtoPaymentSubscription.groupId());
             if(ownerId == null) return;

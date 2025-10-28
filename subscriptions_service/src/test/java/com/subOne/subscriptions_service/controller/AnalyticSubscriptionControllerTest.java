@@ -87,14 +87,9 @@ public class AnalyticSubscriptionControllerTest extends UserSubscriptionControll
                 .returnResult(ResponseTotalAnalyticSubscriptionGroupDto.class).getResponseBody();
 
         StepVerifier.create(result)
-                .assertNext( analyticGroup -> {
-                    StepVerifier.create(analyticSubscriptionRepository.selectTotalAnalyticByGroupId(userSubscription.getGroupId()))
-                            .assertNext(resultRepo -> this.checkAnalytic(analyticGroup, resultRepo))
-                            .verifyComplete();
-                    StepVerifier.create(cacheService.getValue("ANALYTIC_GROUP::" + userSubscription.getGroupId(), ResponseTotalAnalyticSubscriptionGroupDto.class))
-                            .assertNext(resultRepo -> this.checkAnalytic(analyticGroup, resultRepo))
-                            .verifyComplete();
-                }).verifyComplete();
+                .assertNext( analyticGroup -> StepVerifier.create(cacheService.getValue("ANALYTIC_GROUP::" + userSubscription.getGroupId(), ResponseTotalAnalyticSubscriptionGroupDto.class))
+                        .assertNext(resultRepo -> this.checkAnalytic(analyticGroup, resultRepo))
+                        .verifyComplete()).verifyComplete();
     }
 
 

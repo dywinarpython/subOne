@@ -28,7 +28,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     )
     int updateReadNotificationsByUserId(List<Long> notificationsId, UUID userId);
 
-    @Query(value = "delete from notifications where n.created_at < :threshold", nativeQuery = true)
+    @Modifying
+    @Query(value = "delete from notifications where created_at < :threshold", nativeQuery = true)
     int deleteByCreatedAtBefore(OffsetDateTime threshold);
 
 }

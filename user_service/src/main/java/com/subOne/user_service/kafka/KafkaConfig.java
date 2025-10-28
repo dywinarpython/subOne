@@ -71,14 +71,14 @@ public class KafkaConfig {
 
     @Bean
     public NewTopic messageUserTopic(){
-        return createTopic("delete_user");
+        return createTopic("delete_user", 1);
     }
 
     @Bean
-    public NewTopic messageDeleteGroup() { return createTopic("delete_group", 3);}
+    public NewTopic messageDeleteGroup() { return createTopic("delete_group");}
 
     @Bean
-    public NewTopic notifications() { return createTopic("notification_user", 3);}
+    public NewTopic notifications() { return createTopic("notification_user");}
 
     @Bean
     public ProducerFactory<String, String> groupStringProducerFactory(

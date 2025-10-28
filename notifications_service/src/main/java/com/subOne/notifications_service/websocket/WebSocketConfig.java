@@ -12,7 +12,6 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @Configuration
 @EnableWebSocketMessageBroker
 @RequiredArgsConstructor
-@Profile("!test")
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final WebSocketJwtAuthChannelInterceptor webSocketJwtAuthChannelInterceptor;
     @Override
@@ -29,6 +28,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     }
 
     @Override
+    @Profile("!test")
     public void configureClientInboundChannel(ChannelRegistration registration) {
         registration.interceptors(webSocketJwtAuthChannelInterceptor);
     }

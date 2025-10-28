@@ -17,25 +17,15 @@ import java.time.OffsetDateTime;
 public class UserSubscription {
     @Id
     private Long id;
-
     private Long groupId;
-
     private String serviceName;
-
     private String subscriptionName;
-
     private LocalDate startDate;
-
     private LocalDate endDate;
-
     private String paymentPeriod;
-
     private BigDecimal amount;
-
     private String status;
-
     @CreatedDate
     private LocalDateTime createdAt;
-
     private OffsetDateTime updatedAt;
 }

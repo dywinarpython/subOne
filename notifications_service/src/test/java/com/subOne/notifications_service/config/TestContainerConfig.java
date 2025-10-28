@@ -10,7 +10,7 @@ public class TestContainerConfig {
     @Bean(initMethod = "start", destroyMethod = "stop")
     public PostgreSQLContainer<?> postgreSQLContainer(){
         return new PostgreSQLContainer<>("postgres:latest")
-                .withDatabaseName("notifications_service");
+                .withDatabaseName("notifications_service").withReuse(true);
     }
 
 }
