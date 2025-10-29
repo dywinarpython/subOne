@@ -1,8 +1,11 @@
 package com.subOne.subscriptions_service.scheduler;
 
+import com.subOne.kafka_dto.KafkaDtoPaymentSubscription;
+import com.subOne.notification.NotificationType;
 import com.subOne.subscriptions_service.cache.CacheService;
 import com.subOne.subscriptions_service.entity.AnalyticSubscription;
 import com.subOne.subscriptions_service.entity.enumEntity.PaymentPeriod;
+import com.subOne.subscriptions_service.kafka.producer.KafkaService;
 import com.subOne.subscriptions_service.repository.analytic_subscription_repository.AnalyticSubscriptionRepository;
 import com.subOne.subscriptions_service.repository.user_subscription_repository.UserSubscriptionRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,9 +28,10 @@ public class  SchedulerSubscriptionControl {
 
     private final CacheService cacheService;
 
-    // TODO при выпуска в PROD меняем аналитику каждый день в полночь + 10 minutes
-    // @Scheduled(cron = "0 10 0 * * *")
-    @Scheduled(cron = "2 * * * * *")
+    private final KafkaService kafkaService;
+
+
+    @Scheduled(cron = "0 10 0 * * *")
     public void generateSubscriptionsAnalytic() {
         analyticSubscriptionRepository.selectSubscriptionsLastDatePaid().flatMap(subscriptionLastDatePaymentDto -> {
                     PaymentPeriod paymentPeriod = PaymentPeriod.valueOf(subscriptionLastDatePaymentDto.paymentPeriod());
@@ -49,11 +53,36 @@ public class  SchedulerSubscriptionControl {
     }
 
 
-    // TODO при выпуска в PROD меняем аналитику каждый день в полночь
-    // @Scheduled(cron = "0 0 0 * * *")
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "0 0 0 * * *")
     public void updateStatusSubscriptions() {
         userSubscriptionRepository.updateStatusByEndTime().subscribe();
     }
+
+    @Scheduled(cron = "0 0 9 * * *")
+    public void sendMessageWithPaymentInfo() {
+        analyticSubscriptionRepository
+                .selectSubscriptionsIdAndGroupByLastDatePaid()
+                .filter(dto -> {
+                    PaymentPeriod paymentPeriod = PaymentPeriod.valueOf(dto.paymentPeriod());
+                    TemporalAmount period = paymentPeriod.generatePeriod();
+                    LocalDate nextDatePaid = dto.datePaid().plus(period);
+                    return nextDatePaid.isBefore(LocalDate.now().plusDays(2));
+                })
+                .doOnNext(dto -> kafkaService.sendToTopic("payment_subscription",
+                        new KafkaDtoPaymentSubscription(dto.subscriptionId(), dto.groupId(), NotificationType.PAYEMNT_SUBSCRIPTION)).subscribe())
+                .subscribe();
+    }
+
+    @Scheduled(cron = "0 0 8 * * *")
+    public void sendMessageWithAlreadyPaymentInfo() {
+        analyticSubscriptionRepository
+                .selectSubscriptionsIdAndGroupByLastDatePaid()
+                .filter(dto -> dto.datePaid().plusDays(1).equals(LocalDate.now()))
+                .doOnNext(dto -> kafkaService.sendToTopic("payment_subscription",
+                        new KafkaDtoPaymentSubscription(dto.subscriptionId(), dto.groupId(), NotificationType.ALREADY_PAYEMNT_SUBS)).subscribe())
+                .subscribe();
+    }
+
+
 
 }

@@ -9,12 +9,14 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface GroupService {
     Mono<ResponseGroupDto> saveGroup(Mono<RequestGroupDto> requestGroupDtoMono, Jwt jwt);
     Mono<ResponseGroupDto> getGroupById(Long groupId, Jwt jwt);
     Mono<ResponseUserDto> getOwner(Long groupId);
-    Mono<ResponseGroupsDto> getGroupsCreateUser(Jwt jwt, Integer page);
+    Mono<UUID> getOwnerId(Long groupId);
+    Mono<ResponseGroupsDto> getGroupsCreateUser(Jwt jwt);
     Mono<ResponseGroupsDto> getGroupsUserIsMember(Jwt jwt, Integer page);
     Mono<Void> updateGroup(Mono<RequestUpdateGroupDto> requestGroupDtoMono, Long groupId, Jwt jwt);
     Mono<Void> deleteGroup(Long groupId, Jwt jwt);

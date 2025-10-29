@@ -1,6 +1,6 @@
 package com.subOne.user_service.kafka.kasfka_handler_impl;
 
-import com.subOne.kecyloak_dto.UserInfo;
+import com.subOne.keycloak_dto.UserInfo;
 import com.subOne.user_service.kafka.kasfka_handler.KafkaHandlerService;
 import com.subOne.user_service.service.UserService;
 import lombok.RequiredArgsConstructor;

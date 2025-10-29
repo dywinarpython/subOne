@@ -1,6 +1,7 @@
 package com.subOne.subscriptions_service.repository.analytic_subscription_repository.selectImpl;
 
 import com.subOne.subscriptions_service.dto.analytic_subscription.SubscriptionLastDatePaymentDto;
+import com.subOne.subscriptions_service.dto.analytic_subscription.SubscriptionLastDatePaymentIdAndGroupIdDto;
 import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseTotalAnalyticSubscriptionDto;
 import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseTotalAnalyticSubscriptionGroupDto;
 import com.subOne.subscriptions_service.repository.analytic_subscription_repository.select.SelectAnalyticSubscriptionRepository;
@@ -35,6 +36,27 @@ public class SelectAnalyticSubscriptionRepositoryImpl implements SelectAnalyticS
                         row.get("subscription_id", Long.class),
                         row.get("payment_period", String.class),
                         row.get("amount", BigDecimal.class),
+                        row.get("datePaid", LocalDate.class)
+                ))
+                .all();
+    }
+
+    @Override
+    public Flux<SubscriptionLastDatePaymentIdAndGroupIdDto> selectSubscriptionsIdAndGroupByLastDatePaid() {
+        return databaseClient
+                .sql("""
+                select a.subscription_id,
+                       u.group_id,
+                       u.payment_period,
+                       max(a.date_paid) as datePaid
+                from analytic_subscriptions a
+                join user_subscriptions u ON a.subscription_id = u.id
+                where u.status not in ('STOP', 'EXPIRED')
+                group by a.subscription_id, u.group_id, u.payment_period""")
+                .map((row, metadata) -> new SubscriptionLastDatePaymentIdAndGroupIdDto(
+                        row.get("subscription_id", Long.class),
+                        row.get("group_id", Long.class),
+                        row.get("payment_period", String.class),
                         row.get("datePaid", LocalDate.class)
                 ))
                 .all();

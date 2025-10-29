@@ -24,8 +24,7 @@ import reactor.core.publisher.Mono;
 
 import javax.sql.DataSource;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 

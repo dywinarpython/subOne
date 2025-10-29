@@ -13,7 +13,6 @@ import com.subOne.user_service.service.GroupService;
 import jakarta.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -70,13 +69,21 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Mono<ResponseUserDto> getOwner(Long groupId) {
         return groupRepository.selectOwnerByGroupId(groupId);
     }
 
     @Override
-    public Mono<ResponseGroupsDto> getGroupsCreateUser(Jwt jwt, Integer page) {
-        return groupRepository.findByOwnerId(UUID.fromString(jwt.getSubject()), PageRequest.of(page, pageSize)).collectList().map(ResponseGroupsDto::new);
+    @Transactional(readOnly = true)
+    public Mono<UUID> getOwnerId(Long groupId) {
+        return groupRepository.findOwnerIdByGroupId(groupId)
+                .switchIfEmpty(Mono.error(new NoSuchElementException("Group is not found")));
+    }
+
+    @Override
+    public Mono<ResponseGroupsDto> getGroupsCreateUser(Jwt jwt) {
+        return groupRepository.findByOwnerId(UUID.fromString(jwt.getSubject())).collectList().map(ResponseGroupsDto::new);
     }
 
     @Override

@@ -1,0 +1,51 @@
+server:
+  port: ${SERVER_PORT:8002}
+
+spring:
+  page:
+    size: ${PAGE_SIZE:10}
+  config:
+    activate:
+      on-profile: default
+  application:
+    name:  notifications_service
+  security:
+    oauth2:
+      client:
+        registration:
+          discovery:
+            provider: keycloak
+            client-id: ${CLIENT_ID_CREDENTIALS}
+            client-secret: ${CLIENT_SECRET_CREDENTIALS}
+            authorization-grant-type: client_credentials
+        provider:
+          keycloak:
+            issuer-uri: ${KEYCLOAK_URI:http://localhost:8080/realms/subOne}
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_URI:http://localhost:8080/realms/subOne}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/subOne?currentSchema=notifications_service}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:123456}
+  liquibase:
+    change-log: classpath:db/changelog/changelog-master.xml
+
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
+    properties:
+      enable.idempotence: true
+      request.timeout.ms: 15000
+      delivery.timeout.ms: 20000
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.UUIDDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      group-id: notification-service
+  user_service:
+    url: ${USER_SERVICE_URL:http://localhost:8000/api/v1/}
+    max_reties: ${USER_SERVICE_RETRIES:5}

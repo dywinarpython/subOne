@@ -1,6 +1,6 @@
 FROM quay.io/keycloak/keycloak:latest
 
-COPY keycloak-kafka-1.3.0-jar-with-dependencies.jar /opt/keycloak/providers/
+COPY keycloak-kafka-1.3.1-jar-with-dependencies.jar /opt/keycloak/providers/
 
 RUN /opt/keycloak/bin/kc.sh build
 

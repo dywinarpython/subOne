@@ -13,7 +13,6 @@ import com.subOne.subscriptions_service.entity.enumEntity.SubscriptionStatus;
 import com.subOne.subscriptions_service.mapper.UserSubscriptionMapper;
 import com.subOne.subscriptions_service.repository.analytic_subscription_repository.AnalyticSubscriptionRepository;
 import com.subOne.subscriptions_service.repository.user_subscription_repository.UserSubscriptionRepository;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,7 +28,6 @@ import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@Slf4j
 public class UserSubscriptionControllerTest extends AbstractControllerTest{
 
     @Autowired

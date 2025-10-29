@@ -19,7 +19,7 @@ services:
     restart: unless-stopped
 
   keycloak:
-    image: keycloak-kafka:latest
+    image: keycloak-kafka:1.1
     container_name: keycloak
     ports:
       - "8080:8080"
@@ -140,9 +140,6 @@ networks:
 volumes:
   dbSecurity:
   db:
-  kafka1-data:
-  kafka2-data:
-  kafka3-data:
 
 
 

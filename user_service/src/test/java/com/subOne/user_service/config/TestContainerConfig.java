@@ -13,12 +13,12 @@ public class TestContainerConfig {
     @Bean(initMethod = "start", destroyMethod = "stop")
     public PostgreSQLContainer<?> postgreSQLContainer(){
         return new PostgreSQLContainer<>("postgres:latest")
-                .withDatabaseName("user_service");
+                .withDatabaseName("user_service").withReuse(true);
     }
     @Bean(initMethod = "start", destroyMethod = "stop")
     @Qualifier("redisContainer")
     public GenericContainer<?> redisContainer(){
-        return new GenericContainer<>(DockerImageName.parse("redis:latest")).withExposedPorts(6379);
+        return new GenericContainer<>(DockerImageName.parse("redis:latest")).withExposedPorts(6379).withReuse(true);
     }
 
 }

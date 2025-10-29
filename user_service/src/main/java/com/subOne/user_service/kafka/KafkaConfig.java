@@ -1,12 +1,14 @@
 package com.subOne.user_service.kafka;
 
-import com.subOne.kecyloak_dto.UserInfo;
+import com.subOne.kafka_dto.SendNotificationDto;
+import com.subOne.keycloak_dto.UserInfo;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.apache.kafka.common.serialization.UUIDSerializer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,9 +20,11 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.*;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
+import org.springframework.kafka.support.serializer.JsonSerializer;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 // TODO настроить параллельность при обработки в consumer (Consumer)
 @Configuration
@@ -42,8 +46,8 @@ public class KafkaConfig {
                 env.getProperty("spring.kafka.consumer.group-id"));
         cfg.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         cfg.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
-        cfg.put(JsonDeserializer.TRUSTED_PACKAGES, "com.subOne.kecyloak_dto");
-        cfg.put(JsonDeserializer.VALUE_DEFAULT_TYPE, "com.subOne.kecyloak_dto.UserInfo");
+        cfg.put(JsonDeserializer.TRUSTED_PACKAGES, "com.subOne.keycloak_dto");
+        cfg.put(JsonDeserializer.VALUE_DEFAULT_TYPE, "com.subOne.keycloak_dto.UserInfo");
 
         return new DefaultKafkaConsumerFactory<>(cfg);
     }
@@ -67,11 +71,14 @@ public class KafkaConfig {
 
     @Bean
     public NewTopic messageUserTopic(){
-        return createTopic("delete_user");
+        return createTopic("delete_user", 1);
     }
 
     @Bean
-    public NewTopic messageDeleteGroup() { return createTopic("delete_group", 3);}
+    public NewTopic messageDeleteGroup() { return createTopic("delete_group");}
+
+    @Bean
+    public NewTopic notifications() { return createTopic("notification_user");}
 
     @Bean
     public ProducerFactory<String, String> groupStringProducerFactory(
@@ -93,6 +100,21 @@ public class KafkaConfig {
         return new DefaultKafkaProducerFactory<>(props);
     }
 
+    @Bean
+    public ProducerFactory<UUID, SendNotificationDto> notificationsUUIDProducerFactory(
+            @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers) {
+        Map<String, Object> props = new HashMap<>();
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, UUIDSerializer.class);
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        return new DefaultKafkaProducerFactory<>(props);
+    }
+
+    @Bean
+    @Qualifier("messageSendWithUUIDKeyNotification")
+    public KafkaTemplate<UUID, SendNotificationDto> messageSendWithUUIDKey(ProducerFactory<UUID, SendNotificationDto> producerFactory){
+        return new KafkaTemplate<>(producerFactory);
+    }
 
     @Bean
     @Qualifier("messageSendWithLong")
@@ -102,13 +124,7 @@ public class KafkaConfig {
 
     @Bean
     @Qualifier("messageSendWithString")
-    public KafkaTemplate<String, String> messageSendWithString(
-            ProducerFactory<String, String> producerFactory) {
+    public KafkaTemplate<String, String> messageSendWithString(ProducerFactory<String, String> producerFactory) {
         return new KafkaTemplate<>(producerFactory);
     }
-
-
-
-
-
 }

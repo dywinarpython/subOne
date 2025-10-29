@@ -1,6 +1,6 @@
 package com.subOne.user_service.service_impl;
 
-import com.subOne.kecyloak_dto.UserInfo;
+import com.subOne.keycloak_dto.UserInfo;
 import com.subOne.user_service.cache.CacheService;
 import com.subOne.user_service.dto.user.request.RequestUpdateUserDto;
 import com.subOne.user_service.entity.User;

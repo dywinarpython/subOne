@@ -8,7 +8,6 @@ import com.subOne.user_service.repository.group_repository.GroupRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.security.oauth2.jwt.Jwt;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -117,7 +116,7 @@ public class UserControllerTest extends AbstractControllerTest{
                 .expectNextCount(0)
                 .verifyComplete();
 
-        StepVerifier.create(groupRepository.findByOwnerId(user.getUserId(), PageRequest.of(0, 100)))
+        StepVerifier.create(groupRepository.findByOwnerId(user.getUserId()))
                 .expectNextCount(0)
                 .verifyComplete();
 
