@@ -92,8 +92,8 @@ public class SchedulerSubscriptionControlTest {
     @Test
     void sendMessageWithAlreadyPaymentInfo_CorrectSendMessage(){
         List<SubscriptionLastDatePaymentIdAndGroupIdDto> dtoList = List.of(
-                new SubscriptionLastDatePaymentIdAndGroupIdDto(1L, 1L, PaymentPeriod.MONTHLY.toString(),  LocalDate.now()),
-                new SubscriptionLastDatePaymentIdAndGroupIdDto(1L, 1L, PaymentPeriod.MONTHLY.toString(), LocalDate.now())
+                new SubscriptionLastDatePaymentIdAndGroupIdDto(1L, 1L, PaymentPeriod.MONTHLY.toString(),  LocalDate.now().minusDays(1)),
+                new SubscriptionLastDatePaymentIdAndGroupIdDto(1L, 1L, PaymentPeriod.MONTHLY.toString(), LocalDate.now().minusDays(1))
         );
         when(analyticSubscriptionRepository.selectSubscriptionsIdAndGroupByLastDatePaid()).thenReturn(Flux.fromIterable(dtoList));
         when(kafkaService.sendToTopic(anyString(), any())).thenReturn(Mono.empty());
@@ -106,8 +106,6 @@ public class SchedulerSubscriptionControlTest {
                 }
         );
     }
-
-
 }
 
 

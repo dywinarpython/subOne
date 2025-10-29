@@ -92,7 +92,7 @@ public class SchedulerSubscriptionControlTest extends BaseIntegrationTest {
 
     @Test
     void sendMessageWithAlreadyPaymentInfo_FindLastDate_CorrectSendMessage(){
-        analyticSubscription.setDatePaid(LocalDate.now());
+        analyticSubscription.setDatePaid(LocalDate.now().minusDays(1));
         analyticSubscriptionRepository.save(analyticSubscription).block();
 
         schedulerSubscriptionControl.sendMessageWithAlreadyPaymentInfo();

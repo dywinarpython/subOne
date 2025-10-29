@@ -57,8 +57,3 @@ spring:
       group_id: subscriptions_service
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.LongDeserializer
-
-logging:
-  level:
-    org.springframework.security: DEBUG
-    org.springframework.r2dbc.core: DEBUG

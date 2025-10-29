@@ -77,7 +77,7 @@ public class  SchedulerSubscriptionControl {
     public void sendMessageWithAlreadyPaymentInfo() {
         analyticSubscriptionRepository
                 .selectSubscriptionsIdAndGroupByLastDatePaid()
-                .filter(dto -> dto.datePaid().equals(LocalDate.now()))
+                .filter(dto -> dto.datePaid().plusDays(1).equals(LocalDate.now()))
                 .doOnNext(dto -> kafkaService.sendToTopic("payment_subscription",
                         new KafkaDtoPaymentSubscription(dto.subscriptionId(), dto.groupId(), NotificationType.ALREADY_PAYEMNT_SUBS)).subscribe())
                 .subscribe();

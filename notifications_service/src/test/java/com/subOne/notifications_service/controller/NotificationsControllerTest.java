@@ -157,7 +157,6 @@ class NotificationsControllerTest extends BaseIntegrationTest {
     @Test
     @DisplayName("PATCH -> /api/v1/notifications (not valid request (min))")
     void updateNotifications_NotValidRequestUpdateNotificationsDtoMinElement_NotCorrectUpdateAndCheckRepo() throws Exception {
-        List<Notification> notificationList = generateNotifications(5, false);
         RequestUpdateNotificationsDto requestUpdateNotificationsDto = new RequestUpdateNotificationsDto(
                 List.of()
         );
