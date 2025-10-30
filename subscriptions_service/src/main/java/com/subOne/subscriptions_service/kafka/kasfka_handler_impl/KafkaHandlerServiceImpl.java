@@ -16,7 +16,7 @@ public class KafkaHandlerServiceImpl implements KafkaHandlerService {
     private final UserSubscriptionService userSubscriptionService;
 
     @Override
-    @KafkaListener(topics = "delete_group", concurrency = "3")
+    @KafkaListener(topics = "delete_group", containerFactory = "deleteSubscriptionKafkaListenerFactory")
     public void deleteSubscriptionsByGroup(Long groupId) {
         userSubscriptionService.deleteSubscriptionsByGroupId(groupId)
                 .doOnError(throwable -> log.warn(throwable.getMessage()))

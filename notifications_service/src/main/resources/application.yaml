@@ -48,4 +48,11 @@ spring:
       group-id: notification-service
   user_service:
     url: ${USER_SERVICE_URL:http://localhost:8000/api/v1/}
-    max_reties: ${USER_SERVICE_RETRIES:5}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always

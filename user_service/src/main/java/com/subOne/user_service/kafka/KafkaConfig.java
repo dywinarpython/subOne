@@ -19,14 +19,15 @@ import org.springframework.core.env.Environment;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.*;
+import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
+import org.springframework.util.backoff.FixedBackOff;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-// TODO настроить параллельность при обработки в consumer (Consumer)
 @Configuration
 @Profile("!test")
 public class KafkaConfig {
@@ -58,6 +59,9 @@ public class KafkaConfig {
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(userInfoConsumerFactory());
         factory.setConcurrency(3);
+        FixedBackOff backOff = new FixedBackOff(5000L, 3L);
+        DefaultErrorHandler errorHandler = new DefaultErrorHandler(backOff);
+        factory.setCommonErrorHandler(errorHandler);
         return factory;
     }
 

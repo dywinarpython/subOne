@@ -34,7 +34,6 @@ public class SecurityConfig {
                                         "/webjars/**",
                                         "/actuator/**").permitAll()
                                         .anyExchange()
-                                        // TODO реализовать защищенное получение информации о пользователе, то есть если в одной группе или получение самого себя .hasRole()
                                         .authenticated()
                         )
                 .oauth2ResourceServer(oauth -> oauth

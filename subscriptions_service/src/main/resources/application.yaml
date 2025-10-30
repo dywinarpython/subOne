@@ -13,11 +13,6 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${KEYCLOAK_URI:http://localhost:8080/realms/subOne}
-  cache:
-    type: redis
-    health:
-      check:
-        interval: ${REDIS_CHECK_INTERVAL:60000}  # 1 minutes
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -55,5 +50,11 @@ spring:
       delivery.timeout.ms: 20000
     consumer:
       group_id: subscriptions_service
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.LongDeserializer
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always
