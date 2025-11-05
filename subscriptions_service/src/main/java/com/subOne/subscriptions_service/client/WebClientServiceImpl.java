@@ -27,7 +27,8 @@ public class WebClientServiceImpl implements WebClientService {
     private final Integer maxReties;
     private final CacheService cacheService;
 
-    public WebClientServiceImpl(WebClient webClient, @Value("${spring.user_service.max_reties:5}") Integer maxReties, CacheService cacheService) {
+    public WebClientServiceImpl(WebClient webClient,
+                                @Value("${user_service.max_retries:5}") Integer maxReties, CacheService cacheService) {
         this.webClient = webClient;
         this.maxReties = maxReties;
         this.cacheService = cacheService;
@@ -62,7 +63,7 @@ public class WebClientServiceImpl implements WebClientService {
                 .flatMap(bl -> {
                     if(bl) return Mono.empty();
                     return requestProcessing(webClient.get()
-                            .uri("groups/" + groupId + "/members/check/owner")
+                            .uri( "groups/" + groupId + "/members/check/owner")
                             .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt.getTokenValue())
                             .retrieve());
                 });

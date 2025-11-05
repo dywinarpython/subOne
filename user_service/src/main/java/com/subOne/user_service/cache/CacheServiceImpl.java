@@ -47,7 +47,7 @@ public class CacheServiceImpl implements CacheService {
                 .onErrorResume(ex -> Mono.empty())
                 .flatMap(bl -> {
                     if(!bl) {
-                        log.error("Cache is not save: key: {}, value: {}", key, value);
+                        log.warn("Cache is not save: key: {}, value: {}", key, value);
                     }
                     return Mono.empty();
                 });
@@ -59,7 +59,7 @@ public class CacheServiceImpl implements CacheService {
                 .onErrorResume(ex -> Mono.empty())
                 .flatMap(count -> {
                     if(count == 0) {
-                        log.error("Cache is not delete: key: {}", key);
+                        log.warn("Cache is not delete: key: {}", key);
                     }
                     return Mono.empty();
                 });

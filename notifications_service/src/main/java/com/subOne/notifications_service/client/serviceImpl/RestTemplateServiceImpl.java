@@ -26,7 +26,7 @@ public class RestTemplateServiceImpl implements RestTemplateService {
 
     public RestTemplateServiceImpl(AuthorizedClientServiceOAuth2AuthorizedClientManager authorizedClientManager,
                                    RestTemplate restTemplate,
-                                   @Value("${spring.user_service.url}") String userServiceUri) {
+                                   @Value("${user_service.url}") String userServiceUri) {
         this.authorizedClientManager = authorizedClientManager;
         this.restTemplate = restTemplate;
         this.userServiceUri = userServiceUri;

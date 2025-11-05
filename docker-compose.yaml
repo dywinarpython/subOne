@@ -12,10 +12,9 @@ services:
       - keycloak_net
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d keycloak" ]
-      interval: 30s
-      timeout: 10s
+      interval: 5s
       retries: 5
-      start_period: 40s
+      start_period: 30s
     restart: unless-stopped
 
   keycloak:
@@ -32,7 +31,8 @@ services:
       KC_DB_URL_DATABASE: keycloak
       KC_DB_USERNAME: ${POSTGRES_USER}
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
-      KC_HOSTNAME: localhost
+      KC_HOSTNAME: keycloak
+      KC_HOSTNAME_STRICT: false
       KAFKA_BOOTSTRAP_SERVERS: kafka1:9093
 
       #Producer config
@@ -60,14 +60,14 @@ services:
       - keycloak_net
     healthcheck:
       test: [ "CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080; echo -e 'GET /health/ready HTTP/1.1\r\nhost: localhost\r\nConnection: close\r\n\r\n' >&3; timeout --preserve-status 1 cat <&3 | grep -m 1 status | grep -m 1 UP; ERROR=$?; exec 3<&-; exec 3>&-; exit $ERROR" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 20s
+      interval: 5s
+      retries: 10
+      start_period: 40s
     restart: unless-stopped
 
   db:
     image: postgres:latest
+    container_name: db
     environment:
       POSTGRES_DB: subOne
       POSTGRES_USER: ${POSTGRES_USER}
@@ -79,10 +79,9 @@ services:
       - apps_net
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d user_service" ]
-      interval: 30s
-      timeout: 10s
+      interval: 5s
       retries: 5
-      start_period: 40s
+      start_period: 30s
     restart: unless-stopped
 
   kafka1:
@@ -111,10 +110,9 @@ services:
       - kafka_net
     healthcheck:
       test:  ["CMD-SHELL", "nc -z kafka1 9093 || exit 1"]
+      interval: 5s
       retries: 5
-      interval: 30s
-      timeout: 10s
-      start_period: 5s
+      start_period: 30s
     restart: unless-stopped
 
   redis:
@@ -122,17 +120,16 @@ services:
     container_name: redis
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 20s
+      interval: 5s
+      retries: 5
+      start_period: 30s
     networks:
       - cache
     restart: unless-stopped
 
-  user_service:
+  user-service:
     image: user_service:0.0.1
-    container_name: user_service
+    container_name: user-service
     ports:
       - "${SERVER_PORT_USER_SERVICE}:8000"
     environment:
@@ -144,13 +141,12 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - KAFKA_SERVERS=kafka1:9093
-      - KEYCLOAK_URI=http://host.docker.internal:8080/realms/subOne
+      - KEYCLOAK_URI=http://keycloak:8080/realms/subOne
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://localhost:8000/actuator/health || exit 1" ]
-      interval: 30s
-      timeout: 10s
+      interval: 5s
       retries: 5
-      start_period: 20s
+      start_period: 30s
     depends_on:
       keycloak:
         condition: service_healthy
@@ -164,9 +160,9 @@ services:
       - apps_net
     restart: unless-stopped
 
-  subscriptions_service:
+  subscriptions-service:
     image: subscriptions_service:0.0.1
-    container_name: subscriptions_service
+    container_name: subscriptions-service
     ports:
       - "${SERVER_PORT_SUBSCRIPTIONS_SERVICE}:8001"
     environment:
@@ -178,16 +174,16 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - KAFKA_SERVERS=kafka1:9093
-      - USER_SERVICE_URL=user_service/api/v1/
-      - KEYCLOAK_URI=http://host.docker.internal:8080/realms/subOne
+      - USER_SERVICE_URL=http://user-service:8000/api/v1/
+      - USER_SERVICE_RETRIES=1
+      - KEYCLOAK_URI=http://keycloak:8080/realms/subOne
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://localhost:8001/actuator/health || exit 1" ]
-      interval: 15s
-      timeout: 5s
+      interval: 5s
       retries: 5
-      start_period: 20s
+      start_period: 30s
     depends_on:
-      user_service:
+      user-service:
         condition: service_healthy
     networks:
       - kafka_net
@@ -195,9 +191,9 @@ services:
       - apps_net
     restart: unless-stopped
 
-  notifications_service:
+  notifications-service:
     image: notifications_service:0.0.1
-    container_name: notifications_service
+    container_name: notifications-service
     ports:
       - "${SERVER_PORT_NOTIFICATIONS_SERVICE}:8002"
     environment:
@@ -205,19 +201,18 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db/subOne?currentSchema=notifications_service
       - DB_USERNAME=${POSTGRES_USER}
       - DB_PASSWORD=${POSTGRES_PASSWORD}
-      - KEYCLOAK_URI=http://host.docker.internal:8080/realms/subOne
+      - KEYCLOAK_URI=http://keycloak:8080/realms/subOne
       - CLIENT_ID_CREDENTIALS=${CLIENT_ID_CREDENTIALS}
       - CLIENT_SECRET_CREDENTIALS=${CLIENT_SECRET_CREDENTIALS}
       - KAFKA_SERVERS=kafka1:9093
-      - USER_SERVICE_URL=user_service/api/v1/
+      - USER_SERVICE_URL=http://user-service:8000/api/v1/
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://localhost:8002/actuator/health || exit 1" ]
-      interval: 15s
-      timeout: 5s
+      interval: 5s
       retries: 5
-      start_period: 20s
+      start_period: 30s
     depends_on:
-      user_service:
+      user-service:
         condition: service_healthy
     networks:
       - kafka_net
