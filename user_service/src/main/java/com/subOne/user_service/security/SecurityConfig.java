@@ -8,6 +8,7 @@ import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
@@ -26,6 +27,7 @@ public class SecurityConfig {
                 .cors(ServerHttpSecurity.CorsSpec::disable)
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
+                .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
                 .logout(ServerHttpSecurity.LogoutSpec::disable)
                 .authorizeExchange(exchange ->
                                 exchange.pathMatchers("/swagger-ui/**",

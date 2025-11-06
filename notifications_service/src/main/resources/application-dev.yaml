@@ -6,7 +6,7 @@ spring:
     size: ${PAGE_SIZE:10}
   config:
     activate:
-      on-profile: default
+      on-profile: dev
   application:
     name:  notifications_service
   security:
@@ -35,27 +35,32 @@ spring:
     password: ${DB_PASSWORD:123456}
   liquibase:
     change-log: classpath:db/changelog/changelog-master.xml
-
   kafka:
     bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
     properties:
       enable.idempotence: true
       request.timeout.ms: 15000
       delivery.timeout.ms: 20000
-      consumer:
-        group-id: notifications_service
+    consumer:
+      group-id: notifications_service
+
 user_service:
-    url: ${USER_SERVICE_URL:http://localhost:8000/api/v1/}
-springdoc:
-  swagger-ui:
-    enabled: false
-  api-docs:
-    enabled: true
+  url: ${USER_SERVICE_URL:http://localhost:8000/api/v1/}
+
 management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health, beans
   endpoint:
     health:
       show-details: always
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web.client.RestTemplate: DEBUG
+    org.apache.http: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+

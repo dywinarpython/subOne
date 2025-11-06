@@ -5,7 +5,7 @@ spring:
     size: ${PAGE_SIZE:10}
   config:
     activate:
-      on-profile: default
+      on-profile: dev
   application:
     name: subscriptions_service
   security:
@@ -50,16 +50,18 @@ spring:
 user_service:
   url: ${USER_SERVICE_URL:http://localhost:8000/api/v1/}
   max_retries: ${USER_SERVICE_RETRIES:5}
-springdoc:
-  swagger-ui:
-    enabled: false
-  api-docs:
-    enabled: true
 management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health, beans
   endpoint:
     health:
       show-details: always
+logging:
+  level:
+    root: INFO
+    org.springframework.web.reactive.function.client: DEBUG
+    org.springframework.r2dbc.connection: DEBUG
+    org.springframework.data.r2dbc.core: DEBUG
+    io.r2dbc.spi: DEBUG

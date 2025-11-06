@@ -11,7 +11,6 @@ import com.subOne.subscriptions_service.repository.user_subscription_repository.
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -20,9 +19,9 @@ import java.time.temporal.TemporalAmount;
 
 @Slf4j
 @Component
-@Profile("!dev")
+@Profile("dev")
 @RequiredArgsConstructor
-public class  SchedulerSubscriptionControl {
+public class SchedulerSubscriptionControlDev {
 
     private final AnalyticSubscriptionRepository analyticSubscriptionRepository;
 
@@ -32,8 +31,6 @@ public class  SchedulerSubscriptionControl {
 
     private final KafkaService kafkaService;
 
-
-    @Scheduled(cron = "0 10 0 * * *")
     public void generateSubscriptionsAnalytic() {
         analyticSubscriptionRepository.selectSubscriptionsLastDatePaid().flatMap(subscriptionLastDatePaymentDto -> {
                     PaymentPeriod paymentPeriod = PaymentPeriod.valueOf(subscriptionLastDatePaymentDto.paymentPeriod());
@@ -55,12 +52,10 @@ public class  SchedulerSubscriptionControl {
     }
 
 
-    @Scheduled(cron = "0 0 0 * * *")
     public void updateStatusSubscriptions() {
         userSubscriptionRepository.updateStatusByEndTime().subscribe();
     }
 
-    @Scheduled(cron = "0 0 9 * * *")
     public void sendMessageWithPaymentInfo() {
         analyticSubscriptionRepository
                 .selectSubscriptionsIdAndGroupByLastDatePaid()
@@ -75,7 +70,6 @@ public class  SchedulerSubscriptionControl {
                 .subscribe();
     }
 
-    @Scheduled(cron = "0 0 8 * * *")
     public void sendMessageWithAlreadyPaymentInfo() {
         analyticSubscriptionRepository
                 .selectSubscriptionsIdAndGroupByLastDatePaid()

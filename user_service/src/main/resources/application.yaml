@@ -58,6 +58,11 @@ spring:
           json:
             trusted:
               packages: "com.subOne.kecyloak_dto"
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: true
 management:
   endpoints:
     web:

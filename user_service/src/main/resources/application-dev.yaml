@@ -1,31 +1,33 @@
 server:
-  port: ${SERVER_PORT:8001}
+  port: ${SERVER_PORT:8000}
 spring:
   page:
     size: ${PAGE_SIZE:10}
   config:
     activate:
-      on-profile: default
+      on-profile: dev
   application:
-    name: subscriptions_service
+    name: user_service
+  cache:
+    type: redis
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
   security:
     oauth2:
       resourceserver:
         jwt:
           issuer-uri: ${KEYCLOAK_URI:http://localhost:8080/realms/subOne}
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
   liquibase:
     change-log: classpath:db/changelog/changelog-master.xml
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/subOne}
     user: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:123456}
-    default-schema: subscriptions_service
+    default-schema: user_service
     enabled: true
   r2dbc:
-    url: ${SPRING_DATASOURCE_URL_REACTIVE:r2dbc:postgresql://localhost:5432/subOne?schema=subscriptions_service}
+    url: ${SPRING_DATASOURCE_URL_REACTIVE:r2dbc:postgresql://localhost:5432/subOne?schema=user_service}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:123456}
     pool:
@@ -40,26 +42,35 @@ spring:
       connectTimeout: 5s
       socketTimeout: 30s
   kafka:
+    partitions_keycloak_consumer: 3
+    topicNameDeleteUser: ${KAFKA_NAME_TOPIC_DELETE_USER:delete_user}
     bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
+    group-id: user-service
     properties:
       enable.idempotence: true
       request.timeout.ms: 15000
       delivery.timeout.ms: 20000
     consumer:
-      group_id: subscriptions_service
-user_service:
-  url: ${USER_SERVICE_URL:http://localhost:8000/api/v1/}
-  max_retries: ${USER_SERVICE_RETRIES:5}
-springdoc:
-  swagger-ui:
-    enabled: false
-  api-docs:
-    enabled: true
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      group-id: user-service
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: "com.subOne.kecyloak_dto"
 management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health, beans
   endpoint:
     health:
       show-details: always
+logging:
+  level:
+    root: INFO
+    org.springframework.web.reactive.function.client: DEBUG
+    org.springframework.r2dbc.connection: DEBUG
+    org.springframework.data.r2dbc.core: DEBUG
+    io.r2dbc.spi: DEBUG
