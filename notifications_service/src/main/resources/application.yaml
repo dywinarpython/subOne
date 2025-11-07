@@ -42,8 +42,8 @@ spring:
       enable.idempotence: true
       request.timeout.ms: 15000
       delivery.timeout.ms: 20000
-      consumer:
-        group-id: notifications_service
+    consumer:
+      group-id: notifications_service
 user_service:
     url: ${USER_SERVICE_URL:http://localhost:8000/api/v1/}
 springdoc:

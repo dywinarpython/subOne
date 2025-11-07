@@ -130,7 +130,6 @@ services:
     ports:
       - "${SERVER_PORT_USER_SERVICE}:8000"
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
       - SERVER_PORT=${SERVER_PORT_USER_SERVICE}
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db/subOne
       - DB_USERNAME=${POSTGRES_USER}
@@ -164,7 +163,6 @@ services:
     ports:
       - "${SERVER_PORT_SUBSCRIPTIONS_SERVICE}:8001"
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
       - SERVER_PORT=${SERVER_PORT_SUBSCRIPTIONS_SERVICE}
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db/subOne
       - DB_USERNAME=${POSTGRES_USER}
@@ -196,7 +194,6 @@ services:
     ports:
       - "${SERVER_PORT_NOTIFICATIONS_SERVICE}:8002"
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
       - SERVER_PORT=${SERVER_PORT_NOTIFICATIONS_SERVICE}
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db/subOne?currentSchema=notifications_service
       - DB_USERNAME=${POSTGRES_USER}
