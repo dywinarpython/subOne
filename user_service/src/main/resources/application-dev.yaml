@@ -54,11 +54,7 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       group-id: user-service
-      properties:
-        spring:
-          json:
-            trusted:
-              packages: "com.subOne.kecyloak_dto"
+
 management:
   endpoints:
     web:
