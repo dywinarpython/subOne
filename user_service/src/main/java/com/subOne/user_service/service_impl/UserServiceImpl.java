@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -88,10 +89,11 @@ public class UserServiceImpl implements UserService {
                 .switchIfEmpty(Mono.defer(() -> userRepository.existsByUserId(UUID.fromString(jwt.getSubject()))))
                 .flatMap(bl -> bl? Mono.empty(): Mono.error(new NoSuchElementException("User is not found")))
                 .then(Mono.defer( () -> groupMemberService.existsMemberInGroupByOwnerId(jwt)))
-                .then(Mono.defer( () -> groupService.deleteDataRelatedGroupsByOwnerId(jwt)))
-                .then(Mono.defer( () -> userRepository.deleteByUserId(UUID.fromString(jwt.getSubject()))
+                .then(Flux.defer( () -> groupService.getGroupsIdByUserId(jwt)).collectList())
+                .flatMap( groupsId -> userRepository.deleteByUserId(UUID.fromString(jwt.getSubject())).thenReturn(groupsId))
+                .flatMap(groupsId -> groupService.deleteDataRelatedGroupsByOwnerId(Flux.fromIterable(groupsId)))
                 .then(Mono.defer( () -> kafkaService.sendToTopic(nameTopicDeleteUser, jwt.getSubject())))
-                .then(Mono.defer( () -> cacheService.deleteValue("USER::" + jwt.getSubject())))));
+                .then(Mono.defer( () -> cacheService.deleteValue("USER::" + jwt.getSubject())));
     }
 
     @Override

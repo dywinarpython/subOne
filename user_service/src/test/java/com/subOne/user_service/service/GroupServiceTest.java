@@ -472,30 +472,23 @@ public class GroupServiceTest {
     @Test
     void deleteDataRelatedGroupsByOwnerId_GroupsFoundAndUserIsOwnerGroups_Correct(){
         List<Long> groupsId = List.of(1L, 2L);
-        when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
-        when(groupRepository.findGroupsIdByOwnerId(any())).thenReturn(Flux.fromIterable(groupsId));
         when(kafkaService.sendToTopic(anyString(), anyLong())).thenReturn(Mono.empty());
         when(cacheService.deleteValue(anyString())).thenReturn(Mono.empty());
 
-        Mono<Void> result = groupService.deleteDataRelatedGroupsByOwnerId(jwt);
+        Mono<Void> result = groupService.deleteDataRelatedGroupsByOwnerId(Flux.fromIterable(groupsId));
 
         StepVerifier.create(result)
                 .verifyComplete();
-        verify(groupRepository).findGroupsIdByOwnerId(any());
         verify(kafkaService, times(groupsId.size())).sendToTopic(anyString(), anyLong());
         verify(cacheService, times(groupsId.size())).deleteValue(anyString());
     }
 
     @Test
     void deleteDataRelatedGroupsByOwnerId_GroupsNotFound_Correct(){
-        when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
-        when(groupRepository.findGroupsIdByOwnerId(any())).thenReturn(Flux.fromIterable(List.of()));
-
-        Mono<Void> result = groupService.deleteDataRelatedGroupsByOwnerId(jwt);
+        Mono<Void> result = groupService.deleteDataRelatedGroupsByOwnerId(Flux.fromIterable(List.of()));
 
         StepVerifier.create(result)
                 .verifyComplete();
-        verify(groupRepository).findGroupsIdByOwnerId(any());
         verify(kafkaService, times(0)).sendToTopic(anyString(), anyLong());
         verify(cacheService, times(0)).deleteValue(anyString());
     }

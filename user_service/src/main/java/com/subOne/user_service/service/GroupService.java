@@ -6,6 +6,7 @@ import com.subOne.user_service.dto.group.response.ResponseGroupDto;
 import com.subOne.user_service.dto.group.response.ResponseGroupsDto;
 import com.subOne.user_service.dto.user.response.ResponseUserDto;
 import org.springframework.security.oauth2.jwt.Jwt;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -23,5 +24,7 @@ public interface GroupService {
     Mono<Boolean> checkUserIsOwner(Long groupId, Jwt jwt);
     Mono<Void> checkUserIsOwnerGroups(List<Long> groupsId, Jwt jwt);
     Mono<Boolean> checkUserIsOwnerWithoutCacheGet(Long groupId, Jwt jwt);
-    Mono<Void> deleteDataRelatedGroupsByOwnerId(Jwt jwt);
+    Mono<Void> deleteDataRelatedGroupsByOwnerId(Flux<Long> groupsId);
+    Flux<Long> getGroupsIdByUserId(Jwt jwt);
+
 }

@@ -14,7 +14,9 @@ import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
+import java.util.concurrent.TimeUnit;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class AnalyticSubscriptionControllerTest extends UserSubscriptionControllerTest{
@@ -86,10 +88,10 @@ public class AnalyticSubscriptionControllerTest extends UserSubscriptionControll
                 .expectStatus().isOk()
                 .returnResult(ResponseTotalAnalyticSubscriptionGroupDto.class).getResponseBody();
 
-        StepVerifier.create(result)
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted( () -> StepVerifier.create(result)
                 .assertNext( analyticGroup -> StepVerifier.create(cacheService.getValue("ANALYTIC_GROUP::" + userSubscription.getGroupId(), ResponseTotalAnalyticSubscriptionGroupDto.class))
                         .expectNextCount(1)
-                        .verifyComplete()).verifyComplete();
+                        .verifyComplete()).verifyComplete());
     }
 
 

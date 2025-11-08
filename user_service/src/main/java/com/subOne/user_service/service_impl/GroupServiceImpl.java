@@ -17,6 +17,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -147,11 +148,15 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public Mono<Void> deleteDataRelatedGroupsByOwnerId(Jwt jwt) {
-        return groupRepository.findGroupsIdByOwnerId(UUID.fromString(jwt.getSubject()))
-                .flatMap(groupId ->
+    public Mono<Void> deleteDataRelatedGroupsByOwnerId(Flux<Long> groupsId) {
+        return groupsId.flatMap(groupId ->
                     kafkaService.sendToTopic("delete_group" , groupId).then(cacheService.deleteValue("OWNER::" + groupId))
                 ).then();
+    }
+
+    @Override
+    public Flux<Long> getGroupsIdByUserId(Jwt jwt) {
+        return groupRepository.findGroupsIdByOwnerId(UUID.fromString(jwt.getSubject()));
     }
 
 

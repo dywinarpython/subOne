@@ -127,9 +127,23 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
     @Transactional
     public Mono<Void> renewSubscriptionById(Long groupId, Long subscriptionId, Long extensionCount, Jwt jwt) {
         return Mono.just(extensionCount)
-                .flatMap(ex -> ex > 0? Mono.empty(): Mono.error(new ValidationException("The number of extensions is less than 0")))
-                .then(Mono.defer(() -> webClientService.checkUserIsOwnerGroup(groupId, jwt)))
-                .then(Mono.defer( () -> userSubscriptionRepository.updateEndTimeSubscriptionById(subscriptionId, extensionCount)))
-                .flatMap(count -> count == 1? Mono.empty(): Mono.error(new NoSuchElementException("Subscription is not found")));
+                .flatMap(ex -> {
+                    if (ex <= 0) {
+                        return Mono.error(new ValidationException("The number of extensions is less than 0"));
+                    }
+                    if (ex > 1000) {
+                        return Mono.error(new ValidationException("The number of extensions is too large"));
+                    }
+                    return Mono.empty();
+                }) .then(Mono.defer(() -> webClientService.checkUserIsOwnerGroup(groupId, jwt)))
+                .then(Mono.defer(() -> userSubscriptionRepository.updateEndTimeSubscriptionById(subscriptionId, extensionCount)))
+                .flatMap(count -> {
+                        if(count == 1) return Mono.empty();
+                        return userSubscriptionRepository.existsByExpired(subscriptionId).flatMap( bl -> {
+                                    if (bl) return Mono.error(new ValidationException("The subscription has already been completed"));
+                                    return Mono.error(new NoSuchElementException("Subscription is not found"));
+                                }
+                        );
+                });
     }
 }

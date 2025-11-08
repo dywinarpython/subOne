@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.oauth2.jwt.Jwt;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -188,8 +189,9 @@ public class UserServiceTest {
         when(cacheService.getValue(any(), any()))
                 .thenReturn(Mono.just(new ResponseUserDto(userId, null, null, null)));
         when(groupMemberService.existsMemberInGroupByOwnerId(any())).thenReturn(Mono.empty());
-        when(groupService.deleteDataRelatedGroupsByOwnerId(any())).thenReturn(Mono.empty());
+        when(groupService.getGroupsIdByUserId(any())).thenReturn(Flux.fromIterable(List.of(1L, 2L, 3L)));
         when(userRepository.deleteByUserId(any())).thenReturn(Mono.just(1));
+        when(groupService.deleteDataRelatedGroupsByOwnerId(any())).thenReturn(Mono.empty());
         when(kafkaService.sendToTopic(anyString(), anyString())).thenReturn(Mono.empty());
         when(cacheService.deleteValue(anyString())).thenReturn(Mono.empty());
 
@@ -199,8 +201,9 @@ public class UserServiceTest {
                 .expectComplete()
                 .verify();
         verify(groupMemberService).existsMemberInGroupByOwnerId(any());
-        verify(groupService).deleteDataRelatedGroupsByOwnerId(any());
+        verify(groupService).getGroupsIdByUserId(any());
         verify(userRepository).deleteByUserId(any());
+        verify(groupService).deleteDataRelatedGroupsByOwnerId(any());
         verify(kafkaService).sendToTopic(anyString(), anyString());
         verify(cacheService).deleteValue(anyString());
         verify(userRepository, times(0)).existsByUserId(any());
@@ -211,8 +214,9 @@ public class UserServiceTest {
         when(cacheService.getValue(any(), any())).thenReturn(Mono.empty());
         when(userRepository.existsByUserId(any())).thenReturn(Mono.just(Boolean.TRUE));
         when(groupMemberService.existsMemberInGroupByOwnerId(any())).thenReturn(Mono.empty());
-        when(groupService.deleteDataRelatedGroupsByOwnerId(any())).thenReturn(Mono.empty());
+        when(groupService.getGroupsIdByUserId(any())).thenReturn(Flux.fromIterable(List.of(1L, 2L, 3L)));
         when(userRepository.deleteByUserId(any())).thenReturn(Mono.just(1));
+        when(groupService.deleteDataRelatedGroupsByOwnerId(any())).thenReturn(Mono.empty());
         when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
         when(kafkaService.sendToTopic(anyString(), anyString())).thenReturn(Mono.empty());
         when(cacheService.deleteValue(anyString())).thenReturn(Mono.empty());
@@ -225,8 +229,9 @@ public class UserServiceTest {
         verify(cacheService).getValue(any(), any());
         verify(userRepository).existsByUserId(any());
         verify(groupMemberService).existsMemberInGroupByOwnerId(any());
-        verify(groupService).deleteDataRelatedGroupsByOwnerId(any());
+        verify(groupService).getGroupsIdByUserId(any());
         verify(userRepository).deleteByUserId(any());
+        verify(groupService).deleteDataRelatedGroupsByOwnerId(any());
         verify(kafkaService).sendToTopic(anyString(), anyString());
         verify(cacheService).deleteValue(anyString());
     }

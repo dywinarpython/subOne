@@ -1,12 +1,8 @@
 package com.subOne.notifications_service.websocket;
 
-import lombok.RequiredArgsConstructor;
-
 import java.security.Principal;
-@RequiredArgsConstructor
-public class StompPrincipal implements Principal {
-    private final String name;
 
+public record StompPrincipal(String name) implements Principal {
     @Override
     public String getName() {
         return this.name;

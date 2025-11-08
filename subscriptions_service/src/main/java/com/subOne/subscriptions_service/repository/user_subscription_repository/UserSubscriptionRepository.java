@@ -37,10 +37,10 @@ public interface UserSubscriptionRepository extends R2dbcRepository<UserSubscrip
     @Query("""
         update user_subscriptions
         set end_date = CASE payment_period
-            when 'MONTHLY' then end_date + (:extension_count || ' month')::interval
-            when 'YEARLY' then end_date + (:extension_count || ' year')::interval
+            when 'MONTHLY' then end_date + (:extensionCount || ' month')::interval
+            when 'YEARLY' then end_date + (:extensionCount || ' year')::interval
         end
-        where id = :subscriptionId
+        where id = :subscriptionId AND status <> 'EXPIRED'
     """)
     Mono<Integer> updateEndTimeSubscriptionById(Long subscriptionId, Long extensionCount);
 
@@ -51,4 +51,13 @@ public interface UserSubscriptionRepository extends R2dbcRepository<UserSubscrip
         where end_date < NOW() AND status <> 'EXPIRED'
     """)
     Mono<Integer> updateStatusByEndTime();
+
+    @Query("""
+        select exists(
+            select 1
+            from user_subscriptions
+            where id = :subscriptionId and status = 'EXPIRED'
+        )
+    """)
+    Mono<Boolean> existsByExpired(Long subscriptionId);
 }

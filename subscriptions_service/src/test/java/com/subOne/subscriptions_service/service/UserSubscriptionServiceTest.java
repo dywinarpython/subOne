@@ -271,9 +271,10 @@ public class UserSubscriptionServiceTest {
         verify(userSubscriptionRepository).deleteByGroupId(anyLong());
     }
     @Test
-    void renewSubscriptionById_GroupFoundAndSubscriptionFound_CorrectUpdateAndCheckRepo(){
+    void renewSubscriptionById_GroupFoundAndSubscriptionFoundAndSubscriptionNotEXPIRED_CorrectUpdateAndCheckRepo(){
         when(webClientService.checkUserIsOwnerGroup(anyLong(), any())).thenReturn(Mono.empty());
         when(userSubscriptionRepository.updateEndTimeSubscriptionById(anyLong(), anyLong())).thenReturn(Mono.just(1));
+
 
         Mono<Void> result = userSubscriptionService.renewSubscriptionById(1L, 1L, 1L, null);
 
@@ -281,11 +282,13 @@ public class UserSubscriptionServiceTest {
                 .verifyComplete();
         verify(webClientService).checkUserIsOwnerGroup(anyLong(), any());
         verify(userSubscriptionRepository).updateEndTimeSubscriptionById(anyLong(), anyLong());
+        verify(userSubscriptionRepository, times(0)).existsByExpired(anyLong());
     }
     @Test
     void renewSubscriptionById_GroupFoundAndSubscriptionNotFound_CorrectUpdateAndCheckRepo(){
         when(webClientService.checkUserIsOwnerGroup(anyLong(), any())).thenReturn(Mono.empty());
         when(userSubscriptionRepository.updateEndTimeSubscriptionById(anyLong(), anyLong())).thenReturn(Mono.just(0));
+        when(userSubscriptionRepository.existsByExpired(anyLong())).thenReturn(Mono.just(Boolean.FALSE));
 
         Mono<Void> result = userSubscriptionService.renewSubscriptionById(1L, 1L, 1L, null);
 
@@ -294,6 +297,23 @@ public class UserSubscriptionServiceTest {
                 .verify();
         verify(webClientService).checkUserIsOwnerGroup(anyLong(), any());
         verify(userSubscriptionRepository).updateEndTimeSubscriptionById(anyLong(), anyLong());
+        verify(userSubscriptionRepository).existsByExpired(anyLong());
+    }
+
+    @Test
+    void renewSubscriptionById_GroupFoundAndSubscriptionEXPIRED_CorrectUpdateAndCheckRepo(){
+        when(webClientService.checkUserIsOwnerGroup(anyLong(), any())).thenReturn(Mono.empty());
+        when(userSubscriptionRepository.updateEndTimeSubscriptionById(anyLong(), anyLong())).thenReturn(Mono.just(0));
+        when(userSubscriptionRepository.existsByExpired(anyLong())).thenReturn(Mono.just(Boolean.TRUE));
+
+        Mono<Void> result = userSubscriptionService.renewSubscriptionById(1L, 1L, 1L, null);
+
+        StepVerifier.create(result)
+                .expectErrorSatisfies(throwable -> assertEquals(ValidationException.class, throwable.getClass()))
+                .verify();
+        verify(webClientService).checkUserIsOwnerGroup(anyLong(), any());
+        verify(userSubscriptionRepository).updateEndTimeSubscriptionById(anyLong(), anyLong());
+        verify(userSubscriptionRepository).existsByExpired(anyLong());
     }
     @Test
     void renewSubscriptionById_GroupFoundAndExtensionCountNotCorrect_NotCorrectUpdateAndCheckRepo(){
@@ -305,6 +325,7 @@ public class UserSubscriptionServiceTest {
                 .verify();
         verify(webClientService, times(0)).checkUserIsOwnerGroup(anyLong(), any());
         verify(userSubscriptionRepository, times(0)).updateEndTimeSubscriptionById(anyLong(), anyLong());
+        verify(userSubscriptionRepository, times(0)).existsByExpired(anyLong());
     }
 
 
