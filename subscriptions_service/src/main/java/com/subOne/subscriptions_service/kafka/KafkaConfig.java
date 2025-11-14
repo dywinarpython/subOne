@@ -41,11 +41,18 @@ public class KafkaConfig {
 
     @Bean
     public ProducerFactory<String, KafkaDtoPaymentSubscription> kafkaDtoPaymentSubscriptionProducerFactory(
-            @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers) {
+            @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers,
+            @Value("${spring.kafka.properties.enable.idempotence}") String enableIdempotence,
+            @Value("${spring.kafka.properties.request.timeout.ms}") String requestTimeout,
+            @Value("${spring.kafka.properties.delivery.timeout.ms}") String deliveryTimeout
+            ) {
         Map<String, Object> props = new HashMap<>();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, enableIdempotence);
+        props.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, requestTimeout);
+        props.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, deliveryTimeout);
         return new DefaultKafkaProducerFactory<>(props);
     }
 

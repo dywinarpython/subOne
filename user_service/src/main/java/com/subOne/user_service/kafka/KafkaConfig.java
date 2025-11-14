@@ -9,7 +9,6 @@ import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.common.serialization.UUIDSerializer;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -32,11 +31,35 @@ import java.util.UUID;
 @Profile("!test")
 public class KafkaConfig {
 
-    @Value("${spring.kafka.partitions_keycloak_consumer}")
-    private int partitions;
+    private final Environment env;
+    private final int partitions;
+    private final String bootstrapServers;
+    private final boolean enableIdempotence;
+    private final int requestTimeout;
+    private final int deliveryTimeout;
 
-    @Autowired
-    private Environment env;
+    public KafkaConfig(
+            Environment env, @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers,
+            @Value("${spring.kafka.properties.enable.idempotence}") boolean enableIdempotence,
+            @Value("${spring.kafka.properties.request.timeout.ms}") int requestTimeout,
+            @Value("${spring.kafka.properties.delivery.timeout.ms}") int deliveryTimeout,
+            @Value("${spring.kafka.partitions_keycloak_consumer}") int partitions) {
+        this.env = env;
+        this.bootstrapServers = bootstrapServers;
+        this.enableIdempotence = enableIdempotence;
+        this.requestTimeout = requestTimeout;
+        this.deliveryTimeout = deliveryTimeout;
+        this.partitions = partitions;
+    }
+
+    private Map<String, Object> generateDefaultProps() {
+        Map<String, Object> props = new HashMap<>();
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, enableIdempotence);
+        props.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, requestTimeout);
+        props.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, deliveryTimeout);
+        return props;
+    }
 
     @Bean
     public ConsumerFactory<String, UserInfo> userInfoConsumerFactory() {
@@ -84,31 +107,26 @@ public class KafkaConfig {
     @Bean
     public NewTopic notifications() { return createTopic("notification_user");}
 
+
     @Bean
-    public ProducerFactory<String, String> groupStringProducerFactory(
-            @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers) {
-        Map<String, Object> props = new HashMap<>();
-        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+    public ProducerFactory<String, String> groupStringProducerFactory() {
+        Map<String, Object> props = generateDefaultProps();
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         return new DefaultKafkaProducerFactory<>(props);
     }
 
     @Bean
-    public ProducerFactory<String, Long> groupLongProducerFactory(
-            @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers) {
-        Map<String, Object> props = new HashMap<>();
-        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+    public ProducerFactory<String, Long> groupLongProducerFactory() {
+        Map<String, Object> props = generateDefaultProps();
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, LongSerializer.class);
         return new DefaultKafkaProducerFactory<>(props);
     }
 
     @Bean
-    public ProducerFactory<UUID, SendNotificationDto> notificationsUUIDProducerFactory(
-            @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers) {
-        Map<String, Object> props = new HashMap<>();
-        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+    public ProducerFactory<UUID, SendNotificationDto> notificationsUUIDProducerFactory() {
+        Map<String, Object> props = generateDefaultProps();
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, UUIDSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         return new DefaultKafkaProducerFactory<>(props);
@@ -131,4 +149,5 @@ public class KafkaConfig {
     public KafkaTemplate<String, String> messageSendWithString(ProducerFactory<String, String> producerFactory) {
         return new KafkaTemplate<>(producerFactory);
     }
+
 }

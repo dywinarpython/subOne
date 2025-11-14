@@ -21,6 +21,7 @@ services:
       KAFKA_CLIENT_ID: keycloak
       KAFKA_VERIFY_EMAIL_TOPIC: verify_email
       KAFKA_CREATE_USER_TOPIC: create_user
+      KAFKA_ENABLE_IDEMPOTENCE: true
 
       #Consumer config
       KAFKA_DELETE_USER_TOPIC: delete_user
@@ -100,7 +101,7 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_MIN_INSYNC_REPLICAS: 1
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
     volumes:
       - kafka1-data:/var/lib/kafka/data
     networks:
