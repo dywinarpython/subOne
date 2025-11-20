@@ -1,0 +1,235 @@
+services:
+  keycloak:
+    image: keycloak-kafka:1.1
+    container_name: keycloak
+    ports:
+      - "8080:8080"
+    environment:
+      KC_HEALTH_ENABLED: true
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_DB_URL_DATABASE: keycloak
+      KC_DB_USERNAME: ${POSTGRES_USER}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      KC_DB_URL: jdbc:postgresql://db/subOne?currentSchema=security
+      KC_DB: postgres
+      KC_HOSTNAME: keycloak
+      KC_HOSTNAME_STRICT: false
+      KAFKA_BOOTSTRAP_SERVERS: kafka1:9093
+
+      #Producer config
+      KAFKA_CLIENT_ID: keycloak
+      KAFKA_VERIFY_EMAIL_TOPIC: verify_email
+      KAFKA_CREATE_USER_TOPIC: create_user
+      KAFKA_ENABLE_IDEMPOTENCE: true
+
+      #Consumer config
+      KAFKA_DELETE_USER_TOPIC: delete_user
+      KAFKA_REALM_NAME: subOne
+      KAFKA_GROUP_ID: keycloak-user-deletion-group
+      KAFKA_ENABLE_AUTO_COMMIT: false
+      KAFKA_AUTO_OFFSET_RESET: earliest
+      KAFKA_MAX_POLL_RECORDS: 10
+      KAFKA_SESSION_TIMEOUT_MS: 30000
+      KAFKA_HEARTBEAT_INTERVAL_MS: 10000
+    command: start-dev
+    depends_on:
+      db:
+        condition: service_healthy
+      kafka1:
+        condition: service_healthy
+    networks:
+      - kafka_net
+      - keycloak_net
+      - db_net
+    healthcheck:
+      test: [ "CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080; echo -e 'GET /health/ready HTTP/1.1\r\nhost: localhost\r\nConnection: close\r\n\r\n' >&3; timeout --preserve-status 1 cat <&3 | grep -m 1 status | grep -m 1 UP; ERROR=$?; exec 3<&-; exec 3>&-; exit $ERROR" ]
+      interval: 5s
+      retries: 10
+      start_period: 40s
+    restart: unless-stopped
+
+  db:
+    image: postgres:latest
+    container_name: db
+    environment:
+      POSTGRES_DB: subOne
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d
+      - db:/var/lib/postgresql/data
+    networks:
+      - db_net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d user_service" ]
+      interval: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${ADMIN_EMAIL_PG}
+      PGADMIN_DEFAULT_PASSWORD: ${ADMIN_PASSWORD_PG}
+    ports:
+      - "8081:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - db_net
+
+  kafka1:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka1
+    hostname: kafka1
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT_DOCKER://0.0.0.0:9093,CONTROLLER://0.0.0.0:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT_DOCKER://kafka1:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT_HOST:PLAINTEXT,PLAINTEXT_DOCKER:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_DOCKER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka1:9094
+      CLUSTER_ID: "YxvAbc123xyz890pqrs"
+
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_MIN_INSYNC_REPLICAS: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+    volumes:
+      - kafka1-data:/var/lib/kafka/data
+    networks:
+      - kafka_net
+    healthcheck:
+      test:  ["CMD-SHELL", "nc -z kafka1 9093 || exit 1"]
+      interval: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - cache
+    restart: unless-stopped
+
+  user-service:
+    image: user-service:0.0.1
+    container_name: user-service
+    ports:
+      - "${SERVER_PORT_USER_SERVICE}:8000"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SERVER_PORT=${SERVER_PORT_USER_SERVICE}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db/subOne
+      - DB_USERNAME=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - SPRING_DATASOURCE_URL_REACTIVE=r2dbc:postgresql://db/subOne?schema=user_service
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - KAFKA_SERVERS=kafka1:9093
+      - KEYCLOAK_URI=http://keycloak:8080/realms/subOne
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8000/actuator/health || exit 1" ]
+      interval: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    networks:
+      - kafka_net
+      - cache
+      - db_net
+    restart: unless-stopped
+
+  subscriptions-service:
+    image: subscriptions-service:0.0.1
+    container_name: subscriptions-service
+    ports:
+      - "${SERVER_PORT_SUBSCRIPTIONS_SERVICE}:8001"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SERVER_PORT=${SERVER_PORT_SUBSCRIPTIONS_SERVICE}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db/subOne
+      - DB_USERNAME=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - SPRING_DATASOURCE_URL_REACTIVE=r2dbc:postgresql://db/subOne?schema=subscriptions_service
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - KAFKA_SERVERS=kafka1:9093
+      - USER_SERVICE_URL=http://user-service:8000/api/v1/
+      - USER_SERVICE_RETRIES=1
+      - KEYCLOAK_URI=http://keycloak:8080/realms/subOne
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8001/actuator/health || exit 1" ]
+      interval: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      user-service:
+        condition: service_healthy
+    networks:
+      - kafka_net
+      - cache
+      - db_net
+    restart: unless-stopped
+
+  notifications-service:
+    image: notifications-service:0.0.1
+    container_name: notifications-service
+    ports:
+      - "${SERVER_PORT_NOTIFICATIONS_SERVICE}:8002"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SERVER_PORT=${SERVER_PORT_NOTIFICATIONS_SERVICE}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db/subOne?currentSchema=notifications_service
+      - DB_USERNAME=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - KEYCLOAK_URI=http://keycloak:8080/realms/subOne
+      - CLIENT_ID_CREDENTIALS=${CLIENT_ID_CREDENTIALS}
+      - CLIENT_SECRET_CREDENTIALS=${CLIENT_SECRET_CREDENTIALS}
+      - KAFKA_SERVERS=kafka1:9093
+      - USER_SERVICE_URL=http://user-service:8000/api/v1/
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8002/actuator/health || exit 1" ]
+      interval: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      user-service:
+        condition: service_healthy
+    networks:
+      - kafka_net
+      - db_net
+    restart: unless-stopped
+
+networks:
+  keycloak_net:
+  kafka_net:
+  cache:
+  db_net:
+
+volumes:
+  dbSecurity:
+  db:
+  kafka1-data:
+
+
+

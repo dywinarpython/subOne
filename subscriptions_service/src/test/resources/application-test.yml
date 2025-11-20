@@ -1,0 +1,10 @@
+server:
+  port: 0
+spring:
+  page:
+    size: ${PAGE_SIZE:10}
+  application:
+    name: subscriptions_service
+  liquibase:
+    change-log: classpath:db/changelog/changelog-master.xml
+    enabled: true
