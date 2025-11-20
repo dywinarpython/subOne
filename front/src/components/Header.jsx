@@ -1,13 +1,25 @@
 import { useState, useRef, useEffect } from "react";
 import { Settings, LogOut, Bell} from "lucide-react";
+import {useApis} from "../api-client/api"
+import { useAuth } from "../auth/AuthProvider";
 import "../App.css";
 import "../styles/Header.css";
 
-export default function Header({ user, onLogout }) {
+export default function Header() {
+  const { user, logout, accessToken } = useAuth();
+  const {notificationsApi} = useApis(accessToken);
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const ddRef = useRef(null);
-  const countNotification = 1;
+  const [countNotification, setCountNotification] = useState(0);
+
+  useEffect(() => {
+    if (!notificationsApi) return;
+    fetchCountNotification(notificationsApi)
+      .then((response) => {
+                setCountNotification(response.count);
+            })
+  }, [notificationsApi])
 
   useEffect(() => {
     const onDoc = (e) => {
@@ -93,7 +105,7 @@ export default function Header({ user, onLogout }) {
                 <div className="dropdown-divider"></div>
                 <button className="dropdown-item logout" onClick={() => {
                   setOpen(false);
-                  if (onLogout) onLogout();
+                  if (logout) logout();
                 }}>
                   <LogOut size={16} />
                   <span>Выйти</span>
@@ -105,4 +117,10 @@ export default function Header({ user, onLogout }) {
       </div>
     </header>
   );
+}
+
+
+async function fetchCountNotification(notificationsApi) {
+  const response = await notificationsApi.getCountNotificationsNew();;
+  return response.data;
 }

@@ -37,7 +37,7 @@ export function AuthProvider({ children }) {
     }, []);
 
     useEffect(() => {
-        if (!accessToken) return;
+        if (!userApi) return;
         fetchUser(userApi)
             .then((userResponse) => {
                 setUser(userResponse);
@@ -48,7 +48,7 @@ export function AuthProvider({ children }) {
             .finally(() => {
                 setLoading(false);
             });
-    }, [accessToken, userApi]);
+    }, [userApi]);
 
     const refreshUser = () => {
         if (!accessToken) return;

@@ -1,0 +1,385 @@
+/* ========================================
+   NOTIFICATION SYSTEM STYLES
+   ======================================== */
+
+/* Контейнер для всех уведомлений */
+.notification-container {
+  position: fixed;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+}
+
+/* Позиционирование контейнера */
+.notification-top-right {
+  top: 80px;
+  right: 24px;
+  max-width: 400px;
+}
+
+.notification-top-left {
+  top: 80px;
+  left: 24px;
+  max-width: 400px;
+}
+
+.notification-bottom-right {
+  bottom: 24px;
+  right: 24px;
+  max-width: 400px;
+}
+
+.notification-bottom-left {
+  bottom: 24px;
+  left: 24px;
+  max-width: 400px;
+}
+
+.notification-top-center {
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 400px;
+}
+
+.notification-bottom-center {
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 400px;
+}
+
+/* ========================================
+   NOTIFICATION ITEM
+   ======================================== */
+
+.notification-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.08);
+  border-left: 4px solid;
+  min-width: 320px;
+  max-width: 400px;
+  pointer-events: all;
+  animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+/* Анимация появления */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Анимация исчезновения */
+@keyframes slideOutRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+/* Hover эффект */
+.notification-item:hover {
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.16),
+    0 4px 12px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+/* Кликабельное уведомление */
+.notification-item.clickable {
+  cursor: pointer;
+}
+
+.notification-item.clickable:hover {
+  transform: translateY(-4px);
+}
+
+/* ========================================
+   ТИПЫ УВЕДОМЛЕНИЙ (Цвета)
+   ======================================== */
+
+.notification-success {
+  border-left-color: #48bb78;
+}
+
+.notification-success .notification-icon {
+  color: #48bb78;
+  background: rgba(72, 187, 120, 0.1);
+}
+
+.notification-error {
+  border-left-color: #f56565;
+}
+
+.notification-error .notification-icon {
+  color: #f56565;
+  background: rgba(245, 101, 101, 0.1);
+}
+
+.notification-warning {
+  border-left-color: #ed8936;
+}
+
+.notification-warning .notification-icon {
+  color: #ed8936;
+  background: rgba(237, 137, 54, 0.1);
+}
+
+.notification-info {
+  border-left-color: #4299e1;
+}
+
+.notification-info .notification-icon {
+  color: #4299e1;
+  background: rgba(66, 153, 225, 0.1);
+}
+
+/* ========================================
+   ЭЛЕМЕНТЫ УВЕДОМЛЕНИЯ
+   ======================================== */
+
+/* Иконка */
+.notification-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.notification-item:hover .notification-icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+/* Контент */
+.notification-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.notification-message {
+  font-size: 14px;
+  font-weight: 500;
+  color: #2d3748;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+
+.notification-action {
+  font-size: 12px;
+  color: #718096;
+  font-weight: 500;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.notification-action::after {
+  content: '→';
+  font-size: 14px;
+  transition: transform 0.2s ease;
+}
+
+.notification-item.clickable:hover .notification-action::after {
+  transform: translateX(4px);
+}
+
+/* Кнопка закрытия */
+.notification-close {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: #a0aec0;
+  cursor: pointer;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.notification-close:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #2d3748;
+  transform: scale(1.1);
+}
+
+.notification-close:active {
+  transform: scale(0.95);
+}
+
+/* ========================================
+   ПРОГРЕСС-БАР АВТОЗАКРЫТИЯ
+   ======================================== */
+
+.notification-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.notification-progress-bar {
+  height: 100%;
+  background: currentColor;
+  animation: progress linear forwards;
+  transform-origin: left;
+}
+
+@keyframes progress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+/* Цвета прогресс-бара */
+.notification-success .notification-progress-bar {
+  background: #48bb78;
+}
+
+.notification-error .notification-progress-bar {
+  background: #f56565;
+}
+
+.notification-warning .notification-progress-bar {
+  background: #ed8936;
+}
+
+.notification-info .notification-progress-bar {
+  background: #4299e1;
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media (max-width: 768px) {
+  .notification-container {
+    left: 12px !important;
+    right: 12px !important;
+    max-width: none !important;
+    transform: none !important;
+  }
+
+  .notification-item {
+    min-width: auto;
+    max-width: none;
+  }
+
+  .notification-message {
+    font-size: 13px;
+  }
+
+  .notification-action {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .notification-container {
+    top: 70px;
+  }
+
+  .notification-item {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .notification-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .notification-close {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* ========================================
+   АНИМАЦИЯ ДЛЯ ЛЕВОЙ ПОЗИЦИИ
+   ======================================== */
+
+.notification-top-left .notification-item,
+.notification-bottom-left .notification-item {
+  animation: slideInLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ========================================
+   DARK MODE SUPPORT (опционально)
+   ======================================== */
+
+@media (prefers-color-scheme: dark) {
+  .notification-item {
+    background: #2d3748;
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.3),
+      0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  .notification-message {
+    color: #e2e8f0;
+  }
+
+  .notification-action {
+    color: #a0aec0;
+  }
+
+  .notification-close {
+    color: #718096;
+  }
+
+  .notification-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+  }
+}

@@ -19,6 +19,7 @@ export const useApis = (accessToken) => {
   });
 
   useEffect(() => {
+    if (!accessToken) return;
     if (!userServiceApi) {
       userServiceApi = new UserApi(new UserConfiguration({ basePath: "http://localhost:8000", accessToken: () => accessToken || "" }));
     }
@@ -41,3 +42,7 @@ export const useApis = (accessToken) => {
 
   return apis;
 };
+
+export const getUserServiceUrl = () => userServiceApi.configuration.basePath;
+export const getSubscriptionServiceUrl = () => subscriptionApi.configuration.basePath;
+export const getNotificationsServiceUrl = () => notificationsApi.configuration.basePath;
