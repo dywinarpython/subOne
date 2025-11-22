@@ -1,6 +1,7 @@
 package com.subOne.subscriptions_service.controller;
 
 import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseAnalyticPaymentSubscriptionsDto;
+import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseTotalAnalyticGroupsDto;
 import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseTotalAnalyticSubscriptionDto;
 import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseTotalAnalyticSubscriptionGroupDto;
 import com.subOne.subscriptions_service.service.AnalyticSubscriptionService;
@@ -17,12 +18,25 @@ import reactor.core.publisher.Mono;
 
 @Tag(name = "Управление аналитикой подписок")
 @RestController
-@RequestMapping("/api/v1/groups/{groupId}/subscriptions")
+@RequestMapping("/api/v1/groups")
 @RequiredArgsConstructor
-@Tag(name = "Управление аналитикой подписок")
 public class AnalyticSubscriptionController {
 
     private final AnalyticSubscriptionService analyticSubscriptionService;
+
+    @Operation(
+            summary = "Получение аналитики всех групп пользователя (общая оплата, количество подписок)",
+            responses = @ApiResponse(
+                    responseCode = "200",
+                    content = @Content(
+                            schema = @Schema(implementation = ResponseTotalAnalyticGroupsDto.class)
+                    )
+            )
+    )
+    @GetMapping("me/analytic")
+    public Mono<ResponseTotalAnalyticGroupsDto> getTotalAnalyticGroups(@AuthenticationPrincipal Jwt jwt){
+        return analyticSubscriptionService.getTotalAnalyticGroups(jwt);
+    }
 
     @Operation(
             summary = "Получение аналитических данных подписки",
@@ -33,7 +47,7 @@ public class AnalyticSubscriptionController {
                     )
             )
     )
-    @GetMapping("/{subscriptionId}/analytic")
+    @GetMapping("/{groupId}/subscriptions/{subscriptionId}/analytic")
     public Mono<ResponseTotalAnalyticSubscriptionDto> getAnalyticSubscriptionById(@PathVariable Long groupId,
                                                                           @PathVariable Long subscriptionId,
                                                                           @AuthenticationPrincipal Jwt jwt){
@@ -49,7 +63,7 @@ public class AnalyticSubscriptionController {
                     )
             )
     )
-    @GetMapping("/{subscriptionId}/payment-info")
+    @GetMapping("/{groupId}/subscriptions/{subscriptionId}/payment-info")
     public Mono<ResponseAnalyticPaymentSubscriptionsDto> getPaymentInfoSubscriptionById(@PathVariable Long groupId,
                                                                                         @PathVariable Long subscriptionId,
                                                                                         @RequestParam Integer page,
@@ -62,11 +76,11 @@ public class AnalyticSubscriptionController {
             responses = @ApiResponse(
                     responseCode = "200",
                     content = @Content(
-                            schema = @Schema(implementation = ResponseTotalAnalyticSubscriptionDto.class)
+                            schema = @Schema(implementation = ResponseTotalAnalyticSubscriptionGroupDto.class)
                     )
             )
     )
-    @GetMapping("/analytic/group-summary")
+    @GetMapping("/{groupId}/subscriptions/analytic/group-summary")
     public Mono<ResponseTotalAnalyticSubscriptionGroupDto> getAlreadyPaidGroup(@PathVariable Long groupId,
                                                                                @AuthenticationPrincipal Jwt jwt){
         return analyticSubscriptionService.getAlreadyPaidByGroupId(groupId, jwt);

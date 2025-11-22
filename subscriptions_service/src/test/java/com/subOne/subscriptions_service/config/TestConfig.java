@@ -1,7 +1,5 @@
 package com.subOne.subscriptions_service.config;
 
-import com.subOne.subscriptions_service.client.WebClientService;
-import com.subOne.subscriptions_service.client.WebClientServiceImpl;
 import com.zaxxer.hikari.HikariDataSource;
 import io.r2dbc.pool.ConnectionPool;
 import io.r2dbc.pool.ConnectionPoolConfiguration;
@@ -17,17 +15,10 @@ import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.r2dbc.connection.R2dbcTransactionManager;
 import org.springframework.transaction.ReactiveTransactionManager;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
-import reactor.core.publisher.Mono;
 
 import javax.sql.DataSource;
-
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mock;
-
 
 @TestConfiguration
 public class TestConfig {
@@ -64,18 +55,5 @@ public class TestConfig {
         return new ConnectionPool(ConnectionPoolConfiguration
                 .builder(new PostgresqlConnectionFactory(config))
                 .build());
-    }
-    @Bean
-    @Primary
-    public WebClientService webClientService(){
-        WebClientService webClientService = mock(WebClientServiceImpl.class);
-        lenient().when(webClientService.checkUserInGroup(anyLong(), any())).thenReturn(Mono.empty());
-        lenient().when(webClientService.checkUserIsOwnerGroup(anyLong(), any())).thenReturn(Mono.empty());
-        return webClientService;
-    }
-    @Bean
-    public WebClient webClient(WebClient.Builder builder){
-        return builder
-                .build();
     }
 }

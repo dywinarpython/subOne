@@ -2,10 +2,7 @@ package com.subOne.subscriptions_service.service;
 
 import com.subOne.subscriptions_service.cache.CacheService;
 import com.subOne.subscriptions_service.client.WebClientService;
-import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseAnalyticPaymentSubscriptionDto;
-import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseAnalyticPaymentSubscriptionsDto;
-import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseTotalAnalyticSubscriptionDto;
-import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseTotalAnalyticSubscriptionGroupDto;
+import com.subOne.subscriptions_service.dto.analytic_subscription.response.*;
 import com.subOne.subscriptions_service.entity.UserSubscription;
 import com.subOne.subscriptions_service.entity.enumEntity.PaymentPeriod;
 import com.subOne.subscriptions_service.repository.analytic_subscription_repository.AnalyticSubscriptionRepository;
@@ -222,6 +219,19 @@ public class AnalyticSubscriptionServiceTest {
         verify(cacheService).getValue(any(), any());
         verify(analyticSubscriptionRepository).selectTotalAnalyticByGroupId(anyLong());
         verify(cacheService, times(0)).saveValue(anyString(), any(), any());
+    }
+
+    @Test
+    void getTotalAnalyticGroups_GroupsIdFound_CorrectReturn(){
+        ResponseTotalAnalyticGroupsDto responseTotalAnalyticGroupsDto = new ResponseTotalAnalyticGroupsDto(5, BigDecimal.ONE);
+        when(webClientService.getGroupsIdByOwnerId(any())).thenReturn(Mono.just(List.of(1L, 2L, 3L)));
+        when(analyticSubscriptionRepository.selectTotalAnalyticByGroupsId(any())).thenReturn(Mono.just(responseTotalAnalyticGroupsDto));
+
+        Mono<ResponseTotalAnalyticGroupsDto> result = analyticSubscriptionService.getTotalAnalyticGroups(any());
+
+        StepVerifier.create(result)
+                .expectNext(responseTotalAnalyticGroupsDto)
+                .verifyComplete();
     }
 
     @Test

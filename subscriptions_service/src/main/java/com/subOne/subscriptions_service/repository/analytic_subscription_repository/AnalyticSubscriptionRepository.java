@@ -13,5 +13,4 @@ public interface AnalyticSubscriptionRepository extends R2dbcRepository<Analytic
         InsertAnalyticSubscriptionRepository {
 
     Flux<ResponseAnalyticPaymentSubscriptionDto> findBySubscriptionId(Long subscriptionId, Pageable pageable);
-
 }

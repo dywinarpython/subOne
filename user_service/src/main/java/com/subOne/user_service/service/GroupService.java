@@ -19,6 +19,7 @@ public interface GroupService {
     Mono<UUID> getOwnerId(Long groupId);
     Mono<ResponseGroupsDto> getGroupsCreateUser(Jwt jwt);
     Mono<ResponseGroupsDto> getGroupsUserIsMember(Jwt jwt, Integer page);
+    Mono<Integer> getCountGroup(Jwt jwt);
     Mono<Void> updateGroup(Mono<RequestUpdateGroupDto> requestGroupDtoMono, Long groupId, Jwt jwt);
     Mono<Void> deleteGroup(Long groupId, Jwt jwt);
     Mono<Boolean> checkUserIsOwner(Long groupId, Jwt jwt);

@@ -48,6 +48,7 @@ public class UserSubscriptionControllerTest extends AbstractControllerTest{
 
     @BeforeEach
     void setUp(){
+        super.setUp();
         this.userSubscription = createSubscription();
         URI = "/api/v1/groups/" + userSubscription.getGroupId() + "/subscriptions";
     }

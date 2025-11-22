@@ -175,6 +175,7 @@ public class GroupMemberServiceImpl implements GroupMemberService {
                 });
     }
 
+
     private Mono<ResponseMembersDto> getUsersAndOwner(Long groupId){
         return groupService.getOwner(groupId).flatMap( ownerId -> {
             Flux<ResponseMemberDto> members = groupMemberRepository.findMembersIdByGroupId(groupId).map(id -> new ResponseMemberDto(id, false));

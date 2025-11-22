@@ -95,6 +95,11 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
+    public Mono<Integer> getCountGroup(Jwt jwt) {
+        return groupRepository.findCountByOwnerId(UUID.fromString(jwt.getSubject()));
+    }
+
+    @Override
     @Transactional
     public Mono<Void> updateGroup(Mono<RequestUpdateGroupDto> requestGroupDtoMono, Long groupId, Jwt jwt) {
         return requestGroupDtoMono.flatMap(requestUpdateGroupDto ->
