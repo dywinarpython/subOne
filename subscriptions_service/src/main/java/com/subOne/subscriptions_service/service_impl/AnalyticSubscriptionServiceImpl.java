@@ -3,6 +3,7 @@ package com.subOne.subscriptions_service.service_impl;
 import com.subOne.subscriptions_service.cache.CacheService;
 import com.subOne.subscriptions_service.client.WebClientService;
 import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseAnalyticPaymentSubscriptionsDto;
+import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseTotalAnalyticGroupsDto;
 import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseTotalAnalyticSubscriptionDto;
 import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseTotalAnalyticSubscriptionGroupDto;
 import com.subOne.subscriptions_service.entity.AnalyticSubscription;
@@ -23,6 +24,7 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAmount;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 @Service
@@ -85,6 +87,16 @@ public class AnalyticSubscriptionServiceImpl implements AnalyticSubscriptionServ
                                         ));
                             }).flatMap(dto -> cacheService.saveValue("ANALYTIC_GROUP::" + groupId, dto, Duration.ofMinutes(30)).thenReturn(dto))
                 ));
+    }
+
+    @Override
+    public Mono<ResponseTotalAnalyticGroupsDto> getTotalAnalyticGroups(Jwt jwt) {
+        return webClientService.getGroupsIdByOwnerId(jwt)
+                .switchIfEmpty(Mono.just(List.of()))
+                .flatMap(ids -> {
+                    if(ids.isEmpty()) return Mono.just(new ResponseTotalAnalyticGroupsDto(0, BigDecimal.ZERO));
+                    return analyticSubscriptionRepository.selectTotalAnalyticByGroupsId(ids);
+                });
     }
 
     @Override

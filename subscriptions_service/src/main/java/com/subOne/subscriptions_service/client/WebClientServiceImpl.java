@@ -16,6 +16,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -49,7 +50,7 @@ public class WebClientServiceImpl implements WebClientService {
                     return requestProcessing(webClient.get()
                                 .uri("groups/" + groupId + "/members/check")
                                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt.getTokenValue())
-                                .retrieve());
+                                .retrieve(), Void.class);
                 });
     }
 
@@ -65,33 +66,55 @@ public class WebClientServiceImpl implements WebClientService {
                     return requestProcessing(webClient.get()
                             .uri( "groups/" + groupId + "/members/check/owner")
                             .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt.getTokenValue())
-                            .retrieve());
+                            .retrieve(), Void.class);
                 });
     }
 
+    @Override
+    public Mono<List<Long>> getGroupsIdByOwnerId(Jwt jwt) {
+        return requestProcessingList(webClient.get()
+                .uri("groups/owner/me/id")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt.getTokenValue())
+                .retrieve(), Long.class);
+    }
 
 
-    private Mono<Void> requestProcessing(WebClient.ResponseSpec responseSpec){
+    private <T> Mono<T> requestProcessing(WebClient.ResponseSpec responseSpec, Class<T> classz){
+        return responseSpec(responseSpec)
+                .bodyToMono(classz)
+                .retryWhen(retrySpec());
+    }
+
+    private <T> Mono<List<T>> requestProcessingList(WebClient.ResponseSpec responseSpec, Class<T> classz){
+        return responseSpec(responseSpec)
+                .bodyToFlux(classz)
+                .retryWhen(retrySpec())
+                .collectList();
+    }
+
+
+    private WebClient.ResponseSpec responseSpec(WebClient.ResponseSpec responseSpec){
         return responseSpec
                 .onStatus(HttpStatusCode::is4xxClientError, clientResponse -> {
                     HttpStatusCode status = clientResponse.statusCode();
                     return switch (status) {
                         case HttpStatus.FORBIDDEN -> Mono.error(new AccessDeniedException("Access is denied"));
                         case HttpStatus.NOT_FOUND -> clientResponse.bodyToMono(Map.class)
-                            .flatMap(message -> Mono.error(new NoSuchElementException(message.get("warn").toString())));
+                                .flatMap(message -> Mono.error(new NoSuchElementException(message.get("warn").toString())));
                         case HttpStatus.UNAUTHORIZED -> Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not authorized"));
                         default -> Mono.error(new Exception("Client exception: " + clientResponse));
                     };
-                })
-                .bodyToMono(Void.class)
-                .retryWhen(Retry.backoff(maxReties, Duration.ofSeconds(3))
-                        .filter(throwable -> throwable instanceof WebClientRequestException)
-                        .doBeforeRetry(retrySignal -> log.warn("Retry: {}, error: {}", retrySignal.totalRetries() + 1, retrySignal.failure().getMessage()))
-                        .onRetryExhaustedThrow((spec, signal) -> {
-                            log.error("All attempts were exhausted after {} repetitions", spec.maxAttempts);
-                            log.error("Connection error: {}", signal.failure().getMessage(), signal.failure());
-                            return new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "The service is temporarily unavailable");
-                        })
-                );
+        });
+    }
+
+    private Retry retrySpec(){
+        return Retry.backoff(maxReties, Duration.ofSeconds(3))
+                .filter(throwable -> throwable instanceof WebClientRequestException)
+                .doBeforeRetry(retrySignal -> log.warn("Retry: {}, error: {}", retrySignal.totalRetries() + 1, retrySignal.failure().getMessage()))
+                .onRetryExhaustedThrow((spec, signal) -> {
+                    log.error("All attempts were exhausted after {} repetitions", spec.maxAttempts);
+                    log.error("Connection error: {}", signal.failure().getMessage(), signal.failure());
+                    return new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "The service is temporarily unavailable");
+                });
     }
 }

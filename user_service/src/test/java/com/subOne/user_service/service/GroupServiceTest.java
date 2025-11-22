@@ -91,9 +91,6 @@ public class GroupServiceTest {
         Group mappedGroup = new Group();
         mappedGroup.setName("groupTest");
         mappedGroup.setOwnerId(UUID.randomUUID());
-        ResponseGroupDto responseGroupDto = new ResponseGroupDto(
-                1L, "groupTest", OffsetDateTime.now(), null
-        );
 
         when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
         when(groupRepository.findCountByOwnerId(any())).thenReturn(Mono.just(5));
@@ -228,6 +225,19 @@ public class GroupServiceTest {
                 .verifyComplete();
 
         verify(groupRepository).findGroupsUserIsMember(any(), anyInt(), anyInt());
+    }
+
+    @Test
+    void getCountGroup_GroupsFound_CorrectReturn(){
+        when(groupRepository.findCountByOwnerId(any())).thenReturn(Mono.just(3));
+        when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
+
+        Mono<Integer> result = groupService.getCountGroup(jwt);
+
+        StepVerifier.create(result)
+                .expectNext(3)
+                .verifyComplete();
+        verify(groupRepository).findCountByOwnerId(any());
     }
 
 

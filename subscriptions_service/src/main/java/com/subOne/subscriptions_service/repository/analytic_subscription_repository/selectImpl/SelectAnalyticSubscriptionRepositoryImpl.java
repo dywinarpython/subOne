@@ -2,6 +2,7 @@ package com.subOne.subscriptions_service.repository.analytic_subscription_reposi
 
 import com.subOne.subscriptions_service.dto.analytic_subscription.SubscriptionLastDatePaymentDto;
 import com.subOne.subscriptions_service.dto.analytic_subscription.SubscriptionLastDatePaymentIdAndGroupIdDto;
+import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseTotalAnalyticGroupsDto;
 import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseTotalAnalyticSubscriptionDto;
 import com.subOne.subscriptions_service.dto.analytic_subscription.response.ResponseTotalAnalyticSubscriptionGroupDto;
 import com.subOne.subscriptions_service.repository.analytic_subscription_repository.select.SelectAnalyticSubscriptionRepository;
@@ -13,6 +14,7 @@ import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
@@ -101,6 +103,31 @@ public class SelectAnalyticSubscriptionRepositoryImpl implements SelectAnalyticS
                         null
                 ))
                 .one();
+    }
+
+    @Override
+    public Mono<ResponseTotalAnalyticGroupsDto> selectTotalAnalyticByGroupsId(List<Long> ids) {
+        StringBuilder query = new StringBuilder("""
+                with sub as ( select id
+                from user_subscriptions
+                where group_id in (""");
+        for (int i = 0; i < ids.size(); i++) {
+            query.append(":id").append(i).append(" ,");
+        }
+        query.deleteCharAt(query.length() - 1);
+        query.append(")) ");
+        query.append("""
+                select (select count(*) from sub ) as count,
+                 (select sum(amount) as totalSum
+                    	from sub s
+                    	join analytic_subscriptions u on u.subscription_id = s.id) as totalSum;""");
+        DatabaseClient.GenericExecuteSpec spec = databaseClient.sql(query.toString());
+        for (int i = 0; i < ids.size(); i++) {
+            spec = spec.bind("id" + i, ids.get(i));
+        }
+        return spec.map((row, metadata) ->
+            new ResponseTotalAnalyticGroupsDto(row.get("count", Integer.class), row.get("totalSum", BigDecimal.class))
+        ).one();
     }
 }
 

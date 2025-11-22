@@ -23,6 +23,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -77,6 +78,35 @@ public class GroupController {
     public Mono<ResponseGroupsDto> getGroups(@AuthenticationPrincipal Jwt jwt) {
       return groupService.getGroupsCreateUser(jwt);
     }
+
+    @Operation(
+            summary = "Получение id групп созданных пользователем",
+            responses = @ApiResponse(
+                    responseCode = "200",
+                    content = @Content(
+                            array = @ArraySchema(schema = @Schema(implementation = List.class))
+                    )
+            )
+    )
+    @GetMapping("owner/me/id")
+    public Mono<List<Long>> getGroupsId(@AuthenticationPrincipal Jwt jwt) {
+        return groupService.getGroupsIdByUserId(jwt).collectList();
+    }
+
+    @Operation(
+            summary = "Получение количества групп созданных пользователем",
+            responses =  @ApiResponse(
+                    responseCode = "200",
+                    content = @Content(
+                            array = @ArraySchema(schema = @Schema(implementation = Integer.class))
+                    )
+            )
+    )
+    @GetMapping("owner/me/count")
+    public Mono<Integer> getGroupCount(@AuthenticationPrincipal Jwt jwt){
+        return groupService.getCountGroup(jwt);
+    }
+
 
     @Operation(
             description = "Получение id пользователя доступно только при межсерверном взаимодействии",

@@ -23,7 +23,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             value = """
             update notifications
             set read = true
-            where user_id = :userId and id in :notificationsId
+            where user_id = :userId and id in (:notificationsId)
             """, nativeQuery = true
     )
     int updateReadNotificationsByUserId(List<Long> notificationsId, UUID userId);
