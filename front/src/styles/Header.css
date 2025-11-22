@@ -64,7 +64,7 @@
 .logo-text {
   font-size: 22px;
   font-weight: 700;
-  background: #ffffff;
+  background: #3f0168;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -92,7 +92,7 @@
   padding: 8px 16px;
   background: transparent;
   border: none;
-  color: #ffffff;
+  color: #3f0168;
   font-size: 15px;
   font-weight: 500;
   cursor: pointer;
@@ -123,9 +123,7 @@
   transform: translateX(-50%) scaleX(1);
 }
 
-/* ========================================
-   HEADER RIGHT (Icons & User)
-   ======================================== */
+
 
 .header-right {
   display: flex;
@@ -198,9 +196,6 @@
   }
 }
 
-/* ========================================
-   USER MENU
-   ======================================== */
 
 .header-user-wrap {
   position: relative;
@@ -264,7 +259,7 @@
 .user-name {
   font-size: 14px;
   font-weight: 600;
-  color: #000000;
+  color: #280333;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -273,7 +268,7 @@
 
 .user-email {
   font-size: 12px;
-  color: #acc8f3;
+  color: #062149;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

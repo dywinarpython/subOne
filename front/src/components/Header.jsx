@@ -1,25 +1,17 @@
 import { useState, useRef, useEffect } from "react";
 import { Settings, LogOut, Bell} from "lucide-react";
-import {useApis} from "../api-client/api"
 import { useAuth } from "../auth/AuthProvider";
+import { useNotifications } from "../components/Notification/NotificationsContext";
 import "../App.css";
 import "../styles/Header.css";
 
 export default function Header() {
-  const { user, logout, accessToken } = useAuth();
-  const {notificationsApi} = useApis(accessToken);
+  const { user, logout} = useAuth();
+  const { countNotification } = useNotifications();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const ddRef = useRef(null);
-  const [countNotification, setCountNotification] = useState(0);
 
-  useEffect(() => {
-    if (!notificationsApi) return;
-    fetchCountNotification(notificationsApi)
-      .then((response) => {
-                setCountNotification(response.count);
-            })
-  }, [notificationsApi])
 
   useEffect(() => {
     const onDoc = (e) => {
@@ -117,10 +109,4 @@ export default function Header() {
       </div>
     </header>
   );
-}
-
-
-async function fetchCountNotification(notificationsApi) {
-  const response = await notificationsApi.getCountNotificationsNew();;
-  return response.data;
 }

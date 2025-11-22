@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect} from "react";
 import { X, CheckCircle, AlertCircle, AlertTriangle, Info } from "lucide-react";
 import "../../styles/Notification.css";
 
@@ -13,11 +13,25 @@ function NotificationItem({ notification, onClose, onNavigate }) {
     duration = 5000,
   } = notification;
 
+  const [isExiting, setIsExiting] = useState(false);
+
   useEffect(() => {
     if (!autoClose) return;
-    const timer = setTimeout(() => onClose(id), duration);
+
+    const timer = setTimeout(() => {
+      setIsExiting(true);
+    }, duration);
+
     return () => clearTimeout(timer);
-  }, [autoClose, duration, id, onClose]);
+  }, [autoClose, duration]);
+
+  // Анимация выхода
+  useEffect(() => {
+    if (isExiting) {
+      const exitTimer = setTimeout(() => onClose(id), 300); 
+      return () => clearTimeout(exitTimer);
+    }
+  }, [isExiting, id, onClose]);
 
   const icons = {
     success: <CheckCircle size={20} />,
@@ -29,7 +43,7 @@ function NotificationItem({ notification, onClose, onNavigate }) {
   const handleClick = () => {
     if (targetId && notificationTargetType) {
       onNavigate({ targetId, notificationTargetType });
-      onClose(id);
+      setIsExiting(true);
     }
   };
 
@@ -37,7 +51,7 @@ function NotificationItem({ notification, onClose, onNavigate }) {
     <div
       className={`notification-item notification-${type} ${
         targetId && notificationTargetType ? "clickable" : ""
-      }`}
+      } ${isExiting ? "exiting" : ""}`}
       onClick={handleClick}
       role="alert"
       aria-live="polite"
@@ -47,7 +61,7 @@ function NotificationItem({ notification, onClose, onNavigate }) {
       <div className="notification-content">
         <div className="notification-message">{message}</div>
         {targetId && notificationTargetType && (
-          <div className="notification-action">Нажмите, чтобы просмотреть</div>
+          <div className="notification-action">Нажмите, чтобы перейти →</div>
         )}
       </div>
 
@@ -55,14 +69,14 @@ function NotificationItem({ notification, onClose, onNavigate }) {
         className="notification-close"
         onClick={(e) => {
           e.stopPropagation();
-          onClose(id);
+          setIsExiting(true);
         }}
         aria-label="Закрыть уведомление"
       >
         <X size={16} />
       </button>
 
-      {autoClose && (
+      {autoClose && !isExiting && (
         <div className="notification-progress">
           <div
             className="notification-progress-bar"
@@ -87,12 +101,13 @@ export default function NotificationSystem({ position = "top-right" }) {
   };
 
   const handleNavigate = ({ targetId, notificationTargetType }) => {
-    console.log("Навигация к ресурсу:", { targetId, notificationTargetType });
+    console.log("Переход к:", { targetId, notificationTargetType });
+    // Здесь можно добавить реальную навигацию
     // navigate(`/${notificationTargetType}/${targetId}`);
   };
 
   useEffect(() => {
-    const handleAddNotification = (event) => addNotification(event.detail);
+    const handleAddNotification = (e) => addNotification(e.detail);
     window.addEventListener("addNotification", handleAddNotification);
     window.showNotification = addNotification;
 
@@ -139,34 +154,25 @@ export const showNotificationWithTarget = ({
 }) => {
   const message = getNotificationText(notificationType);
 
-  if (!targetId || !notificationTargetType) {
-    showWarning(message, options);
-  } else {
-    window.showNotification?.({
-      type,
-      message,
-      targetId,
-      notificationTargetType,
-      ...options,
-    });
-  }
+  window.showNotification?.({
+    type,
+    message,
+    targetId,
+    notificationTargetType,
+    autoClose: true,
+    duration: 6000,
+    ...options,
+  });
 };
 
-const getNotificationText = (notificationType) => {
-  switch (notificationType) {
-    case "DELETE_MEMBER":
-      return "Вы были удалены из группы";
-    case "ADD_MEMBER":
-      return "Пользователь был добавлен в команду";
-    case "CHANGE_OWNER":
-      return "Владелец команды изменён";
-    case "CREATE_USER":
-      return "Создан новый пользователь";
-    case "PAYEMNT_SUBSCRIPTION":
-      return "Оплата подписки прошла успешно";
-    case "ALREADY_PAYEMNT_SUBS":
-      return "Подписка уже оплачена";
-    default:
-      return `Получено уведомление: ${notificationType || "неизвестный тип"}`;
-  }
+const getNotificationText = (type) => {
+  const texts = {
+    DELETE_MEMBER: "Вы были удалены из группы",
+    ADD_MEMBER: "Пользователь добавлен в команду",
+    CHANGE_OWNER: "Владелец команды изменён",
+    CREATE_USER: "Новый пользователь создан",
+    PAYEMNT_SUBSCRIPTION: "Оплата подписки прошла успешно",
+    ALREADY_PAYEMNT_SUBS: "Подписка уже активна",
+  };
+  return texts[type] || `Событие: ${type}`;
 };

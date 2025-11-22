@@ -4,6 +4,8 @@ import LoadingAnimation from "./components/Loading/LoadingAnimation";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import NotificationSystem, { showError, showNotificationWithTarget } from "./components/Notification/NotificationSystem";
+import { NotificationsProvider } from "./components/Notification/NotificationsContext";
+import MainPage from "./components/MainPage";
 import {getNotificationsServiceUrl} from "./api-client/api"
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
@@ -53,9 +55,12 @@ export default function SubOneApp() {
 
   return (
     <>
+    <NotificationsProvider>
       <Header/>
+      <MainPage/>
       <NotificationSystem/>
       <Footer />
+      </NotificationsProvider>
     </>
   );
 }
