@@ -12,7 +12,7 @@
  * Do not edit the class manually.
  */
 
-import type { Configuration } from "./configuration";
+import type { Configuration } from "./configuration.ts";
 import type { RequestArgs } from "./base.ts";
 import type { AxiosInstance, AxiosResponse } from 'axios';
 import { RequiredError } from "./base.ts";

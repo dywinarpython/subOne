@@ -165,7 +165,7 @@ export const showNotificationWithTarget = ({
   });
 };
 
-const getNotificationText = (type) => {
+export const getNotificationText = (type) => {
   const texts = {
     DELETE_MEMBER: "Вы были удалены из группы",
     ADD_MEMBER: "Пользователь добавлен в команду",

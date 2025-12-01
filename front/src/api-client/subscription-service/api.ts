@@ -66,9 +66,18 @@ export interface ResponseSubscriptionDto {
 export interface ResponseSubscriptionsDto {
     'subscriptions'?: Array<ResponseSubscriptionDto>;
 }
+export interface ResponseTotalAnalyticGroupsDto {
+    'count'?: number;
+    'totalSum'?: number;
+}
 export interface ResponseTotalAnalyticSubscriptionDto {
     'alreadyPaid'?: number;
     'lastDatePaid'?: string;
+}
+export interface ResponseTotalAnalyticSubscriptionGroupDto {
+    'totalAmount'?: number;
+    'approxMonthPaid'?: number;
+    'approxYearPaid'?: number;
 }
 
 /**
@@ -382,6 +391,40 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
         },
         /**
          * 
+         * @summary Получение аналитики всех групп пользователя (общая оплата, количество подписок)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTotalAnalyticGroups: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/v1/groups/me/analytic`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication oauth2 required
+            // oauth required
+            await setOAuthToObject(localVarHeaderParameter, "oauth2", [], configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Создание подписки для определенной группы
          * @param {number} groupId 
          * @param {RequestSubscriptionDto} requestSubscriptionDto 
@@ -517,7 +560,7 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async getAlreadyPaidGroup(groupId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResponseTotalAnalyticSubscriptionDto>> {
+        async getAlreadyPaidGroup(groupId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResponseTotalAnalyticSubscriptionGroupDto>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.getAlreadyPaidGroup(groupId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.getAlreadyPaidGroup']?.[localVarOperationServerIndex]?.url;
@@ -578,6 +621,18 @@ export const DefaultApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.getSubscriptionsGroup(groupId, page, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.getSubscriptionsGroup']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Получение аналитики всех групп пользователя (общая оплата, количество подписок)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getTotalAnalyticGroups(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResponseTotalAnalyticGroupsDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getTotalAnalyticGroups(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.getTotalAnalyticGroups']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -648,7 +703,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAlreadyPaidGroup(groupId: number, options?: RawAxiosRequestConfig): AxiosPromise<ResponseTotalAnalyticSubscriptionDto> {
+        getAlreadyPaidGroup(groupId: number, options?: RawAxiosRequestConfig): AxiosPromise<ResponseTotalAnalyticSubscriptionGroupDto> {
             return localVarFp.getAlreadyPaidGroup(groupId, options).then((request) => request(axios, basePath));
         },
         /**
@@ -695,6 +750,15 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          */
         getSubscriptionsGroup(groupId: number, page: number, options?: RawAxiosRequestConfig): AxiosPromise<ResponseSubscriptionsDto> {
             return localVarFp.getSubscriptionsGroup(groupId, page, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Получение аналитики всех групп пользователя (общая оплата, количество подписок)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTotalAnalyticGroups(options?: RawAxiosRequestConfig): AxiosPromise<ResponseTotalAnalyticGroupsDto> {
+            return localVarFp.getTotalAnalyticGroups(options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -809,6 +873,16 @@ export class DefaultApi extends BaseAPI {
      */
     public getSubscriptionsGroup(groupId: number, page: number, options?: RawAxiosRequestConfig) {
         return DefaultApiFp(this.configuration).getSubscriptionsGroup(groupId, page, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Получение аналитики всех групп пользователя (общая оплата, количество подписок)
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public getTotalAnalyticGroups(options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).getTotalAnalyticGroups(options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

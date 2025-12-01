@@ -14,7 +14,9 @@ All URIs are relative to *http://localhost:8000*
 |[**deleteUser**](#deleteuser) | **DELETE** /api/v1/users/me | Удаления пользователя|
 |[**getCodeByGroupId**](#getcodebygroupid) | **GET** /api/v1/invitations/{groupId} | Получения кода приглашения|
 |[**getGroupById**](#getgroupbyid) | **GET** /api/v1/groups/{groupId} | Получение группы|
+|[**getGroupCount**](#getgroupcount) | **GET** /api/v1/groups/owner/me/count | Получение количества групп созданных пользователем|
 |[**getGroups**](#getgroups) | **GET** /api/v1/groups/owner/me | Получение групп созданных пользователем|
+|[**getGroupsId**](#getgroupsid) | **GET** /api/v1/groups/owner/me/id | Получение id групп созданных пользователем|
 |[**getGroupsUserIsMember**](#getgroupsuserismember) | **GET** /api/v1/groups/me | Получение групп: пользователь член группы|
 |[**getMembers**](#getmembers) | **GET** /api/v1/groups/{groupId}/members | Получение членов группы|
 |[**getOwnerIdByGroupId**](#getowneridbygroupid) | **GET** /api/v1/groups/{groupId}/owner | Получение id собственника группы|
@@ -514,6 +516,49 @@ const { status, data } = await apiInstance.getGroupById(
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **getGroupCount**
+> Array<number> getGroupCount()
+
+
+### Example
+
+```typescript
+import {
+    DefaultApi,
+    Configuration
+} from './api';
+
+const configuration = new Configuration();
+const apiInstance = new DefaultApi(configuration);
+
+const { status, data } = await apiInstance.getGroupCount();
+```
+
+### Parameters
+This endpoint does not have any parameters.
+
+
+### Return type
+
+**Array<number>**
+
+### Authorization
+
+[oauth2](../README.md#oauth2)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: */*
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | OK |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **getGroups**
 > Array<ResponseGroupsDto> getGroups()
 
@@ -539,6 +584,49 @@ This endpoint does not have any parameters.
 ### Return type
 
 **Array<ResponseGroupsDto>**
+
+### Authorization
+
+[oauth2](../README.md#oauth2)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: */*
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | OK |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **getGroupsId**
+> Array<string> getGroupsId()
+
+
+### Example
+
+```typescript
+import {
+    DefaultApi,
+    Configuration
+} from './api';
+
+const configuration = new Configuration();
+const apiInstance = new DefaultApi(configuration);
+
+const { status, data } = await apiInstance.getGroupsId();
+```
+
+### Parameters
+This endpoint does not have any parameters.
+
+
+### Return type
+
+**Array<string>**
 
 ### Authorization
 

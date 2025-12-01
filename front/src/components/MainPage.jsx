@@ -1,202 +1,240 @@
-import { useState, useEffect, useCallback } from "react";
-import { Plus, TrendingUp, Users, Bell, ChevronRight } from "lucide-react";
-import { showError, showSuccess, showNotificationWithTarget, showInfo } from "./Notification/NotificationSystem";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { Plus, TrendingUp, Users, Bell, ChevronRight, Check } from "lucide-react";
+import { showError, showSuccess, getNotificationText } from "./Notification/NotificationSystem";
 import LoadingAnimation from "../components/Loading/LoadingAnimation";
 import { useApis } from "../api-client/api";
 import { useAuth } from "../auth/AuthProvider";
 import { useNotifications } from "../components/Notification/NotificationsContext";
 import "../styles/MainPage.css";
 
-export default function MainPage() {
-  const [loading, setLoading] = useState(true);
-  const [groups, setGroups] = useState([]);
-  const [notifications, setNotifications] = useState([]);
-  const { countNotification, setCount } = useNotifications();
-  const [stats, setStats] = useState({
-    totalGroups: 0,
-    totalSubscriptions: 0,
-    monthlyExpense: 0
-  });
+const GROUPS_PAGE_SIZE = 10;
+const NOTIFICATIONS_PAGE_SIZE = 10;
+const SCROLL_THRESHOLD = 120;
 
-  const [processingIds, setProcessingIds] = useState(new Set());
-
+export default function MainPage({ notificationsRedirectUrl = "/notifications" }) {
   const { user } = useAuth();
   const apis = useApis();
   const { userApi, notificationsApi, subscriptionApi } = apis || {};
+  const { countNotification, setCount } = useNotifications();
 
-  const loadGroupsStatistics = useCallback(async (groupsList) => {
-    if (!subscriptionApi) return;
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({ totalGroups: 0, totalSubscriptions: 0, monthlyExpense: 0 });
+
+  const [groups, setGroups] = useState([]);
+  const [groupsPage, setGroupsPage] = useState(0);
+  const groupsHasMoreRef = useRef(true);
+  const groupsLoadingRef = useRef(false);
+  const groupsContainerRef = useRef(null);
+
+  const [notifications, setNotifications] = useState([]);
+  const [notificationsPage, setNotificationsPage] = useState(0);
+  const notificationsLoadingRef = useRef(false);
+  const [showNotificationsMoreButton, setShowNotificationsMoreButton] = useState(false);
+
+  const [selectedNotifications, setSelectedNotifications] = useState(new Set());
+
+  const loadStats = useCallback(async () => {
+    if (!userApi || !subscriptionApi) return;
+    
     try {
-      let totalSubscriptionsCount = 0;
-      let totalMonthlyExpense = 0;
-
-      for (const group of groupsList) {
-        try {
-          const subsResponse = await subscriptionApi.getSubscriptionsGroup(group.id, 0);
-          const subscriptions = subsResponse.data?.subscriptions || [];
-          totalSubscriptionsCount += subscriptions.length;
-
-          const analyticResponse = await subscriptionApi.getAlreadyPaidGroup(group.id);
-          const alreadyPaid = analyticResponse.data?.alreadyPaid || 0;
-          totalMonthlyExpense += alreadyPaid;
-        } catch (err) {
-          console.error(`Ошибка загрузки данных для группы ${group.id}:`, err);
-        }
-      }
-
+      const [groupCountRes, analyticRes] = await Promise.all([
+        userApi.getGroupCount(),
+        subscriptionApi.getTotalAnalyticGroups()
+      ]);
+      
       setStats({
-        totalGroups: groupsList.length,
-        totalSubscriptions: totalSubscriptionsCount,
-        monthlyExpense: totalMonthlyExpense
+        totalGroups: groupCountRes?.data ?? 0,
+        totalSubscriptions: analyticRes?.data?.count ?? 0,
+        monthlyExpense: analyticRes?.data?.totalSum ?? 0
       });
     } catch (error) {
-      console.error("Ошибка загрузки статистики:", error);
+      console.error("Error loading stats:", error);
     }
-  }, [subscriptionApi]);
+  }, [userApi, subscriptionApi]);
 
-  const loadGroups = useCallback(async () => {
-    if (!userApi || !subscriptionApi) return;
+  const loadGroups = useCallback(async (page = 0, replace = false) => {
+    if (!userApi || groupsLoadingRef.current) return;
+    if (!groupsHasMoreRef.current && !replace) return;
 
+    groupsLoadingRef.current = true;
+    
     try {
-      const ownerGroupsResponse = await userApi.getGroups();
-      const ownerGroups = ownerGroupsResponse.data.groups || [];
-      const memberGroupsResponse = await userApi.getGroupsUserIsMember(0);
-      const memberGroups = memberGroupsResponse.data.groups || [];
+      const resp = await userApi.getGroupsUserIsMember(page);
+      const newGroups = resp?.data?.groups || [];
 
-      const allGroups = [...ownerGroups, ...memberGroups];
-      const uniqueGroups = Array.from(new Map(allGroups.map(g => [g.id, g])).values());
-      setGroups(uniqueGroups);
-
-      await loadGroupsStatistics(uniqueGroups);
-    } catch (error) {
-      console.error("Ошибка загрузки групп:", error);
+      if (replace) {
+        setGroups(newGroups);
+        groupsHasMoreRef.current = newGroups.length >= GROUPS_PAGE_SIZE;
+        setGroupsPage(page);
+      } else {
+        setGroups(prev => {
+          const existing = new Map(prev.map(g => [g.id, g]));
+          newGroups.forEach(g => existing.set(g.id, g));
+          return Array.from(existing.values());
+        });
+        groupsHasMoreRef.current = newGroups.length >= GROUPS_PAGE_SIZE;
+        if (newGroups.length > 0) setGroupsPage(page);
+      }
+    } catch (err) {
+      console.error("Error loading groups:", err);
       showError("Не удалось загрузить группы");
+      groupsHasMoreRef.current = false;
+    } finally {
+      groupsLoadingRef.current = false;
     }
-  }, [userApi, subscriptionApi, loadGroupsStatistics]);
+  }, [userApi]);
 
-  // ========================================
-  // Загрузка уведомлений
-  // ========================================
-  const loadNotifications = useCallback(async () => {
-    if (!notificationsApi) return;
+  const loadNotifications = useCallback(async (page = 0, replace = false, checkOnly = false) => {
+    if (!notificationsApi || notificationsLoadingRef.current) return false;
 
+    notificationsLoadingRef.current = true;
+    
     try {
-      const response = await notificationsApi.getNewNotifications(0);
-      const notifs = response.data?.notifications || [];
-      const total =
-        response.data?.count ??
-        response.data?.total ??
-        response.data?.totalCount ??
-        notifs.length;
-
-      setNotifications(notifs.slice(0, 5));
-      // защита: если setCount не передан, проверяем
-      if (typeof setCount === "function") {
+      const resp = await notificationsApi.getNewNotifications(page);
+      const items = resp?.data?.notifications || [];
+      const total = resp?.data?.count ?? resp?.data?.total ?? resp?.data?.totalCount;
+      
+      if (typeof setCount === "function" && total != null) {
         setCount(total);
       }
-    } catch (error) {
-      console.error("Ошибка загрузки уведомлений:", error);
+
+      if (checkOnly) {
+        return items.length > 0;
+      }
+
+      if (replace) {
+        setNotifications(items);
+        setNotificationsPage(page);
+      } else {
+        setNotifications(prev => {
+          const existing = new Map(prev.map(n => [n.id, n]));
+          items.forEach(n => existing.set(n.id, n));
+          return Array.from(existing.values());
+        });
+        setNotificationsPage(page);
+      }
+      
+      return items.length >= NOTIFICATIONS_PAGE_SIZE;
+    } catch (err) {
+      console.error("Error loading notifications:", err);
+      showError("Ошибка при загрузке уведомлений");
+      return false;
+    } finally {
+      notificationsLoadingRef.current = false;
     }
   }, [notificationsApi, setCount]);
 
-  const loadDashboardData = useCallback(async () => {
+  const loadDashboard = useCallback(async () => {
     setLoading(true);
+    groupsHasMoreRef.current = true;
+    setShowNotificationsMoreButton(false);
+
     try {
-      await Promise.all([loadGroups(), loadNotifications()]);
-    } catch (error) {
-      console.error("Ошибка загрузки данных:", error);
-      showError("Ошибка загрузки данных дашборда");
+      await Promise.all([
+        loadStats(),
+        loadGroups(0, true),
+        loadNotifications(0, true).then(async () => {
+          const hasMore = await loadNotifications(1, false, true);
+          setShowNotificationsMoreButton(Boolean(hasMore));
+        })
+      ]);
+    } catch (err) {
+      console.error("Error loading dashboard:", err);
+      showError("Ошибка загрузки данных");
     } finally {
       setLoading(false);
     }
-  }, [loadGroups, loadNotifications]);
+  }, [loadStats, loadGroups, loadNotifications]);
 
   useEffect(() => {
-    if (userApi && notificationsApi) {
-      loadDashboardData();
+    if (userApi && notificationsApi && subscriptionApi) {
+      loadDashboard();
     }
-  }, [userApi, notificationsApi, loadDashboardData]);
+  }, [userApi, notificationsApi, subscriptionApi, loadDashboard]);
 
-  const handleNotificationClick = useCallback(async (notification) => {
-    if (!notificationsApi || !notification) return;
+  useEffect(() => {
+    const el = groupsContainerRef.current;
+    if (!el) return;
 
-    const id = notification.id;
-    // если уже обрабатывается — игнорируем повторный клик
-    if (processingIds.has(id)) return;
+    let ticking = false;
+    const onScroll = () => {
+      if (groupsLoadingRef.current || !groupsHasMoreRef.current || ticking) return;
+      
+      ticking = true;
+      requestAnimationFrame(() => {
+        const { scrollTop, clientHeight, scrollHeight } = el;
+        if (scrollTop + clientHeight >= scrollHeight - SCROLL_THRESHOLD) {
+          loadGroups(groupsPage + 1);
+        }
+        ticking = false;
+      });
+    };
 
-    // сохраняем текущее состояние для возможного отката
-    const prevNotifications = notifications;
-    const prevCount = typeof countNotification === "number" ? countNotification : (prevNotifications.length ?? 0);
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [groupsPage, loadGroups]);
 
-    // оптимистично обновляем UI: убираем уведомление и уменьшаем счётчик
-    setNotifications((prev) => prev.filter(n => n.id !== id));
-    if (typeof setCount === "function") {
-      setCount((prev) => Math.max(0, (typeof prev === "number" ? prev : prevCount) - 1));
-    }
+  const handleNavigateToNotifications = useCallback(() => {
+    window.location.href = notificationsRedirectUrl;
+  }, [notificationsRedirectUrl]);
 
-    // помечаем как обрабатываемое
-    setProcessingIds((prev) => {
-      const clone = new Set(prev);
-      clone.add(id);
-      return clone;
+  const toggleNotificationSelection = useCallback((notificationId) => {
+    setSelectedNotifications(prev => {
+      const updated = new Set(prev);
+      if (updated.has(notificationId)) {
+        updated.delete(notificationId);
+      } else {
+        updated.add(notificationId);
+      }
+      return updated;
     });
+  }, []);
+
+  const toggleSelectAll = useCallback(() => {
+    setSelectedNotifications(prev => {
+      if (prev.size === notifications.length) {
+        return new Set();
+      }
+      return new Set(notifications.map(n => n.id));
+    });
+  }, [notifications]);
+
+  const markSelectedAsRead = useCallback(async () => {
+    if (!notificationsApi) return;
+    
+    const ids = Array.from(selectedNotifications);
+    if (ids.length === 0) return;
+
+    const previousNotifications = notifications;
+    const previousCount = countNotification;
+
+    setNotifications(prev => prev.filter(n => !selectedNotifications.has(n.id)));
+    if (typeof setCount === "function") {
+      setCount(prev => Math.max(0, (prev || 0) - ids.length));
+    }
+    setSelectedNotifications(new Set());
 
     try {
-      await notificationsApi.updateNotifications({ ids: [id] });
-      // успешно — убираем id из processing
-      setProcessingIds((prev) => {
-        const clone = new Set(prev);
-        clone.delete(id);
-        return clone;
-      });
-      showInfo("Уведомление прочитано");
-    } catch (error) {
-      console.error("Ошибка обработки уведомления:", error);
-      // откатим изменения в UI
-      setNotifications(prev => {
-        // если уведомление уже вернулось (например, было параллельно загружено) — не дублируем
-        if (prev.some(n => n.id === id)) return prev;
-        // восстанавливаем в начало списка
-        return [notification, ...prev].slice(0, 5);
-      });
+      await notificationsApi.updateNotifications({ ids });
+      showSuccess(`Прочитано уведомлений: ${ids.length}`);
+    } catch (err) {
+      console.error("Error marking notifications:", err);
+      showError("Не удалось отметить уведомления как прочитанные");
+      
+      setNotifications(previousNotifications);
       if (typeof setCount === "function") {
-        setCount(prev => {
-          // если prev число — увеличим, иначе вернём prevCount
-          return (typeof prev === "number") ? prev + 1 : prevCount;
-        });
+        setCount(previousCount);
       }
-      setProcessingIds((prev) => {
-        const clone = new Set(prev);
-        clone.delete(id);
-        return clone;
-      });
-      showError("Ошибка при обработке уведомления");
     }
-  }, [notificationsApi, notifications, processingIds, setCount, countNotification]);
+  }, [notificationsApi, selectedNotifications, notifications, countNotification, setCount]);
 
-  const getNotificationMessage = (notification) => {
-    const typeMessages = {
-      'DELETE_MEMBER': 'Участник удален из группы',
-      'ADD_MEMBER': 'Новый участник добавлен в группу',
-      'CHANGE_OWNER': 'Изменен владелец группы',
-      'CREATE_USER': 'Пользователь создан',
-      'PAYEMNT_SUBSCRIPTION': 'Требуется оплата подписки',
-      'ALREADY_PAYEMNT_SUBS': 'Подписка уже оплачена'
-    };
-    return typeMessages[notification.notificationType] || 'Новое уведомление';
-  };
+  const formattedExpense = useMemo(() => {
+    return stats.monthlyExpense.toFixed(2);
+  }, [stats.monthlyExpense]);
 
-  const handleCreateGroup = () => showSuccess("Функция создания группы будет добавлена");
-  const handleAddSubscription = () => showSuccess("Функция добавления подписки будет добавлена");
-  const handleViewGroup = (groupId) => {
-    console.log("Переход к группе:", groupId);
-    showNotificationWithTarget({
-      message: "Переход к группе",
-      type: "info",
-      targetId: groupId,
-      resourceType: "group"
-    });
-  };
+  const allSelected = useMemo(() => {
+    return notifications.length > 0 && selectedNotifications.size === notifications.length;
+  }, [notifications.length, selectedNotifications.size]);
 
   if (loading) {
     return <LoadingAnimation message="Загрузка приложения" />;
@@ -206,22 +244,23 @@ export default function MainPage() {
     <div className="main-page">
       <section className="hero-section">
         <div className="hero-content">
-          <h1 className="hero-title">
-            Привет, {user?.name || 'Пользователь'}! 👋
-          </h1>
-          <p className="hero-subtitle">
-            Вот обзор ваших подписок и активности
-          </p>
+          <h1 className="hero-title">Привет, {user?.name || 'Пользователь'}! 👋</h1>
+          <p className="hero-subtitle">Обзор подписок и активности</p>
         </div>
-
         <div className="quick-actions">
-          <button className="btn btn-primary" onClick={handleCreateGroup}>
-            <Plus size={20} />
-            Создать группу
+          <button 
+            className="btn btn-primary" 
+            onClick={() => showSuccess("Функция создания группы скоро будет добавлена")}
+            aria-label="Создать новую группу"
+          >
+            <Plus size={20} aria-hidden="true" /> Создать группу
           </button>
-          <button className="btn btn-primary" onClick={handleAddSubscription}>
-            <Plus size={20} />
-            Добавить подписку
+          <button 
+            className="btn btn-primary" 
+            onClick={() => showSuccess("Функция добавления подписки скоро будет добавлена")}
+            aria-label="Добавить новую подписку"
+          >
+            <Plus size={20} aria-hidden="true" /> Добавить подписку
           </button>
         </div>
       </section>
@@ -229,7 +268,7 @@ export default function MainPage() {
       <section className="stats-section">
         <div className="stats-grid">
           <div className="stat-card">
-            <div className="stat-icon">
+            <div className="stat-icon" aria-hidden="true">
               <Users size={24} />
             </div>
             <div className="stat-content">
@@ -237,9 +276,8 @@ export default function MainPage() {
               <div className="stat-label">Групп</div>
             </div>
           </div>
-
           <div className="stat-card">
-            <div className="stat-icon">
+            <div className="stat-icon" aria-hidden="true">
               <TrendingUp size={24} />
             </div>
             <div className="stat-content">
@@ -247,15 +285,14 @@ export default function MainPage() {
               <div className="stat-label">Подписок</div>
             </div>
           </div>
-
           <div className="stat-card highlight">
-            <svg width="80px" height="80px" viewBox="0 0 24 24" fill="none">
-              <path d="M9 14H12" stroke="#1C274C" strokeWidth="1.5" strokeLinecap="round"/>
-              <path d="M10 12V8.2C10 8.0142 10 7.9213 10.0123 7.84357C10.0801 7.41567 10.4157 7.08008 10.8436 7.01231C10.9213 7 11.0142 7 11.2 7H13.5C14.8807 7 16 8.11929 16 9.5C16 10.8807 14.8807 12 13.5 12H10ZM10 12V17M10 12H9" stroke="#1C274C" strokeWidth="1.5" strokeLinecap="round"/>
-              <path d="M7 3.33782C8.47087 2.48697 10.1786 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 10.1786 2.48697 8.47087 3.33782 7" stroke="#1C274C" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
+            <div className="stat-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="#ffffff" width="24" height="24" viewBox="0 0 36 36">
+                <path d="M20.57,20A8.23,8.23,0,0,0,29,12a8.23,8.23,0,0,0-8.43-8H12a1,1,0,0,0-1,1V18H9a1,1,0,0,0,0,2h2v2H9a1,1,0,0,0,0,2h2v7a1,1,0,0,0,2,0V24h9a1,1,0,0,0,0-2H13V20ZM13,6h7.57A6.24,6.24,0,0,1,27,12a6.23,6.23,0,0,1-6.43,6H13Z" />
+              </svg>
+            </div>
             <div className="stat-content">
-              <div className="stat-value">{stats.monthlyExpense.toFixed(2)}</div>
+              <div className="stat-value">{formattedExpense}</div>
               <div className="stat-label">Всего оплачено</div>
             </div>
           </div>
@@ -265,31 +302,41 @@ export default function MainPage() {
       <div className="main-content-grid">
         <section className="groups-section">
           <div className="section-header">
-            <h2>Мои группы</h2>
-            <button className="view-all-btn" onClick={() => console.log("Показать все группы")}>
-              Все группы
-              <ChevronRight size={16} />
+            <h2>Вы состоите в этих группах</h2>
+            <button className="view-all-btn" aria-label="Показать все группы">
+              Все группы <ChevronRight size={16} aria-hidden="true" />
             </button>
           </div>
 
-          {groups.length === 0 ? (
-            <div className="empty-state">
-              <Users size={48} className="empty-icon" />
-              <p>У вас пока нет групп</p>
-              <button className="btn btn-primary" onClick={handleCreateGroup}>
-                Создать первую группу
-              </button>
-            </div>
-          ) : (
-            <div className="groups-list">
-              {groups.slice(0, 6).map(group => (
-                <div
-                  key={group.id}
-                  className="group-card"
-                  onClick={() => handleViewGroup(group.id)}
+          <div
+            ref={groupsContainerRef}
+            className="groups-list-scrollable"
+            role="list"
+            aria-label="Список групп"
+          >
+            {groups.length === 0 ? (
+              <div className="empty-state">
+                <Users size={48} className="empty-icon" aria-hidden="true" />
+                <p>Вы не в одной группе</p>
+                <button 
+                  className="btn btn-primary" 
+                  onClick={() => showSuccess("Функция добавления участника скоро будет добавлена")}
                 >
-                  <div className="group-avatar">
-                    {group.name?.[0]?.toUpperCase() || 'G'}
+                  Войти в группу
+                </button>
+              </div>
+            ) : (
+              groups.map(group => (
+                <div 
+                  key={group.id} 
+                  className="group-card" 
+                  onClick={() => console.log("Navigate to group:", group.id)}
+                  role="listitem"
+                  tabIndex={0}
+                  onKeyPress={(e) => e.key === 'Enter' && console.log("Navigate to group:", group.id)}
+                >
+                  <div className="group-avatar" aria-hidden="true">
+                    {group.name?.[0]?.toUpperCase() || "G"}
                   </div>
                   <div className="group-info">
                     <h3>{group.name}</h3>
@@ -297,11 +344,18 @@ export default function MainPage() {
                       Создана {new Date(group.createdAt).toLocaleDateString('ru-RU')}
                     </p>
                   </div>
-                  <ChevronRight size={20} className="group-arrow" />
+                  <ChevronRight size={20} className="group-arrow" aria-hidden="true" />
                 </div>
-              ))}
-            </div>
-          )}
+              ))
+            )}
+
+            {groupsLoadingRef.current && (
+              <div className="loading-more" aria-live="polite">Загрузка...</div>
+            )}
+            {!groupsHasMoreRef.current && groups.length > 0 && (
+              <div className="end-of-list">Больше групп нет</div>
+            )}
+          </div>
         </section>
 
         <section className="notifications-section">
@@ -309,45 +363,87 @@ export default function MainPage() {
             <h2>
               Уведомления
               {countNotification > 0 && (
-                <span className="notification-badge">{countNotification}</span>
+                <span className="notification-badge" aria-label={`${countNotification} новых уведомлений`}>
+                  {countNotification}
+                </span>
               )}
             </h2>
-            <button className="view-all-btn" onClick={() => console.log("Показать все уведомления")}>
-              Все
-              <ChevronRight size={16} />
+            <button 
+              className="view-all-btn" 
+              onClick={handleNavigateToNotifications}
+              aria-label="Показать все уведомления"
+            >
+              Все <ChevronRight size={16} aria-hidden="true" />
             </button>
           </div>
 
+          {notifications.length > 0 && (
+            <div className="notifications-actions">
+              <button className="action-btn" onClick={toggleSelectAll}>
+                {allSelected ? 'Снять все' : 'Выбрать все'}
+              </button>
+              {selectedNotifications.size > 0 && (
+                <button className="action-btn primary" onClick={markSelectedAsRead}>
+                  <Check size={16} aria-hidden="true" /> Прочитать ({selectedNotifications.size})
+                </button>
+              )}
+            </div>
+          )}
+
           {notifications.length === 0 ? (
             <div className="empty-state">
-              <Bell size={48} className="empty-icon" />
+              <Bell size={48} className="empty-icon" aria-hidden="true" />
               <p>Нет новых уведомлений</p>
             </div>
           ) : (
-            <div className="notifications-list">
+            <div className="notifications-list" role="list" aria-label="Список уведомлений">
               {notifications.map(notif => {
-                const isProcessing = processingIds.has(notif.id);
+                const isSelected = selectedNotifications.has(notif.id);
+                const notifText = getNotificationText(notif.notificationType);
+                
                 return (
-                  <div
-                    key={notif.id}
-                    className={`notification-item ${isProcessing ? "is-processing" : ""}`}
-                    onClick={() => handleNotificationClick(notif)}
-                    style={{ opacity: isProcessing ? 0.6 : 1, pointerEvents: isProcessing ? "none" : "auto" }}
+                  <div 
+                    key={notif.id} 
+                    className={`notification-item ${isSelected ? 'selected' : ''}`}
+                    role="listitem"
                   >
-                    <div className="notification-icon">
-                      <Bell size={18} />
+                    <div className="notification-checkbox" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        id={`notif-${notif.id}`}
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleNotificationSelection(notif.id)}
+                        aria-label={`Выбрать уведомление: ${notifText}`}
+                      />
                     </div>
-                    <div className="notification-content">
-                      <div className="notification-message">
-                        {getNotificationMessage(notif)}
-                      </div>
-                      <div className="notification-time">
-                        {new Date(notif.createdAt).toLocaleDateString('ru-RU')}
+
+                    <div className="notification-body">
+                      <div className="notification-content">
+                        <div className="notification-message" title={notifText}>
+                          {notifText}
+                        </div>
+                        <div className="notification-meta">
+                          {new Date(notif.createdAt).toLocaleString('ru-RU', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </div>
                       </div>
                     </div>
                   </div>
                 );
               })}
+            </div>
+          )}
+          
+          {showNotificationsMoreButton && (
+            <div style={{ marginTop: 12 }}>
+              <button className="btn btn-secondary" onClick={handleNavigateToNotifications}>
+                Показать ещё → Управление уведомлениями
+              </button>
             </div>
           )}
         </section>

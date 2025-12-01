@@ -11,6 +11,7 @@ All URIs are relative to *http://localhost:8001*
 |[**getPaymentInfoSubscriptionById**](#getpaymentinfosubscriptionbyid) | **GET** /api/v1/groups/{groupId}/subscriptions/{subscriptionId}/payment-info | Получение данных оплаты|
 |[**getSubscriptionById**](#getsubscriptionbyid) | **GET** /api/v1/groups/{groupId}/subscriptions/{subscriptionId} | Получение подписки по id для определенной группы|
 |[**getSubscriptionsGroup**](#getsubscriptionsgroup) | **GET** /api/v1/groups/{groupId}/subscriptions | Получение всех подписок для определенной группы|
+|[**getTotalAnalyticGroups**](#gettotalanalyticgroups) | **GET** /api/v1/groups/me/analytic | Получение аналитики всех групп пользователя (общая оплата, количество подписок)|
 |[**saveSubscription**](#savesubscription) | **POST** /api/v1/groups/{groupId}/subscriptions | Создание подписки для определенной группы|
 |[**updateSubscription**](#updatesubscription) | **PATCH** /api/v1/groups/{groupId}/subscriptions/{subscriptionId} | Изменение подписки для определенной группы|
 
@@ -124,7 +125,7 @@ const { status, data } = await apiInstance.extendSubscription(
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **getAlreadyPaidGroup**
-> ResponseTotalAnalyticSubscriptionDto getAlreadyPaidGroup()
+> ResponseTotalAnalyticSubscriptionGroupDto getAlreadyPaidGroup()
 
 
 ### Example
@@ -154,7 +155,7 @@ const { status, data } = await apiInstance.getAlreadyPaidGroup(
 
 ### Return type
 
-**ResponseTotalAnalyticSubscriptionDto**
+**ResponseTotalAnalyticSubscriptionGroupDto**
 
 ### Authorization
 
@@ -370,6 +371,49 @@ const { status, data } = await apiInstance.getSubscriptionsGroup(
 ### Return type
 
 **ResponseSubscriptionsDto**
+
+### Authorization
+
+[oauth2](../README.md#oauth2)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: */*
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | OK |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **getTotalAnalyticGroups**
+> ResponseTotalAnalyticGroupsDto getTotalAnalyticGroups()
+
+
+### Example
+
+```typescript
+import {
+    DefaultApi,
+    Configuration
+} from './api';
+
+const configuration = new Configuration();
+const apiInstance = new DefaultApi(configuration);
+
+const { status, data } = await apiInstance.getTotalAnalyticGroups();
+```
+
+### Parameters
+This endpoint does not have any parameters.
+
+
+### Return type
+
+**ResponseTotalAnalyticGroupsDto**
 
 ### Authorization
 

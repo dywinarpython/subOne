@@ -18,7 +18,7 @@ import type { AxiosPromise, AxiosInstance, RawAxiosRequestConfig } from 'axios';
 import globalAxios from 'axios';
 // Some imports not used depending on template conditions
 // @ts-ignore
-import { DUMMY_BASE_URL, assertParamExists, setOAuthToObject, setSearchParams, serializeDataIfNeeded, toPathString, createRequestFunction } from './common.ts';
+import { DUMMY_BASE_URL, assertParamExists,  setOAuthToObject, setSearchParams, serializeDataIfNeeded, toPathString, createRequestFunction } from './common.ts';
 import type { RequestArgs } from './base.ts';
 // @ts-ignore
 import { BASE_PATH, BaseAPI, operationServerMap } from './base.ts';
@@ -460,12 +460,80 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
         },
         /**
          * 
+         * @summary Получение количества групп созданных пользователем
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getGroupCount: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/v1/groups/owner/me/count`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication oauth2 required
+            // oauth required
+            await setOAuthToObject(localVarHeaderParameter, "oauth2", [], configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Получение групп созданных пользователем
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         getGroups: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/api/v1/groups/owner/me`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication oauth2 required
+            // oauth required
+            await setOAuthToObject(localVarHeaderParameter, "oauth2", [], configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Получение id групп созданных пользователем
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getGroupsId: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/v1/groups/owner/me/id`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -908,6 +976,18 @@ export const DefaultApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Получение количества групп созданных пользователем
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getGroupCount(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<number>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getGroupCount(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.getGroupCount']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @summary Получение групп созданных пользователем
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -916,6 +996,18 @@ export const DefaultApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.getGroups(options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.getGroups']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Получение id групп созданных пользователем
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getGroupsId(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<string>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getGroupsId(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.getGroupsId']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -1119,12 +1211,30 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
         },
         /**
          * 
+         * @summary Получение количества групп созданных пользователем
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getGroupCount(options?: RawAxiosRequestConfig): AxiosPromise<Array<number>> {
+            return localVarFp.getGroupCount(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @summary Получение групп созданных пользователем
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         getGroups(options?: RawAxiosRequestConfig): AxiosPromise<Array<ResponseGroupsDto>> {
             return localVarFp.getGroups(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Получение id групп созданных пользователем
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getGroupsId(options?: RawAxiosRequestConfig): AxiosPromise<Array<string>> {
+            return localVarFp.getGroupsId(options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -1314,12 +1424,32 @@ export class DefaultApi extends BaseAPI {
 
     /**
      * 
+     * @summary Получение количества групп созданных пользователем
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public getGroupCount(options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).getGroupCount(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
      * @summary Получение групп созданных пользователем
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
     public getGroups(options?: RawAxiosRequestConfig) {
         return DefaultApiFp(this.configuration).getGroups(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Получение id групп созданных пользователем
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public getGroupsId(options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).getGroupsId(options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
