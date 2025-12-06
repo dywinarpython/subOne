@@ -27,7 +27,6 @@ export default function MainPage({ notificationsRedirectUrl = "/notifications" }
   const groupsContainerRef = useRef(null);
 
   const [notifications, setNotifications] = useState([]);
-  const [notificationsPage, setNotificationsPage] = useState(0);
   const notificationsLoadingRef = useRef(false);
   const [showNotificationsMoreButton, setShowNotificationsMoreButton] = useState(false);
 
@@ -104,14 +103,12 @@ export default function MainPage({ notificationsRedirectUrl = "/notifications" }
 
       if (replace) {
         setNotifications(items);
-        setNotificationsPage(page);
       } else {
         setNotifications(prev => {
           const existing = new Map(prev.map(n => [n.id, n]));
           items.forEach(n => existing.set(n.id, n));
           return Array.from(existing.values());
         });
-        setNotificationsPage(page);
       }
       
       return items.length >= NOTIFICATIONS_PAGE_SIZE;

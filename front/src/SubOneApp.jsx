@@ -1,5 +1,7 @@
 import { useEffect } from "react";
 import { useAuth } from "./auth/AuthProvider";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import SettingsPage from "./components/SettingsPage";
 import LoadingAnimation from "./components/Loading/LoadingAnimation";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
@@ -9,7 +11,6 @@ import MainPage from "./components/MainPage";
 import {getNotificationsServiceUrl} from "./api-client/api"
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
-
 export default function SubOneApp() {
   const { loading, accessToken } = useAuth();
 
@@ -32,10 +33,9 @@ export default function SubOneApp() {
                 duration: 1000000
               });
             } else {
-                console.error(data.message);
-              }
+              console.error(data.message);
             }
-        catch (err) {
+          } catch (err) {
             console.error("Ошибка парсинга уведомления:", err);
           }
         });
@@ -45,6 +45,7 @@ export default function SubOneApp() {
         showError("Ошибка WebSocket соединения");
       },
     });
+
     stompClient.activate();
     return () => stompClient.deactivate();
   }, [accessToken]);
@@ -54,13 +55,17 @@ export default function SubOneApp() {
   }
 
   return (
-    <>
-    <NotificationsProvider>
-      <Header/>
-      <MainPage/>
-      <NotificationSystem/>
-      <Footer />
+    <BrowserRouter>
+      <NotificationsProvider>
+        <Header />
+        <Routes>
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/" element={<MainPage />} />
+        </Routes>
+        <NotificationSystem />
+        <Footer />
       </NotificationsProvider>
-    </>
+    </BrowserRouter>
   );
 }
+

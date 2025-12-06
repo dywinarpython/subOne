@@ -1,17 +1,20 @@
 import { useState, useRef, useEffect } from "react";
-import { Settings, LogOut, Bell} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Settings, LogOut, Bell } from "lucide-react";
 import { useAuth } from "../auth/AuthProvider";
 import { useNotifications } from "../components/Notification/NotificationsContext";
 import "../App.css";
 import "../styles/Header.css";
 
 export default function Header() {
-  const { user, logout} = useAuth();
+  const { user, logout } = useAuth();
   const { countNotification } = useNotifications();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const ddRef = useRef(null);
 
+  const navigate = useNavigate();
+  
 
   useEffect(() => {
     const onDoc = (e) => {
@@ -34,11 +37,21 @@ export default function Header() {
     ? `${user.name?.[0] || ""}${user.surname?.[0] || ""}`.toUpperCase()
     : "U";
 
+    const handleSettingsClick = () => {
+      setOpen(false);
+      navigate("/settings");
+    };
+
+  const handleLogout = () => {
+    setOpen(false);
+    if (logout) logout();
+  };
+
   return (
     <header className={`header-root ${scrolled ? "scrolled" : ""}`}>
       <div className="header-container">
         <div className="header-left">
-          <div className="header-logo">
+          <div className="header-logo" onClick={() => navigate("/")}>
             <div className="logo-mark">
               <span className="logo-gradient">S</span>
             </div>
@@ -58,11 +71,12 @@ export default function Header() {
             <Bell size={20} />
             {countNotification > 0 && (
               <span className="notification-dot">
-                <span className="notification-count">{countNotification > 10 ? "9+" : countNotification}</span>
+                <span className="notification-count">
+                  {countNotification > 10 ? "9+" : countNotification}
+                </span>
               </span>
             )}
           </button>
-
 
           <div className="header-user-wrap" ref={ddRef}>
             <button
@@ -90,15 +104,12 @@ export default function Header() {
 
             <div className={`dropdown ${open ? "show" : ""}`}>
               <div className="dropdown-content">
-                <button className="dropdown-item">
+                <button className="dropdown-item" onClick={handleSettingsClick}>
                   <Settings size={16} />
                   <span>Настройки</span>
                 </button>
                 <div className="dropdown-divider"></div>
-                <button className="dropdown-item logout" onClick={() => {
-                  setOpen(false);
-                  if (logout) logout();
-                }}>
+                <button className="dropdown-item logout" onClick={handleLogout}>
                   <LogOut size={16} />
                   <span>Выйти</span>
                 </button>
