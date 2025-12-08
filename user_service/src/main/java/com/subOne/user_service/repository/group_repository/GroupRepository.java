@@ -12,11 +12,11 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 import java.util.UUID;
 
-public interface GroupRepository extends R2dbcRepository<Group, Long>, SelectOwnerGroupRepository {
+public interface GroupRepository extends R2dbcRepository<Group, Integer>, SelectOwnerGroupRepository {
 
-    Mono<Integer> deleteByIdAndOwnerId(Long groupId, UUID ownerId);
+    Mono<Integer> deleteByIdAndOwnerId(Integer groupId, UUID ownerId);
 
-    Mono<Boolean> existsByIdAndOwnerId(Long groupId, UUID ownerId);
+    Mono<Boolean> existsByIdAndOwnerId(Integer groupId, UUID ownerId);
 
     Flux<ResponseGroupDto> findByOwnerId(UUID ownerId);
 
@@ -25,21 +25,21 @@ public interface GroupRepository extends R2dbcRepository<Group, Long>, SelectOwn
             from groups
             where id = :groupId
             """)
-    Mono<UUID> findOwnerIdByGroupId(Long groupId);
+    Mono<UUID> findOwnerIdByGroupId(Integer groupId);
 
     @Query("""
             select id
             from groups
             where owner_id = :ownerId
             """)
-    Flux<Long> findGroupsIdByOwnerId(UUID ownerId);
+    Flux<Integer> findGroupsIdByOwnerId(UUID ownerId);
 
     @Query("""
             select count(*)
             from groups g
             where g.owner_id = :ownerId and g.id in (:groupsId)
             """)
-    Mono<Long> findCountWhereUserIsOwnerByGroupsId(UUID ownerId, List<Long> groupsId);
+    Mono<Long> findCountWhereUserIsOwnerByGroupsId(UUID ownerId, List<Integer> groupsId);
 
     @Query("""
             select count(*)
@@ -70,7 +70,7 @@ public interface GroupRepository extends R2dbcRepository<Group, Long>, SelectOwn
             ))
             """
     )
-    Mono<ResponseGroupDto> findGroupById(Long groupId, UUID userId);
+    Mono<ResponseGroupDto> findGroupById(Integer groupId, UUID userId);
 
     @Modifying
     @Query(
@@ -81,7 +81,7 @@ public interface GroupRepository extends R2dbcRepository<Group, Long>, SelectOwn
             where id = :groupId and owner_id = :ownerId
             """
     )
-    Mono<Integer> updateGroupByIdAndOwnerId(Long groupId, String name, UUID ownerId);
+    Mono<Integer> updateGroupByIdAndOwnerId(Integer groupId, String name, UUID ownerId);
 
 
 

@@ -36,7 +36,7 @@ public abstract class AbstractControllerTest extends BaseIntegrationTest {
     @BeforeEach
     void setUp(){
         lenient().when(kafkaService.sendToTopic(anyString(), anyString())).thenReturn(Mono.empty());
-        lenient().when(kafkaService.sendToTopic(anyString(), anyLong())).thenReturn(Mono.empty());
+        lenient().when(kafkaService.sendToTopic(anyString(), anyInt())).thenReturn(Mono.empty());
         lenient().when(kafkaService.sendToTopic(anyString(), any(), any())).thenReturn(Mono.empty());
 
         UUID userId = UUID.randomUUID();

@@ -49,13 +49,13 @@ public class GroupInviteServiceImpl implements GroupInviteService {
     public Mono<ResponseMembersDto> addUserByCode(UUID code, Jwt jwt) {
         return userService.checkVerifyEmail(UUID.fromString(jwt.getSubject()))
                 .flatMap(bl -> bl? Mono.empty(): Mono.error(new AccessDeniedException("Email not verified")))
-                .then(Mono.defer(() -> cacheService.getValue("CODE::" + code, Long.class)))
+                .then(Mono.defer(() -> cacheService.getValue("CODE::" + code, Integer.class)))
                 .switchIfEmpty(Mono.defer(() -> groupInviteRepository.findGroupIdByCode(code)))
                 .flatMap(groupId ->
                         groupMemberService.addUser(UUID.fromString(jwt.getSubject()), groupId)
-                                .flatMap(response -> groupService.getOwnerId(groupId).flatMap(ownerId ->
+                                .flatMap(response -> groupService.getOwnerId(groupId).flatMap(dto ->
                                         kafkaService.sendToTopic("notification_user",
-                                                ownerId,
+                                                dto.ownerId(),
                                                 new SendNotificationDto(NotificationType.ADD_MEMBER, NotificationTargetType.GROUP, groupId))).thenReturn(response))
                 )
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.GONE, "Invite code has expired")));
@@ -64,7 +64,7 @@ public class GroupInviteServiceImpl implements GroupInviteService {
 
     @Override
     @Transactional
-    public Mono<ResponseInviteCodeDto> getCodeByGroupId(Long groupId, Jwt jwt) {
+    public Mono<ResponseInviteCodeDto> getCodeByGroupId(Integer groupId, Jwt jwt) {
         return groupService.checkUserIsOwner(groupId, jwt)
                 .then(groupInviteRepository.findCodeByGroupId(groupId))
                 .flatMap(codeDto -> {
@@ -75,7 +75,7 @@ public class GroupInviteServiceImpl implements GroupInviteService {
     }
 
 
-    private Mono<ResponseInviteCodeDto> createCodeInvite(Long groupId) {
+    private Mono<ResponseInviteCodeDto> createCodeInvite(Integer groupId) {
         return groupInviteRepository.save(mapperGroupInvite.codeAndGroupIdToGroupInvite(groupId, UUID.randomUUID()))
                 .map(groupInvite ->
                         new ResponseInviteCodeDto(groupInvite.getCode(), Duration.ofMinutes(5).toSeconds()))

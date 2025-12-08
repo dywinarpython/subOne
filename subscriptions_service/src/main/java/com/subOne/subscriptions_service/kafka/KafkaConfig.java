@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.LongDeserializer;
+import org.apache.kafka.common.serialization.IntegerDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.common.serialization.UUIDDeserializer;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -70,7 +70,7 @@ public class KafkaConfig {
         cfg.put(ConsumerConfig.GROUP_ID_CONFIG,
                 env.getProperty("spring.kafka.consumer.group-id"));
         cfg.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, UUIDDeserializer.class);
-        cfg.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class);
+        cfg.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, IntegerDeserializer.class);
         return new DefaultKafkaConsumerFactory<>(cfg);
     }
 

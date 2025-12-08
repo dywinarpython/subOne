@@ -84,7 +84,7 @@ public class UserSubscriptionControllerTest extends AbstractControllerTest{
         userSubscription1.setServiceName("serviceName");
         userSubscription1.setEndDate(LocalDate.now().plusMonths(3));
         userSubscription1.setStartDate(LocalDate.now().minusMonths(3));
-        userSubscription1.setGroupId(1L + System.currentTimeMillis());
+        userSubscription1.setGroupId(Math.abs((int) System.currentTimeMillis()));
         userSubscription1.setStatus(SubscriptionStatus.ACTIVE.toString());
         return userSubscriptionRepository.save(userSubscription1).block();
     }

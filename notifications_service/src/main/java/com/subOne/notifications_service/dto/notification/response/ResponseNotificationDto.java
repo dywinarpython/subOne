@@ -5,5 +5,5 @@ import com.subOne.notification.NotificationType;
 
 import java.time.OffsetDateTime;
 
-public record ResponseNotificationDto(Long id, NotificationTargetType notificationTargetType, NotificationType notificationType, Long targetId, OffsetDateTime createdAt) {
+public record ResponseNotificationDto(Integer id, NotificationTargetType notificationTargetType, NotificationType notificationType, Integer targetId, OffsetDateTime createdAt) {
 }

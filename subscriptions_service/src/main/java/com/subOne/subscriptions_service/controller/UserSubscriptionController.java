@@ -37,7 +37,7 @@ public class UserSubscriptionController {
             )
     )
     @GetMapping
-    public Mono<ResponseSubscriptionsDto> getSubscriptionsGroup(@PathVariable Long groupId, @RequestParam Integer page,  @AuthenticationPrincipal Jwt jwt){
+    public Mono<ResponseSubscriptionsDto> getSubscriptionsGroup(@PathVariable Integer groupId, @RequestParam Integer page,  @AuthenticationPrincipal Jwt jwt){
         return userSubscriptionService.getSubscriptionsGroup(groupId, page, jwt);
     }
 
@@ -51,10 +51,9 @@ public class UserSubscriptionController {
             )
     )
     @GetMapping("/{subscriptionId}")
-    public Mono<ResponseSubscriptionDto> getSubscriptionById(@PathVariable Long groupId, @PathVariable Long subscriptionId, @AuthenticationPrincipal Jwt jwt){
+    public Mono<ResponseSubscriptionDto> getSubscriptionById(@PathVariable Integer groupId, @PathVariable Integer subscriptionId, @AuthenticationPrincipal Jwt jwt){
         return userSubscriptionService.getSubscriptionById(groupId, subscriptionId, jwt);
     }
-
 
     @Operation(
             summary = "Создание подписки для определенной группы",
@@ -66,7 +65,7 @@ public class UserSubscriptionController {
             )
     )
     @PostMapping
-    public Mono<ResponseEntity<ResponseSubscriptionDto>> saveSubscription(@PathVariable Long groupId,
+    public Mono<ResponseEntity<ResponseSubscriptionDto>> saveSubscription(@PathVariable Integer groupId,
                                                           @Valid @RequestBody Mono<RequestSubscriptionDto> requestSubscriptionDtoMono,
                                                           @AuthenticationPrincipal Jwt jwt){
         return userSubscriptionService.saveSubscription(groupId, requestSubscriptionDtoMono, jwt)
@@ -83,8 +82,8 @@ public class UserSubscriptionController {
             )
     )
     @PatchMapping("/{subscriptionId}")
-    public Mono<ResponseEntity<Map<String, String>>> updateSubscription(@PathVariable Long groupId,
-                                                        @PathVariable Long subscriptionId,
+    public Mono<ResponseEntity<Map<String, String>>> updateSubscription(@PathVariable Integer groupId,
+                                                        @PathVariable Integer subscriptionId,
                                                         @Valid @RequestBody Mono<RequestUpdateSubscriptionDto> requestSubscriptionDtoMono,
                                                         @AuthenticationPrincipal Jwt jwt){
         return userSubscriptionService.updateSubscription(groupId, subscriptionId, requestSubscriptionDtoMono, jwt)
@@ -101,16 +100,13 @@ public class UserSubscriptionController {
             )
     )
     @PatchMapping("/{subscriptionId}/extend/{extensionCount}")
-    public Mono<ResponseEntity<Map<String, String>>> extendSubscription(@PathVariable Long groupId,
-                                                                        @PathVariable Long subscriptionId,
-                                                                        @PathVariable Long extensionCount,
+    public Mono<ResponseEntity<Map<String, String>>> extendSubscription(@PathVariable Integer groupId,
+                                                                        @PathVariable Integer subscriptionId,
+                                                                        @PathVariable Integer extensionCount,
                                                                         @AuthenticationPrincipal Jwt jwt){
         return userSubscriptionService.renewSubscriptionById(groupId, subscriptionId, extensionCount, jwt)
                 .thenReturn(ResponseEntity.ok(Map.of("message", "Subscription extended")));
     }
-
-
-
 
     @Operation(
             summary = "Удаление подписки для определенной группы",
@@ -119,8 +115,8 @@ public class UserSubscriptionController {
             )
     )
     @DeleteMapping("/{subscriptionId}")
-    public Mono<ResponseEntity<Void>> deleteSubscription(@PathVariable Long groupId,
-                                                         @PathVariable Long subscriptionId,
+    public Mono<ResponseEntity<Void>> deleteSubscription(@PathVariable Integer groupId,
+                                                         @PathVariable Integer subscriptionId,
                                                          @AuthenticationPrincipal Jwt jwt){
         return userSubscriptionService.deleteSubscriptionById(groupId, subscriptionId, jwt).thenReturn(ResponseEntity.noContent().build());
     }

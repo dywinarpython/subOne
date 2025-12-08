@@ -36,7 +36,7 @@ public class WebClientServiceImpl implements WebClientService {
     }
 
     @Override
-    public Mono<Void> checkUserInGroup(Long groupId, Jwt jwt) {
+    public Mono<Void> checkUserInGroup(Integer groupId, Jwt jwt) {
         UUID userId = UUID.fromString(jwt.getSubject());
         String memberKey = "MEMBER::" + userId + ' ' + groupId;
         String ownerKey = "OWNER::" + groupId;
@@ -55,7 +55,7 @@ public class WebClientServiceImpl implements WebClientService {
     }
 
     @Override
-    public Mono<Void> checkUserIsOwnerGroup(Long groupId, Jwt jwt) {
+    public Mono<Void> checkUserIsOwnerGroup(Integer groupId, Jwt jwt) {
         UUID userId = UUID.fromString(jwt.getSubject());
         String ownerKey = "OWNER::" + groupId;
         return cacheService.getValue(ownerKey, UUID.class)
@@ -71,11 +71,11 @@ public class WebClientServiceImpl implements WebClientService {
     }
 
     @Override
-    public Mono<List<Long>> getGroupsIdByOwnerId(Jwt jwt) {
+    public Mono<List<Integer>> getGroupsIdByOwnerId(Jwt jwt) {
         return requestProcessingList(webClient.get()
                 .uri("groups/owner/me/id")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt.getTokenValue())
-                .retrieve(), Long.class);
+                .retrieve(), Integer.class);
     }
 
 

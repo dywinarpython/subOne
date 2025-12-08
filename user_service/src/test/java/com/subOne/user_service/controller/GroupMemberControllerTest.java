@@ -84,7 +84,7 @@ public class GroupMemberControllerTest extends GroupControllerTest{
     void getMembers_GroupIsNotFound_NotCorrectReturn(){
         webTestClient
                 .get()
-                .uri(URI + System.currentTimeMillis()  + "/members")
+                .uri(URI + (int) System.currentTimeMillis()  + "/members")
                 .exchange()
                 .expectStatus().isNotFound();
     }
@@ -118,7 +118,7 @@ public class GroupMemberControllerTest extends GroupControllerTest{
     @DisplayName("GET -> /api/v1/groups/{groupId}/members/check (group not found)")
     void checkUserInGroup_GroupNotFound_CorrectReturn(){
         webTestClient.get()
-                .uri(URI + System.currentTimeMillis() + "/members/check")
+                .uri(URI + (int) System.currentTimeMillis() + "/members/check")
                 .exchange()
                 .expectStatus().isNotFound();
     }
@@ -152,7 +152,7 @@ public class GroupMemberControllerTest extends GroupControllerTest{
     @DisplayName("GET -> /api/v1/groups/{groupId}/members/check/owner (group not found)")
     void checkUserIsOwnerGroup_GroupNotFound_CorrectReturn(){
         webTestClient.get()
-                .uri(URI + System.currentTimeMillis() + "/members/check/owner")
+                .uri(URI + (int) System.currentTimeMillis() + "/members/check/owner")
                 .exchange()
                 .expectStatus().isNotFound();
     }

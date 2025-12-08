@@ -85,7 +85,6 @@ public class NotificationServiceImpl implements NotificationService {
     @Transactional
     public void saveNotificationPaymentSubscription(KafkaDtoPaymentSubscription kafkaDtoPaymentSubscription) {
             UUID ownerId = restTemplateService.getOwnerIdByGroupId(kafkaDtoPaymentSubscription.groupId());
-            if(ownerId == null) return;
             Notification notification = notificationRepository.save(
                     mapperNotification.parametersToNotification(ownerId, kafkaDtoPaymentSubscription.notificationType(), NotificationTargetType.SUBSCRIPTION, kafkaDtoPaymentSubscription.subscriptionId())
             );
@@ -98,7 +97,7 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     @Transactional
     public void readNotification(RequestUpdateNotificationsDto requestUpdateNotificationsDto, Jwt jwt) {
-        int count = notificationRepository.updateReadNotificationsByUserId(requestUpdateNotificationsDto.ids(), UUID.fromString(jwt.getSubject()));
+        long count = notificationRepository.updateReadNotificationsByUserId(requestUpdateNotificationsDto.ids(), UUID.fromString(jwt.getSubject()));
         if(count != requestUpdateNotificationsDto.ids().size()){
             throw new NoSuchElementException("Some notifications is not found");
         }

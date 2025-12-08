@@ -22,7 +22,7 @@ public interface MapperNotification {
             @Mapping(target = "createdAt", expression = "java(java.time.OffsetDateTime.now())"),
             @Mapping(target = "read",expression = "java(Boolean.FALSE)")
     })
-    Notification parametersToNotification(UUID userId, NotificationType notificationType, NotificationTargetType notificationTargetType, Long targetId);
+    Notification parametersToNotification(UUID userId, NotificationType notificationType, NotificationTargetType notificationTargetType, Integer targetId);
 
 
     default Notification messageDtoToNotification(ConsumerRecord<UUID, SendNotificationDto> record){

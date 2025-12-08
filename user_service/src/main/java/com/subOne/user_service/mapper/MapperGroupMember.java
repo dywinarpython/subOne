@@ -10,5 +10,5 @@ import java.util.UUID;
 public interface MapperGroupMember {
 
 
-    GroupMember userIdAndGroupIdToGroupMember(UUID userId, Long groupId);
+    GroupMember userIdAndGroupIdToGroupMember(UUID userId, Integer groupId);
 }

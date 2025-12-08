@@ -17,8 +17,8 @@ public class KafkaServiceImpl implements KafkaService {
     private KafkaTemplate<String, String> kafkaTemplateString;
 
     @Autowired
-    @Qualifier("messageSendWithLong")
-    private KafkaTemplate<String, Long> kafkaTemplateLong;
+    @Qualifier("messageSendWithInteger")
+    private KafkaTemplate<String, Integer> kafkaTemplateInteger;
 
     @Autowired
     @Qualifier("messageSendWithUUIDKeyNotification")
@@ -30,8 +30,8 @@ public class KafkaServiceImpl implements KafkaService {
     }
 
     @Override
-    public Mono<Void> sendToTopic(String nameTopic, Long value) {
-        return Mono.fromFuture(kafkaTemplateLong.send(nameTopic, value)).then();
+    public Mono<Void> sendToTopic(String nameTopic, Integer value) {
+        return Mono.fromFuture(kafkaTemplateInteger.send(nameTopic, value)).then();
     }
 
     @Override

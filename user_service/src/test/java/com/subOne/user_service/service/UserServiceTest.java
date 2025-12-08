@@ -189,7 +189,7 @@ public class UserServiceTest {
         when(cacheService.getValue(any(), any()))
                 .thenReturn(Mono.just(new ResponseUserDto(userId, null, null, null)));
         when(groupMemberService.existsMemberInGroupByOwnerId(any())).thenReturn(Mono.empty());
-        when(groupService.getGroupsIdByUserId(any())).thenReturn(Flux.fromIterable(List.of(1L, 2L, 3L)));
+        when(groupService.getGroupsIdByUserId(any())).thenReturn(Flux.fromIterable(List.of(1, 2, 3)));
         when(userRepository.deleteByUserId(any())).thenReturn(Mono.just(1));
         when(groupService.deleteDataRelatedGroupsByOwnerId(any())).thenReturn(Mono.empty());
         when(kafkaService.sendToTopic(anyString(), anyString())).thenReturn(Mono.empty());
@@ -214,7 +214,7 @@ public class UserServiceTest {
         when(cacheService.getValue(any(), any())).thenReturn(Mono.empty());
         when(userRepository.existsByUserId(any())).thenReturn(Mono.just(Boolean.TRUE));
         when(groupMemberService.existsMemberInGroupByOwnerId(any())).thenReturn(Mono.empty());
-        when(groupService.getGroupsIdByUserId(any())).thenReturn(Flux.fromIterable(List.of(1L, 2L, 3L)));
+        when(groupService.getGroupsIdByUserId(any())).thenReturn(Flux.fromIterable(List.of(1, 2, 3)));
         when(userRepository.deleteByUserId(any())).thenReturn(Mono.just(1));
         when(groupService.deleteDataRelatedGroupsByOwnerId(any())).thenReturn(Mono.empty());
         when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());

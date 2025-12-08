@@ -60,7 +60,7 @@ public class GroupController {
             )
     )
     @GetMapping("/{groupId}")
-    public Mono<ResponseGroupDto> getGroupById(@PathVariable Long groupId, @AuthenticationPrincipal Jwt jwt) {
+    public Mono<ResponseGroupDto> getGroupById(@PathVariable Integer groupId, @AuthenticationPrincipal Jwt jwt) {
         return groupService.getGroupById(groupId, jwt);
     }
 
@@ -89,7 +89,7 @@ public class GroupController {
             )
     )
     @GetMapping("owner/me/id")
-    public Mono<List<Long>> getGroupsId(@AuthenticationPrincipal Jwt jwt) {
+    public Mono<List<Integer>> getGroupsId(@AuthenticationPrincipal Jwt jwt) {
         return groupService.getGroupsIdByUserId(jwt).collectList();
     }
 
@@ -120,8 +120,8 @@ public class GroupController {
     )
     @GetMapping("/{groupId}/owner")
     @PreAuthorize("hasRole('CLIENT_SERVICE_NOTIFICATION_SERVICE')")
-    public Mono<ResponseGroupOwnerIdDto> getOwnerIdByGroupId(@PathVariable Long groupId) {
-        return groupService.getOwnerId(groupId).map(ResponseGroupOwnerIdDto::new);
+    public Mono<ResponseGroupOwnerIdDto> getOwnerIdByGroupId(@PathVariable Integer groupId) {
+        return groupService.getOwnerId(groupId);
     }
 
     @Operation(
@@ -143,7 +143,7 @@ public class GroupController {
             summary = "Обновление информации группы"
     )
     @PatchMapping("/{groupId}")
-    public Mono<ResponseEntity<Map<String, String>>> updateGroup(@PathVariable Long groupId, @Valid @RequestBody Mono<RequestUpdateGroupDto> requestUpdateGroupDtoMono , @AuthenticationPrincipal Jwt jwt) {
+    public Mono<ResponseEntity<Map<String, String>>> updateGroup(@PathVariable Integer groupId, @Valid @RequestBody Mono<RequestUpdateGroupDto> requestUpdateGroupDtoMono , @AuthenticationPrincipal Jwt jwt) {
         return groupService.updateGroup(requestUpdateGroupDtoMono,groupId , jwt).thenReturn(ResponseEntity.ok(Map.of("message", "Group is updated")));
     }
 
@@ -152,7 +152,7 @@ public class GroupController {
             summary = "Удаления группы"
     )
     @DeleteMapping("/{groupId}")
-    public Mono<ResponseEntity<Void>> deleteGroup(@PathVariable Long groupId, @AuthenticationPrincipal Jwt jwt) {
+    public Mono<ResponseEntity<Void>> deleteGroup(@PathVariable Integer groupId, @AuthenticationPrincipal Jwt jwt) {
         return groupService.deleteGroup(groupId, jwt).thenReturn(ResponseEntity.noContent().build());
     }
 

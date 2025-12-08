@@ -13,8 +13,8 @@ import java.time.LocalDate;
 @Setter
 public class AnalyticSubscription {
     @Id
-    private Long id;
-    private Long subscriptionId;
+    private Integer id;
+    private Integer subscriptionId;
     private LocalDate datePaid;
     private BigDecimal amount;
 }

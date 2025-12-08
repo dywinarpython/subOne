@@ -20,7 +20,7 @@ public class SchedulerNotificationControl {
     @Transactional
     public void deleteOldNotifications() {
         OffsetDateTime timeDelete = OffsetDateTime.now().minusDays(7);
-        Integer count = notificationRepository.deleteByCreatedAtBefore(timeDelete);
+        int count = notificationRepository.deleteByCreatedAtBefore(timeDelete);
         log.info("Successful deletion of old notifications deleted: {}", count);
     }
 }

@@ -38,7 +38,7 @@ public class SchedulerNotificationControlTest extends BaseIntegrationTest {
             notification.setNotificationType(NotificationType.PAYEMNT_SUBSCRIPTION);
             notification.setNotificationTargetType(NotificationTargetType.SUBSCRIPTION);
             notification.setUserId(UUID.randomUUID());
-            notification.setTargetId(1L);
+            notification.setTargetId(1);
             if(old){
                 notification.setCreatedAt(OffsetDateTime.now().minusDays(7));
             } else {

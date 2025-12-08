@@ -12,5 +12,5 @@ public interface MapperGroupInvite {
 
 
     @Mapping(target = "expiresAt", expression = "java(java.time.LocalDateTime.now().plusMinutes(5))")
-    GroupInvite codeAndGroupIdToGroupInvite(Long groupId, UUID code);
+    GroupInvite codeAndGroupIdToGroupInvite(Integer groupId, UUID code);
 }

@@ -17,7 +17,7 @@ public class Notification {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
     private UUID userId;
     private OffsetDateTime createdAt;
     private Boolean read;
@@ -25,5 +25,5 @@ public class Notification {
     private NotificationType notificationType;
     @Enumerated(EnumType.STRING)
     private NotificationTargetType notificationTargetType;
-    private Long targetId;
+    private Integer targetId;
 }

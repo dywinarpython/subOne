@@ -19,7 +19,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 
 public class KafkaHandlerServiceTest extends BaseIntegrationTest {
@@ -36,7 +36,7 @@ public class KafkaHandlerServiceTest extends BaseIntegrationTest {
 
     @Test
     void saveNotification_CorrectConsumerRecord_CorrectSaveAndCheckRepo(){
-        SendNotificationDto sendNotificationDto = new SendNotificationDto(NotificationType.PAYEMNT_SUBSCRIPTION, NotificationTargetType.SUBSCRIPTION, System.currentTimeMillis());
+        SendNotificationDto sendNotificationDto = new SendNotificationDto(NotificationType.PAYEMNT_SUBSCRIPTION, NotificationTargetType.SUBSCRIPTION, Math.abs( (int) System.currentTimeMillis()));
         ConsumerRecord<UUID, SendNotificationDto> consumerRecord = new ConsumerRecord<>("notification_user", 0, 0L, UUID.randomUUID(), sendNotificationDto);
 
         kafkaHandlerService.saveNotification(consumerRecord);
@@ -68,8 +68,8 @@ public class KafkaHandlerServiceTest extends BaseIntegrationTest {
     @Test
     void saveNotificationPaymentSubscription_CorrectKafkaDtoPaymentSubscription_CorrectSaveAndCheckRepo(){
         UUID userId = UUID.randomUUID();
-        when(restTemplateService.getOwnerIdByGroupId(anyLong())).thenReturn(userId);
-        KafkaDtoPaymentSubscription kafkaDtoPaymentSubscription = new KafkaDtoPaymentSubscription(1L, 1L, NotificationType.PAYEMNT_SUBSCRIPTION);
+        when(restTemplateService.getOwnerIdByGroupId(anyInt())).thenReturn(userId);
+        KafkaDtoPaymentSubscription kafkaDtoPaymentSubscription = new KafkaDtoPaymentSubscription(1, 1, NotificationType.PAYEMNT_SUBSCRIPTION);
 
         kafkaHandlerService.saveNotificationPaymentSubscription(kafkaDtoPaymentSubscription);
 
