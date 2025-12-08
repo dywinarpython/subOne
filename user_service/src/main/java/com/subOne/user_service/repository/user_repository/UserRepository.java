@@ -11,7 +11,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
-public interface UserRepository extends ReactiveCrudRepository<User, Long>, UpdateRepository {
+public interface UserRepository extends ReactiveCrudRepository<User, Integer>, UpdateRepository {
 
     Mono<ResponseUserDto> findByUserId(UUID id);
     Mono<Integer> deleteByUserId(UUID id);

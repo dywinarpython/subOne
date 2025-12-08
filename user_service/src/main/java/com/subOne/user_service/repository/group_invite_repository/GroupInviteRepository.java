@@ -10,21 +10,21 @@ import java.time.Instant;
 import java.util.UUID;
 
 
-public interface GroupInviteRepository extends R2dbcRepository<GroupInvite, Long> {
+public interface GroupInviteRepository extends R2dbcRepository<GroupInvite, Integer> {
 
     @Query("""
             select code, expires_at
             from group_invites
             where group_id = :groupId and expires_at > NOW()
             """)
-    Mono<CodeDto> findCodeByGroupId(Long groupId);
+    Mono<CodeDto> findCodeByGroupId(Integer groupId);
 
     @Query("""
             select group_id
             from group_invites
             where code = :code and expires_at > NOW()
             """)
-    Mono<Long> findGroupIdByCode(UUID code);
+    Mono<Integer> findGroupIdByCode(UUID code);
 
     Mono<Void> deleteAllByExpiresAtBefore(Instant moment);
 

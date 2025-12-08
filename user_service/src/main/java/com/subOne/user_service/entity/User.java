@@ -12,7 +12,7 @@ import java.util.UUID;
 @Setter
 public class User {
     @Id
-    private Long id;
+    private Integer id;
     private UUID userId;
     private String name;
     private String surname;

@@ -35,7 +35,7 @@ public class SelectAnalyticSubscriptionRepositoryImpl implements SelectAnalyticS
                 where u.status not in ('STOP', 'EXPIRED')
                 group by a.subscription_id, u.payment_period, u.amount""")
                 .map((row, metadata) -> new SubscriptionLastDatePaymentDto(
-                        row.get("subscription_id", Long.class),
+                        row.get("subscription_id", Integer.class),
                         row.get("payment_period", String.class),
                         row.get("amount", BigDecimal.class),
                         row.get("datePaid", LocalDate.class)
@@ -56,8 +56,8 @@ public class SelectAnalyticSubscriptionRepositoryImpl implements SelectAnalyticS
                 where u.status not in ('STOP', 'EXPIRED')
                 group by a.subscription_id, u.group_id, u.payment_period""")
                 .map((row, metadata) -> new SubscriptionLastDatePaymentIdAndGroupIdDto(
-                        row.get("subscription_id", Long.class),
-                        row.get("group_id", Long.class),
+                        row.get("subscription_id", Integer.class),
+                        row.get("group_id", Integer.class),
                         row.get("payment_period", String.class),
                         row.get("datePaid", LocalDate.class)
                 ))
@@ -65,7 +65,7 @@ public class SelectAnalyticSubscriptionRepositoryImpl implements SelectAnalyticS
     }
 
     @Override
-    public Mono<ResponseTotalAnalyticSubscriptionDto> selectSumAmountAndLastDateBySubscriptionId(Long subscriptionId) {
+    public Mono<ResponseTotalAnalyticSubscriptionDto> selectSumAmountAndLastDateBySubscriptionId(Integer subscriptionId) {
         return databaseClient
                 .sql("""
                 select sum(amount) as alreadyPaid, max(date_paid) as lastDatePaid
@@ -81,7 +81,7 @@ public class SelectAnalyticSubscriptionRepositoryImpl implements SelectAnalyticS
     }
 
     @Override
-    public Mono<ResponseTotalAnalyticSubscriptionGroupDto> selectTotalAnalyticByGroupId(Long groupId) {
+    public Mono<ResponseTotalAnalyticSubscriptionGroupDto> selectTotalAnalyticByGroupId(Integer groupId) {
         return databaseClient
                 .sql("""
                         with analytic as (
@@ -106,7 +106,7 @@ public class SelectAnalyticSubscriptionRepositoryImpl implements SelectAnalyticS
     }
 
     @Override
-    public Mono<ResponseTotalAnalyticGroupsDto> selectTotalAnalyticByGroupsId(List<Long> ids) {
+    public Mono<ResponseTotalAnalyticGroupsDto> selectTotalAnalyticByGroupsId(List<Integer> ids) {
         StringBuilder query = new StringBuilder("""
                 with sub as ( select id
                 from user_subscriptions

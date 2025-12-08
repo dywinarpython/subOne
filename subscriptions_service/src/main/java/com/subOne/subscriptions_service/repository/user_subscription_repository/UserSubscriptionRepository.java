@@ -12,26 +12,26 @@ import reactor.core.publisher.Mono;
 
 
 
-public interface UserSubscriptionRepository extends R2dbcRepository<UserSubscription, Long>, UpdateRepository {
+public interface UserSubscriptionRepository extends R2dbcRepository<UserSubscription, Integer>, UpdateRepository {
 
-    Flux<ResponseSubscriptionDto> findByGroupId(Long groupId, Pageable pageable);
+    Flux<ResponseSubscriptionDto> findByGroupId(Integer groupId, Pageable pageable);
 
     @Modifying
     @Query("""
             delete from user_subscriptions
             where id = :id
             """)
-    Mono<Integer> deleteByIdReturningCount(Long id);
+    Mono<Integer> deleteByIdReturningCount(Integer id);
 
     @Modifying
-    Mono<Integer> deleteByGroupId(Long groupId);
+    Mono<Integer> deleteByGroupId(Integer groupId);
 
     @Query("""
             select id, service_name, subscription_name, start_date, end_date, payment_period, amount, status
             from user_subscriptions
             where id = :id
             """)
-    Mono<ResponseSubscriptionDto> findBySubscriptionId(Long id);
+    Mono<ResponseSubscriptionDto> findBySubscriptionId(Integer id);
 
     @Modifying
     @Query("""
@@ -42,7 +42,7 @@ public interface UserSubscriptionRepository extends R2dbcRepository<UserSubscrip
         end
         where id = :subscriptionId AND status <> 'EXPIRED'
     """)
-    Mono<Integer> updateEndTimeSubscriptionById(Long subscriptionId, Long extensionCount);
+    Mono<Integer> updateEndTimeSubscriptionById(Integer subscriptionId, Integer extensionCount);
 
     @Modifying
     @Query("""
@@ -59,5 +59,5 @@ public interface UserSubscriptionRepository extends R2dbcRepository<UserSubscrip
             where id = :subscriptionId and status = 'EXPIRED'
         )
     """)
-    Mono<Boolean> existsByExpired(Long subscriptionId);
+    Mono<Boolean> existsByExpired(Integer subscriptionId);
 }

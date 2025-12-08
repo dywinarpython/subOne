@@ -5,10 +5,7 @@ import com.subOne.keycloak_dto.UserInfo;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.LongSerializer;
-import org.apache.kafka.common.serialization.StringDeserializer;
-import org.apache.kafka.common.serialization.StringSerializer;
-import org.apache.kafka.common.serialization.UUIDSerializer;
+import org.apache.kafka.common.serialization.*;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -117,10 +114,10 @@ public class KafkaConfig {
     }
 
     @Bean
-    public ProducerFactory<String, Long> groupLongProducerFactory() {
+    public ProducerFactory<String, Integer> groupLongProducerFactory() {
         Map<String, Object> props = generateDefaultProps();
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, LongSerializer.class);
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, IntegerSerializer.class);
         return new DefaultKafkaProducerFactory<>(props);
     }
 
@@ -139,8 +136,8 @@ public class KafkaConfig {
     }
 
     @Bean
-    @Qualifier("messageSendWithLong")
-    public KafkaTemplate<String, Long> messageSendWithLong(ProducerFactory<String, Long> producerFactory){
+    @Qualifier("messageSendWithInteger")
+    public KafkaTemplate<String, Integer> messageSendWithInteger(ProducerFactory<String, Integer> producerFactory){
         return new KafkaTemplate<>(producerFactory);
     }
 

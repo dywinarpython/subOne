@@ -8,11 +8,11 @@ import reactor.core.publisher.Mono;
 import java.util.UUID;
 
 public interface GroupMemberService {
-    Mono<ResponseMembersDto> addUser(UUID userId, Long groupId);
-    Mono<ResponseMembersDto> getUsers(Long groupId, Jwt jwt);
-    Mono<Void> deleteMember(Long groupId, UUID userId, Jwt jwt);
-    Mono<Boolean> checkUserInGroup(Long groupId, Jwt jwt);
-    Mono<Boolean> checkUserIsOwnerGroup(Long groupId, Jwt jwt);
+    Mono<ResponseMembersDto> addUser(UUID userId, Integer groupId);
+    Mono<ResponseMembersDto> getUsers(Integer groupId, Jwt jwt);
+    Mono<Void> deleteMember(Integer groupId, UUID userId, Jwt jwt);
+    Mono<Boolean> checkUserInGroup(Integer groupId, Jwt jwt);
+    Mono<Boolean> checkUserIsOwnerGroup(Integer groupId, Jwt jwt);
     Mono<Void> existsMemberInGroupByOwnerId(Jwt jwt);
     Mono<Void> changesOwnerGroup(Mono<RequestGroupsOwnershipChangesDto> requestGroupsOwnershipChangesDtoMono, Jwt jwt);
 

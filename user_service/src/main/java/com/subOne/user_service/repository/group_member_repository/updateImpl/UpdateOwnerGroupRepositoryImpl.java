@@ -23,7 +23,7 @@ public class UpdateOwnerGroupRepositoryImpl implements UpdateOwnerGroupRepositor
         }
         query.append(" END ");
         query.append("WHERE id IN (");
-        List<Long> groupsId = requestGroupsOwnershipChangesDtos.stream().map(RequestGroupOwnershipChangesDto::groupId).toList();
+        List<Integer> groupsId = requestGroupsOwnershipChangesDtos.stream().map(RequestGroupOwnershipChangesDto::groupId).toList();
         for (int i = 0; i < groupsId.size(); i++) {
             query.append(":groupId").append(i).append(",");
         }

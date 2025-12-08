@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
+    <changeSet id="2025-12-08-005-update-type-index" author="Dywinar">
+        <sql>
+            ALTER TABLE analytic_subscriptions
+            DROP CONSTRAINT fk_analytic_subscriptions_user_subscriptions;
+
+            ALTER TABLE user_subscriptions
+            ALTER column id TYPE integer USING id::integer,
+            ALTER column group_id TYPE integer USING group_id::integer;
+
+            ALTER TABLE analytic_subscriptions
+            ALTER column id TYPE integer USING id::integer,
+            ALTER column subscription_id TYPE integer USING subscription_id::integer;
+
+            ALTER TABLE analytic_subscriptions
+            ADD CONSTRAINT fk_analytic_subscriptions_user_subscriptions
+            FOREIGN KEY (subscription_id) REFERENCES user_subscriptions(id)
+            ON DELETE CASCADE;
+        </sql>
+    </changeSet>
+</databaseChangeLog>

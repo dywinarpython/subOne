@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
+    <changeSet id="2025-12-08-009-update-type-index" author="Dywinar">
+        <sql>
+            ALTER TABLE group_members
+            DROP CONSTRAINT fk_groups_group_members;
+
+            ALTER TABLE group_invites
+            DROP CONSTRAINT fk_group_invites_groups;
+
+            ALTER TABLE users
+            ALTER COLUMN id TYPE INTEGER USING id::integer;
+
+            ALTER TABLE groups
+            ALTER COLUMN id TYPE INTEGER USING id::integer;
+
+            ALTER TABLE group_invites
+            ALTER COLUMN id TYPE INTEGER USING id::integer,
+            ALTER COLUMN group_id TYPE INTEGER USING group_id::integer;
+
+            ALTER TABLE group_members
+            ALTER COLUMN id TYPE INTEGER USING id::integer,
+            ALTER COLUMN group_id TYPE INTEGER USING group_id::integer;
+
+            ALTER TABLE group_members
+            ADD CONSTRAINT fk_groups_group_members
+            FOREIGN KEY (group_id) REFERENCES groups(id)
+            ON DELETE CASCADE;
+
+            ALTER TABLE group_invites
+            ADD CONSTRAINT fk_group_invites_groups
+            FOREIGN KEY (group_id) REFERENCES groups(id)
+            ON DELETE CASCADE;
+        </sql>
+    </changeSet>
+</databaseChangeLog>

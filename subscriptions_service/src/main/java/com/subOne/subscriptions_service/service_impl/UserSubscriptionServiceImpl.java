@@ -60,7 +60,7 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
 
     @Override
     @Transactional
-    public Mono<ResponseSubscriptionDto> saveSubscription(Long groupId, Mono<RequestSubscriptionDto> requestSubscriptionDtoMono, Jwt jwt) {
+    public Mono<ResponseSubscriptionDto> saveSubscription(Integer groupId, Mono<RequestSubscriptionDto> requestSubscriptionDtoMono, Jwt jwt) {
         return requestSubscriptionDtoMono.flatMap(requestSubscriptionDto -> {
             if(requestSubscriptionDto.startDate().equals(requestSubscriptionDto.endDate())) return Mono.error(new ValidationException("The start date must not be equal to the end date"));
             if (requestSubscriptionDto.startDate().isAfter(requestSubscriptionDto.endDate())) return Mono.error(new ValidationException("Start date must not be after end date"));
@@ -76,7 +76,7 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
 
     @Override
     @Transactional
-    public Mono<Void> updateSubscription(Long groupId, Long subscriptionId, Mono<RequestUpdateSubscriptionDto> requestUpdateSubscriptionDtoMono, Jwt jwt) {
+    public Mono<Void> updateSubscription(Integer groupId, Integer subscriptionId, Mono<RequestUpdateSubscriptionDto> requestUpdateSubscriptionDtoMono, Jwt jwt) {
         return requestUpdateSubscriptionDtoMono.flatMap( requestUpdateSubscriptionDto -> {
             Map<SqlIdentifier, Object> updateMap = userSubscriptionMapper.addUpdateField(requestUpdateSubscriptionDto);
             if (updateMap.isEmpty())
@@ -91,7 +91,7 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
 
     @Override
     @Transactional(readOnly = true)
-    public Mono<ResponseSubscriptionsDto> getSubscriptionsGroup(Long groupId, Integer page, Jwt jwt) {
+    public Mono<ResponseSubscriptionsDto> getSubscriptionsGroup(Integer groupId, Integer page, Jwt jwt) {
         return webClientService.checkUserInGroup(groupId, jwt)
                 .thenMany(userSubscriptionRepository.findByGroupId(groupId, PageRequest.of(page, pageSize)))
                 .collectList()
@@ -100,7 +100,7 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
 
     @Override
     @Transactional(readOnly = true)
-    public Mono<ResponseSubscriptionDto> getSubscriptionById(Long groupId, Long subscriptionId, Jwt jwt) {
+    public Mono<ResponseSubscriptionDto> getSubscriptionById(Integer groupId, Integer subscriptionId, Jwt jwt) {
         return webClientService.checkUserInGroup(groupId, jwt)
                 .then(userSubscriptionRepository.findBySubscriptionId(subscriptionId))
                 .switchIfEmpty(Mono.error(new NoSuchElementException("Subscription is not found")));
@@ -108,7 +108,7 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
 
     @Override
     @Transactional
-    public Mono<Void> deleteSubscriptionById(Long groupId, Long subscriptionId, Jwt jwt) {
+    public Mono<Void> deleteSubscriptionById(Integer groupId, Integer subscriptionId, Jwt jwt) {
         return webClientService.checkUserIsOwnerGroup(groupId, jwt)
                 .then(userSubscriptionRepository.deleteByIdReturningCount(subscriptionId))
                 .flatMap(count -> count == 0? Mono.error(new NoSuchElementException("Subscription is not found")): Mono.empty());
@@ -116,7 +116,7 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
 
     @Override
     @Transactional
-    public Mono<Void> deleteSubscriptionsByGroupId(Long groupId) {
+    public Mono<Void> deleteSubscriptionsByGroupId(Integer groupId) {
         return userSubscriptionRepository.deleteByGroupId(groupId).flatMap(count -> {
             if(count == 0) return Mono.error(new NoSuchElementException("Subscriptions is not found!"));
             return Mono.empty();
@@ -125,7 +125,7 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
 
     @Override
     @Transactional
-    public Mono<Void> renewSubscriptionById(Long groupId, Long subscriptionId, Long extensionCount, Jwt jwt) {
+    public Mono<Void> renewSubscriptionById(Integer groupId, Integer subscriptionId, Integer extensionCount, Jwt jwt) {
         return Mono.just(extensionCount)
                 .flatMap(ex -> {
                     if (ex <= 0) {

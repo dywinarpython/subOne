@@ -15,7 +15,7 @@ public class SelectOwnerGroupRepositoryImpl implements SelectOwnerGroupRepositor
     private final DatabaseClient databaseClient;
 
     @Override
-    public Mono<ResponseUserDto> selectOwnerByGroupId(Long groupId) {
+    public Mono<ResponseUserDto> selectOwnerByGroupId(Integer groupId) {
         return databaseClient.sql("""
                 select owner_id, u.name, u.surname, u.email
                 from groups g

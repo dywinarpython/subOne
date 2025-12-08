@@ -13,8 +13,8 @@ import java.util.UUID;
 @Setter
 public class GroupInvite {
     @Id
-    private Long id;
+    private Integer id;
     private UUID code;
-    private Long groupId;
+    private Integer groupId;
     private LocalDateTime expiresAt;
 }

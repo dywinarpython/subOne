@@ -8,5 +8,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface DeleteAllByPairsRepository {
-    Mono<Void> deleteAllByUserGroupPairs(@Param("userGroupPairs") List<Tuple2<UUID, Long>> pairs);
+    Mono<Void> deleteAllByUserGroupPairs(@Param("userGroupPairs") List<Tuple2<UUID, Integer>> pairs);
 }

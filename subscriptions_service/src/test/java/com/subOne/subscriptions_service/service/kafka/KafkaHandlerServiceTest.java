@@ -22,11 +22,11 @@ public class KafkaHandlerServiceTest {
 
     @Test
     void deleteSubscriptionsByGroup_SubscriptionsFound_CorrectDeleteAndCheck(){
-        when(userSubscriptionService.deleteSubscriptionsByGroupId(anyLong())).thenReturn(Mono.empty());
+        when(userSubscriptionService.deleteSubscriptionsByGroupId(anyInt())).thenReturn(Mono.empty());
 
-        kafkaHandlerService.deleteSubscriptionsByGroup(1L);
+        kafkaHandlerService.deleteSubscriptionsByGroup(1);
 
-        verify(userSubscriptionService).deleteSubscriptionsByGroupId(anyLong());
+        verify(userSubscriptionService).deleteSubscriptionsByGroupId(anyInt());
 
     }
 

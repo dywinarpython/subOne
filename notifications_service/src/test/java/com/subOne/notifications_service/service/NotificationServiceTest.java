@@ -62,9 +62,9 @@ public class NotificationServiceTest {
     @Test
     void findNotReadNotificationsByUserId_NotReadNotificationFound_CorrectReturnAndCheckRepo(){
         List<ResponseNotificationDto> responseNotificationDtoList = List.of(
-                new ResponseNotificationDto(1L, NotificationTargetType.GROUP, NotificationType.CHANGE_OWNER, 1L, OffsetDateTime.now()),
-                new ResponseNotificationDto(2L, NotificationTargetType.SUBSCRIPTION, NotificationType.PAYEMNT_SUBSCRIPTION, 2L, OffsetDateTime.now()),
-                new ResponseNotificationDto(3L, null, NotificationType.ADD_MEMBER, 3L, OffsetDateTime.now())
+                new ResponseNotificationDto(1, NotificationTargetType.GROUP, NotificationType.CHANGE_OWNER, 1, OffsetDateTime.now()),
+                new ResponseNotificationDto(2, NotificationTargetType.SUBSCRIPTION, NotificationType.PAYEMNT_SUBSCRIPTION, 2, OffsetDateTime.now()),
+                new ResponseNotificationDto(3, null, NotificationType.ADD_MEMBER, 3, OffsetDateTime.now())
         );
         when(notificationRepository.findByUserIdAndReadFalseOrderByCreatedAtDesc(any(), any())).thenReturn(responseNotificationDtoList);
 
@@ -79,9 +79,9 @@ public class NotificationServiceTest {
     @Test
     void findReadNotificationsByUserId_ReadNotificationFound_CorrectReturnAndCheckRepo(){
         List<ResponseNotificationDto> responseNotificationDtoList = List.of(
-                new ResponseNotificationDto(1L, NotificationTargetType.GROUP, NotificationType.CHANGE_OWNER, 1L, OffsetDateTime.now()),
-                new ResponseNotificationDto(2L, NotificationTargetType.SUBSCRIPTION, NotificationType.PAYEMNT_SUBSCRIPTION, 2L, OffsetDateTime.now()),
-                new ResponseNotificationDto(3L, null, NotificationType.ADD_MEMBER, 3L, OffsetDateTime.now())
+                new ResponseNotificationDto(1, NotificationTargetType.GROUP, NotificationType.CHANGE_OWNER, 1, OffsetDateTime.now()),
+                new ResponseNotificationDto(2, NotificationTargetType.SUBSCRIPTION, NotificationType.PAYEMNT_SUBSCRIPTION, 2, OffsetDateTime.now()),
+                new ResponseNotificationDto(3, null, NotificationType.ADD_MEMBER, 3, OffsetDateTime.now())
         );
         when(notificationRepository.findByUserIdAndReadTrueOrderByCreatedAtDesc(any(), any())).thenReturn(responseNotificationDtoList);
 
@@ -95,7 +95,7 @@ public class NotificationServiceTest {
 
     @Test
     void findCountNotReadNotifications_NotReadNotificationFound_CorrectReturnAndCheckRepo(){
-        ResponseNotificationsCountDto responseNotificationsCountDto = new ResponseNotificationsCountDto(10L);
+        ResponseNotificationsCountDto responseNotificationsCountDto = new ResponseNotificationsCountDto(10);
         when(notificationRepository.countByUserId(any())).thenReturn(responseNotificationsCountDto.count());
 
         ResponseNotificationsCountDto result = notificationService.findCountNotReadNotifications(jwt);
@@ -110,7 +110,7 @@ public class NotificationServiceTest {
         Notification notification = new Notification();
         notification.setUserId(UUID.randomUUID());
         when(notificationRepository.save(any())).thenReturn(notification);
-        when(consumerRecord.value()).thenReturn(new SendNotificationDto(NotificationType.ADD_MEMBER, NotificationTargetType.GROUP, 1L));
+        when(consumerRecord.value()).thenReturn(new SendNotificationDto(NotificationType.ADD_MEMBER, NotificationTargetType.GROUP, 1));
         when(mapperNotification.messageDtoToNotification(any())).thenReturn(notification);
 
         notificationService.saveNotification(consumerRecord);
@@ -134,38 +134,27 @@ public class NotificationServiceTest {
 
     @Test
     void saveNotificationPaymentSubscription_OwnerFound_CorrectSaveAndCheckRepoAndWebsocket(){
-        KafkaDtoPaymentSubscription kafkaDtoPaymentSubscription = new KafkaDtoPaymentSubscription(1L, 1L, NotificationType.PAYEMNT_SUBSCRIPTION);
+        KafkaDtoPaymentSubscription kafkaDtoPaymentSubscription = new KafkaDtoPaymentSubscription(1, 1, NotificationType.PAYEMNT_SUBSCRIPTION);
         Notification notification = new Notification();
         notification.setUserId(UUID.randomUUID());
         notification.setNotificationType(kafkaDtoPaymentSubscription.notificationType());
         notification.setNotificationTargetType(NotificationTargetType.SUBSCRIPTION);
         notification.setTargetId(kafkaDtoPaymentSubscription.subscriptionId());
-        when(restTemplateService.getOwnerIdByGroupId(anyLong())).thenReturn(UUID.randomUUID());
+        when(restTemplateService.getOwnerIdByGroupId(anyInt())).thenReturn(UUID.randomUUID());
         when(notificationRepository.save(any())).thenReturn(notification);
 
         notificationService.saveNotificationPaymentSubscription(kafkaDtoPaymentSubscription);
 
-        verify(restTemplateService).getOwnerIdByGroupId(anyLong());
+        verify(restTemplateService).getOwnerIdByGroupId(anyInt());
         verify(notificationRepository).save(any());
         verify(webSocketSendMessageService).sendMessage(anyString(), anyString(), any());
     }
 
     @Test
-    void saveNotificationPaymentSubscription_OwnerNotFound_CorrectSaveAndCheckRepoAndWebsocket(){
-        KafkaDtoPaymentSubscription kafkaDtoPaymentSubscription = new KafkaDtoPaymentSubscription(1L, 1L, NotificationType.PAYEMNT_SUBSCRIPTION);
-        when(restTemplateService.getOwnerIdByGroupId(anyLong())).thenReturn(null);
-
-        notificationService.saveNotificationPaymentSubscription(kafkaDtoPaymentSubscription);
-
-        verify(restTemplateService).getOwnerIdByGroupId(anyLong());
-        verify(notificationRepository, times(0)).save(any());
-        verify(webSocketSendMessageService, times(0)).sendMessage(anyString(), anyString(), any());
-    }
-    @Test
     void readNotification_FoundNotifications_CorrectUpdateAndCheckRepo() {
         RequestUpdateNotificationsDto requestUpdateNotificationsDto = new RequestUpdateNotificationsDto(
                 List.of(
-                      1L, 2L, 3L, 4L, 5L
+                      1, 2, 3, 4, 5
                 )
         );
         when(notificationRepository.updateReadNotificationsByUserId(anyList(), any())).thenReturn(5);

@@ -49,7 +49,7 @@ public class AnalyticSubscriptionServiceImpl implements AnalyticSubscriptionServ
 
     @Override
     @Transactional(readOnly = true)
-    public Mono<ResponseTotalAnalyticSubscriptionDto> getTotalAnalyticById(Long groupId, Long subscriptionId, Jwt jwt) {
+    public Mono<ResponseTotalAnalyticSubscriptionDto> getTotalAnalyticById(Integer groupId, Integer subscriptionId, Jwt jwt) {
         return webClientService.checkUserInGroup(groupId, jwt)
                 .then(Mono.defer(() -> cacheService.getValue("ANALYTIC_SUBSCRIPTION::" + subscriptionId, ResponseTotalAnalyticSubscriptionDto.class)))
                 .switchIfEmpty(Mono.defer(() -> analyticSubscriptionRepository.selectSumAmountAndLastDateBySubscriptionId(subscriptionId)
@@ -63,7 +63,7 @@ public class AnalyticSubscriptionServiceImpl implements AnalyticSubscriptionServ
 
     @Override
     @Transactional(readOnly = true)
-    public Mono<ResponseAnalyticPaymentSubscriptionsDto> getPaymentInfoSubscriptionById(Long groupId, Long subscriptionId, Integer page, Jwt jwt) {
+    public Mono<ResponseAnalyticPaymentSubscriptionsDto> getPaymentInfoSubscriptionById(Integer groupId, Integer subscriptionId, Integer page, Jwt jwt) {
         return webClientService.checkUserInGroup(groupId, jwt)
                 .then(analyticSubscriptionRepository.findBySubscriptionId(subscriptionId, PageRequest.of(page, pageSize))
                 .collectList()
@@ -72,7 +72,7 @@ public class AnalyticSubscriptionServiceImpl implements AnalyticSubscriptionServ
 
     @Override
     @Transactional(readOnly = true)
-    public Mono<ResponseTotalAnalyticSubscriptionGroupDto> getAlreadyPaidByGroupId(Long groupId, Jwt jwt) {
+    public Mono<ResponseTotalAnalyticSubscriptionGroupDto> getAlreadyPaidByGroupId(Integer groupId, Jwt jwt) {
         return webClientService.checkUserInGroup(groupId, jwt)
                 .then(Mono.defer(() -> cacheService.getValue("ANALYTIC_GROUP::" + groupId, ResponseTotalAnalyticSubscriptionGroupDto.class)))
                 .switchIfEmpty(Mono.defer( () -> analyticSubscriptionRepository.selectTotalAnalyticByGroupId(groupId)

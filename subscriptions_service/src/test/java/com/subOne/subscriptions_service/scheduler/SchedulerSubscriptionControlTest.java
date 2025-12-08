@@ -49,7 +49,7 @@ public class SchedulerSubscriptionControlTest extends BaseIntegrationTest {
     @BeforeEach
     void setUp(){
         userSubscription = new UserSubscription();
-        userSubscription.setGroupId(System.currentTimeMillis());
+        userSubscription.setGroupId(Math.abs((int) System.currentTimeMillis()));
         userSubscription.setSubscriptionName("name");
         userSubscription.setServiceName("serviceName");
         userSubscription.setStartDate(LocalDate.now().minusMonths(2));

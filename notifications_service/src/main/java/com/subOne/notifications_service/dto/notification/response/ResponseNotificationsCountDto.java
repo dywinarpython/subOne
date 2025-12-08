@@ -1,4 +1,4 @@
 package com.subOne.notifications_service.dto.notification.response;
 
-public record ResponseNotificationsCountDto (Long count){
+public record ResponseNotificationsCountDto (Integer count){
 }

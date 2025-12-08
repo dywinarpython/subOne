@@ -48,8 +48,8 @@ public class AnalyticSubscriptionController {
             )
     )
     @GetMapping("/{groupId}/subscriptions/{subscriptionId}/analytic")
-    public Mono<ResponseTotalAnalyticSubscriptionDto> getAnalyticSubscriptionById(@PathVariable Long groupId,
-                                                                          @PathVariable Long subscriptionId,
+    public Mono<ResponseTotalAnalyticSubscriptionDto> getAnalyticSubscriptionById(@PathVariable Integer groupId,
+                                                                          @PathVariable Integer subscriptionId,
                                                                           @AuthenticationPrincipal Jwt jwt){
         return analyticSubscriptionService.getTotalAnalyticById(groupId, subscriptionId, jwt);
     }
@@ -64,8 +64,8 @@ public class AnalyticSubscriptionController {
             )
     )
     @GetMapping("/{groupId}/subscriptions/{subscriptionId}/payment-info")
-    public Mono<ResponseAnalyticPaymentSubscriptionsDto> getPaymentInfoSubscriptionById(@PathVariable Long groupId,
-                                                                                        @PathVariable Long subscriptionId,
+    public Mono<ResponseAnalyticPaymentSubscriptionsDto> getPaymentInfoSubscriptionById(@PathVariable Integer groupId,
+                                                                                        @PathVariable Integer subscriptionId,
                                                                                         @RequestParam Integer page,
                                                                                         @AuthenticationPrincipal Jwt jwt){
         return analyticSubscriptionService.getPaymentInfoSubscriptionById(groupId, subscriptionId, page, jwt);
@@ -81,7 +81,7 @@ public class AnalyticSubscriptionController {
             )
     )
     @GetMapping("/{groupId}/subscriptions/analytic/group-summary")
-    public Mono<ResponseTotalAnalyticSubscriptionGroupDto> getAlreadyPaidGroup(@PathVariable Long groupId,
+    public Mono<ResponseTotalAnalyticSubscriptionGroupDto> getAlreadyPaidGroup(@PathVariable Integer groupId,
                                                                                @AuthenticationPrincipal Jwt jwt){
         return analyticSubscriptionService.getAlreadyPaidByGroupId(groupId, jwt);
     }
