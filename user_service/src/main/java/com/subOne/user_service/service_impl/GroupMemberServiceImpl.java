@@ -50,7 +50,7 @@ public class GroupMemberServiceImpl implements GroupMemberService {
 
 
     @Override
-    public Mono<ResponseMembersDto> addUser(UUID userId, Long groupId) {
+    public Mono<ResponseMembersDto> addUser(UUID userId, Integer groupId) {
         return groupMemberRepository.findExistUserInGroupAndCountMemberInGroup(userId, groupId)
                 .flatMap( dto -> {
                     if (dto.exist()) return Mono.error(new ConflictException("User is already a member of the group", Map.of()));
@@ -63,14 +63,14 @@ public class GroupMemberServiceImpl implements GroupMemberService {
 
     @Override
     @Transactional(readOnly = true)
-    public Mono<ResponseMembersDto> getUsers(Long groupId, Jwt jwt) {
+    public Mono<ResponseMembersDto> getUsers(Integer groupId, Jwt jwt) {
         return checkUserInGroup(groupId, jwt)
                 .then(Mono.defer(() -> getUsersAndOwner(groupId)));
     }
 
     @Override
     @Transactional
-    public Mono<Void> deleteMember(Long groupId, UUID userId, Jwt jwt) {
+    public Mono<Void> deleteMember(Integer groupId, UUID userId, Jwt jwt) {
         return Mono.just(jwt.getSubject())
                 .map(UUID::fromString)
                 .flatMap(jwtUserId -> {
@@ -91,7 +91,7 @@ public class GroupMemberServiceImpl implements GroupMemberService {
 
     @Override
     @Transactional(readOnly = true)
-    public Mono<Boolean> checkUserInGroup(Long groupId, Jwt jwt) {
+    public Mono<Boolean> checkUserInGroup(Integer groupId, Jwt jwt) {
         UUID userId = UUID.fromString(jwt.getSubject());
         String memberKey = "MEMBER::" + userId + ' ' + groupId;
         String ownerKey = "OWNER::" + groupId;
@@ -115,7 +115,7 @@ public class GroupMemberServiceImpl implements GroupMemberService {
     }
 
     @Override
-    public Mono<Boolean> checkUserIsOwnerGroup(Long groupId, Jwt jwt) {
+    public Mono<Boolean> checkUserIsOwnerGroup(Integer groupId, Jwt jwt) {
         return groupService.checkUserIsOwner(groupId, jwt);
     }
 
@@ -159,7 +159,7 @@ public class GroupMemberServiceImpl implements GroupMemberService {
                 .then();
     }
 
-    private Mono<RequestGroupOwnershipChangesDto> checkUserIsMemberGroup(UUID userId, Long groupId){
+    private Mono<RequestGroupOwnershipChangesDto> checkUserIsMemberGroup(UUID userId, Integer groupId){
         String memberKey = "MEMBER::" + userId + ' ' + groupId;
         return cacheService.getValue(memberKey, Boolean.class)
                 .switchIfEmpty(Mono.just(Boolean.FALSE))
@@ -176,7 +176,7 @@ public class GroupMemberServiceImpl implements GroupMemberService {
     }
 
 
-    private Mono<ResponseMembersDto> getUsersAndOwner(Long groupId){
+    private Mono<ResponseMembersDto> getUsersAndOwner(Integer groupId){
         return groupService.getOwner(groupId).flatMap( ownerId -> {
             Flux<ResponseMemberDto> members = groupMemberRepository.findMembersIdByGroupId(groupId).map(id -> new ResponseMemberDto(id, false));
             return Flux.concat(

@@ -1,6 +1,7 @@
 package com.subOne.user_service.service;
 
 import com.subOne.user_service.cache.CacheService;
+import com.subOne.user_service.dto.group.response.ResponseGroupOwnerIdDto;
 import com.subOne.user_service.dto.group_invite.CodeDto;
 import com.subOne.user_service.dto.group_invite.response.ResponseInviteCodeDto;
 import com.subOne.user_service.dto.group_member.response.ResponseMembersDto;
@@ -66,11 +67,11 @@ public class GroupInviteServiceTest {
         ResponseMembersDto responseMembersDto = new ResponseMembersDto(List.of());
         when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
         when(userService.checkVerifyEmail(any())).thenReturn(Mono.just(Boolean.TRUE));
-        when(groupInviteRepository.findGroupIdByCode(any())).thenReturn(Mono.just(1L));
-        when(groupMemberService.addUser(any(), anyLong())).thenReturn(Mono.just(responseMembersDto));
+        when(groupInviteRepository.findGroupIdByCode(any())).thenReturn(Mono.just(1));
+        when(groupMemberService.addUser(any(), anyInt())).thenReturn(Mono.just(responseMembersDto));
         when(cacheService.getValue(anyString(), any())).thenReturn(Mono.empty());
         when(kafkaService.sendToTopic(anyString(), any(), any())).thenReturn(Mono.empty());
-        when(groupService.getOwnerId(anyLong())).thenReturn(Mono.just(UUID.randomUUID()));
+        when(groupService.getOwnerId(anyInt())).thenReturn(Mono.just(new ResponseGroupOwnerIdDto(UUID.randomUUID())));
 
         Mono<ResponseMembersDto> result = groupInviteService.addUserByCode(UUID.randomUUID(), jwt);
 
@@ -79,8 +80,8 @@ public class GroupInviteServiceTest {
                 .verifyComplete();
         verify(userService).checkVerifyEmail(any());
         verify(groupInviteRepository).findGroupIdByCode(any());
-        verify(groupMemberService).addUser(any(), anyLong());
-        verify(groupService).getOwnerId(anyLong());
+        verify(groupMemberService).addUser(any(), anyInt());
+        verify(groupService).getOwnerId(anyInt());
         verify(cacheService).getValue(anyString(), any());
         verify(kafkaService).sendToTopic(anyString(), any(), any());
     }
@@ -89,10 +90,10 @@ public class GroupInviteServiceTest {
         ResponseMembersDto responseMembersDto = new ResponseMembersDto(List.of());
         when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
         when(userService.checkVerifyEmail(any())).thenReturn(Mono.just(Boolean.TRUE));
-        when(groupMemberService.addUser(any(), anyLong())).thenReturn(Mono.just(responseMembersDto));
-        when(cacheService.getValue(anyString(), any())).thenReturn(Mono.just(1L));
+        when(groupMemberService.addUser(any(), anyInt())).thenReturn(Mono.just(responseMembersDto));
+        when(cacheService.getValue(anyString(), any())).thenReturn(Mono.just(1));
         when(kafkaService.sendToTopic(anyString(), any(), any())).thenReturn(Mono.empty());
-        when(groupService.getOwnerId(anyLong())).thenReturn(Mono.just(UUID.randomUUID()));
+        when(groupService.getOwnerId(anyInt())).thenReturn(Mono.just(new ResponseGroupOwnerIdDto(UUID.randomUUID())));
 
         Mono<ResponseMembersDto> result = groupInviteService.addUserByCode(UUID.randomUUID(), jwt);
 
@@ -101,8 +102,8 @@ public class GroupInviteServiceTest {
                 .verifyComplete();
         verify(userService).checkVerifyEmail(any());
         verify(groupInviteRepository, times(0)).findGroupIdByCode(any());
-        verify(groupService).getOwnerId(anyLong());
-        verify(groupMemberService).addUser(any(), anyLong());
+        verify(groupService).getOwnerId(anyInt());
+        verify(groupMemberService).addUser(any(), anyInt());
         verify(cacheService).getValue(anyString(), any());
         verify(kafkaService).sendToTopic(anyString(), any(), any());
     }
@@ -120,7 +121,7 @@ public class GroupInviteServiceTest {
                 .verify();
         verify(userService).checkVerifyEmail(any());
         verify(groupInviteRepository, times(0)).findGroupIdByCode(any());
-        verify(groupMemberService, times(0)).addUser(any(), anyLong());
+        verify(groupMemberService, times(0)).addUser(any(), anyInt());
         verify(cacheService, times(0)).getValue(anyString(), any());
     }
 
@@ -139,7 +140,7 @@ public class GroupInviteServiceTest {
                 .verify();
         verify(userService).checkVerifyEmail(any());
         verify(groupInviteRepository).findGroupIdByCode(any());
-        verify(groupMemberService, times(0)).addUser(any(), anyLong());
+        verify(groupMemberService, times(0)).addUser(any(), anyInt());
         verify(cacheService).getValue(anyString(), any());
     }
 
@@ -147,11 +148,11 @@ public class GroupInviteServiceTest {
     @DisplayName("Проверка создания кода при наличии группы и код не истек")
     void  getCodeByGroupId_UserIsOwnerAndGroupIsFoundAndCodeIsNotCreated_CorrectReturnAndCheckRepo(){
         CodeDto codeDto = new CodeDto(UUID.randomUUID(), LocalDateTime.now().plusMinutes(5));
-        when(groupService.checkUserIsOwner(anyLong(), any())).thenReturn(Mono.empty());
-        when(groupInviteRepository.findCodeByGroupId(anyLong()))
+        when(groupService.checkUserIsOwner(anyInt(), any())).thenReturn(Mono.empty());
+        when(groupInviteRepository.findCodeByGroupId(anyInt()))
                 .thenReturn(Mono.just(codeDto));
 
-        Mono<ResponseInviteCodeDto> result = groupInviteService.getCodeByGroupId(anyLong(), any());
+        Mono<ResponseInviteCodeDto> result = groupInviteService.getCodeByGroupId(anyInt(), any());
 
         ResponseInviteCodeDto responseInviteCodeDto = new ResponseInviteCodeDto(
                 codeDto.code(),
@@ -159,8 +160,8 @@ public class GroupInviteServiceTest {
         StepVerifier.create(result)
                 .assertNext(code -> assertEquals(responseInviteCodeDto.code(), code.code()))
                 .verifyComplete();
-        verify(groupService).checkUserIsOwner(anyLong(), any());
-        verify(groupInviteRepository).findCodeByGroupId(anyLong());
+        verify(groupService).checkUserIsOwner(anyInt(), any());
+        verify(groupInviteRepository).findCodeByGroupId(anyInt());
         verify(groupInviteRepository, times(0)).save(any());
         verify(cacheService, times(0)).saveValue(anyString(), any(), any());
     }
@@ -171,23 +172,23 @@ public class GroupInviteServiceTest {
     void  getCodeByGroupId_UserIsOwnerAndGroupIsFoundAndCodeIsCreated_CorrectReturnAndCheckRepo(){
         GroupInvite groupInvite = new GroupInvite();
         groupInvite.setCode(UUID.randomUUID());
-        groupInvite.setGroupId(1L);
+        groupInvite.setGroupId(1);
         groupInvite.setExpiresAt(LocalDateTime.now().plusMinutes(5));
-        when(groupService.checkUserIsOwner(anyLong(), any())).thenReturn(Mono.empty());
-        when(groupInviteRepository.findCodeByGroupId(anyLong())).thenReturn(Mono.empty());
-        when(mapperGroupInvite.codeAndGroupIdToGroupInvite(anyLong(), any())).thenReturn(new GroupInvite());
+        when(groupService.checkUserIsOwner(anyInt(), any())).thenReturn(Mono.empty());
+        when(groupInviteRepository.findCodeByGroupId(anyInt())).thenReturn(Mono.empty());
+        when(mapperGroupInvite.codeAndGroupIdToGroupInvite(anyInt(), any())).thenReturn(new GroupInvite());
         when(groupInviteRepository.save(any())).thenReturn(Mono.just(groupInvite));
         when(cacheService.saveValue(anyString(), any(), any())).thenReturn(Mono.empty());
 
-        Mono<ResponseInviteCodeDto> result = groupInviteService.getCodeByGroupId(anyLong(), any());
+        Mono<ResponseInviteCodeDto> result = groupInviteService.getCodeByGroupId(anyInt(), any());
 
         ResponseInviteCodeDto responseInviteCodeDto = new ResponseInviteCodeDto(
                 groupInvite.getCode(), Duration.ofMinutes(5).toSeconds());
         StepVerifier.create(result)
                 .expectNext(responseInviteCodeDto)
                 .verifyComplete();
-        verify(groupService).checkUserIsOwner(anyLong(), any());
-        verify(groupInviteRepository).findCodeByGroupId(anyLong());
+        verify(groupService).checkUserIsOwner(anyInt(), any());
+        verify(groupInviteRepository).findCodeByGroupId(anyInt());
         verify(groupInviteRepository).save(any());
         verify(cacheService).saveValue(anyString(), any(), any());
     }

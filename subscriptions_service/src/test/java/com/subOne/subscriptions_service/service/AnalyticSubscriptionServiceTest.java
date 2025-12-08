@@ -61,21 +61,21 @@ public class AnalyticSubscriptionServiceTest {
                 BigDecimal.valueOf(1000),
                 LocalDate.now()
         );
-        when(webClientService.checkUserInGroup(anyLong(), any())).thenReturn(Mono.empty());
+        when(webClientService.checkUserInGroup(anyInt(), any())).thenReturn(Mono.empty());
         when(cacheService.getValue(any(), any())).thenReturn(Mono.empty());
-        when(analyticSubscriptionRepository.selectSumAmountAndLastDateBySubscriptionId(anyLong()))
+        when(analyticSubscriptionRepository.selectSumAmountAndLastDateBySubscriptionId(anyInt()))
                 .thenReturn(Mono.just(responseTotalAnalyticSubscriptionDto));
         when(cacheService.saveValue(anyString(), any(), any())).thenReturn(Mono.empty());
 
-        Mono<ResponseTotalAnalyticSubscriptionDto> result = analyticSubscriptionService.getTotalAnalyticById(1L, 1L, null);
+        Mono<ResponseTotalAnalyticSubscriptionDto> result = analyticSubscriptionService.getTotalAnalyticById(1, 1, null);
 
 
         StepVerifier.create(result)
                 .expectNext(responseTotalAnalyticSubscriptionDto)
                 .verifyComplete();
-        verify(webClientService).checkUserInGroup(anyLong(), any());
+        verify(webClientService).checkUserInGroup(anyInt(), any());
         verify(cacheService).getValue(any(), any());
-        verify(analyticSubscriptionRepository).selectSumAmountAndLastDateBySubscriptionId(anyLong());
+        verify(analyticSubscriptionRepository).selectSumAmountAndLastDateBySubscriptionId(anyInt());
         verify(cacheService).saveValue(anyString(), any(), any());
     }
 
@@ -84,20 +84,20 @@ public class AnalyticSubscriptionServiceTest {
     @Test
     @DisplayName("getTotalAnalyticById -> not found: group,subscription")
     void getTotalAnalyticById_GroupFoundAndSubscriptionNotFoundAndCacheIsNotFound_NotCorrectReturnAndCheckRepo(){
-        when(webClientService.checkUserInGroup(anyLong(), any())).thenReturn(Mono.empty());
+        when(webClientService.checkUserInGroup(anyInt(), any())).thenReturn(Mono.empty());
         when(cacheService.getValue(any(), any())).thenReturn(Mono.empty());
-        when(analyticSubscriptionRepository.selectSumAmountAndLastDateBySubscriptionId(anyLong()))
+        when(analyticSubscriptionRepository.selectSumAmountAndLastDateBySubscriptionId(anyInt()))
                 .thenReturn(Mono.empty());
 
-        Mono<ResponseTotalAnalyticSubscriptionDto> result = analyticSubscriptionService.getTotalAnalyticById(1L, 1L, null);
+        Mono<ResponseTotalAnalyticSubscriptionDto> result = analyticSubscriptionService.getTotalAnalyticById(1, 1, null);
 
 
         StepVerifier.create(result)
                 .expectErrorSatisfies(throwable -> assertEquals(NoSuchElementException.class, throwable.getClass()))
                 .verify();
-        verify(webClientService).checkUserInGroup(anyLong(), any());
+        verify(webClientService).checkUserInGroup(anyInt(), any());
         verify(cacheService).getValue(any(), any());
-        verify(analyticSubscriptionRepository).selectSumAmountAndLastDateBySubscriptionId(anyLong());
+        verify(analyticSubscriptionRepository).selectSumAmountAndLastDateBySubscriptionId(anyInt());
         verify(cacheService, times(0)).saveValue(anyString(), any(), any());
     }
 
@@ -116,36 +116,36 @@ public class AnalyticSubscriptionServiceTest {
                        new ResponseAnalyticPaymentSubscriptionDto(LocalDate.now().minusMonths(2), BigDecimal.valueOf(1000))
                 )
         );
-        when(webClientService.checkUserInGroup(anyLong(), any())).thenReturn(Mono.empty());
-        when(analyticSubscriptionRepository.findBySubscriptionId(anyLong(), any())).thenReturn(fluxLs);
+        when(webClientService.checkUserInGroup(anyInt(), any())).thenReturn(Mono.empty());
+        when(analyticSubscriptionRepository.findBySubscriptionId(anyInt(), any())).thenReturn(fluxLs);
 
-        Mono<ResponseAnalyticPaymentSubscriptionsDto> result = analyticSubscriptionService.getPaymentInfoSubscriptionById(1L, 1L, 0, null);
+        Mono<ResponseAnalyticPaymentSubscriptionsDto> result = analyticSubscriptionService.getPaymentInfoSubscriptionById(1, 1, 0, null);
 
         StepVerifier.create(result)
                 .assertNext(dto -> {
                     List<ResponseAnalyticPaymentSubscriptionDto> dtoLs = dto.paymentsInfo();
                     assertEquals(ls.size(), dtoLs.size());
                 });
-        verify(webClientService).checkUserInGroup(anyLong(), any());
-        verify(analyticSubscriptionRepository).findBySubscriptionId(anyLong(), any());
+        verify(webClientService).checkUserInGroup(anyInt(), any());
+        verify(analyticSubscriptionRepository).findBySubscriptionId(anyInt(), any());
 
     }
 
     @Test
     @DisplayName("getPaymentInfoSubscriptionById -> found: group, not found -> subscription")
     void getPaymentInfoSubscriptionById_GroupFoundAndSubscriptionNotFound_CorrectReturnAndCheckRepo(){
-        when(webClientService.checkUserInGroup(anyLong(), any())).thenReturn(Mono.empty());
-        when(analyticSubscriptionRepository.findBySubscriptionId(anyLong(), any(PageRequest.class))).thenReturn(Flux.empty());
+        when(webClientService.checkUserInGroup(anyInt(), any())).thenReturn(Mono.empty());
+        when(analyticSubscriptionRepository.findBySubscriptionId(anyInt(), any(PageRequest.class))).thenReturn(Flux.empty());
 
-        Mono<ResponseAnalyticPaymentSubscriptionsDto> result = analyticSubscriptionService.getPaymentInfoSubscriptionById(1L, 1L, 0, null);
+        Mono<ResponseAnalyticPaymentSubscriptionsDto> result = analyticSubscriptionService.getPaymentInfoSubscriptionById(1, 1, 0, null);
 
         StepVerifier.create(result)
                 .assertNext(dto -> {
                     List<ResponseAnalyticPaymentSubscriptionDto> dtoLs = dto.paymentsInfo();
                     assertEquals(0, dtoLs.size());
                 });
-        verify(webClientService).checkUserInGroup(anyLong(), any());
-        verify(analyticSubscriptionRepository).findBySubscriptionId(anyLong(), any());
+        verify(webClientService).checkUserInGroup(anyInt(), any());
+        verify(analyticSubscriptionRepository).findBySubscriptionId(anyInt(), any());
     }
 
     @Test
@@ -155,12 +155,12 @@ public class AnalyticSubscriptionServiceTest {
                 BigDecimal.valueOf(1000),
                 null
         );
-        when(webClientService.checkUserInGroup(anyLong(), any())).thenReturn(Mono.empty());
+        when(webClientService.checkUserInGroup(anyInt(), any())).thenReturn(Mono.empty());
         when(cacheService.getValue(any(), any())).thenReturn(Mono.empty());
-        when(analyticSubscriptionRepository.selectTotalAnalyticByGroupId(anyLong())).thenReturn(Mono.just(responseTotalAnalyticSubscriptionGroupDto));
+        when(analyticSubscriptionRepository.selectTotalAnalyticByGroupId(anyInt())).thenReturn(Mono.just(responseTotalAnalyticSubscriptionGroupDto));
         when(cacheService.saveValue(anyString(), any(), any())).thenReturn(Mono.empty());
 
-        Mono<ResponseTotalAnalyticSubscriptionGroupDto> result = analyticSubscriptionService.getAlreadyPaidByGroupId(anyLong(), any());
+        Mono<ResponseTotalAnalyticSubscriptionGroupDto> result = analyticSubscriptionService.getAlreadyPaidByGroupId(anyInt(), any());
 
         StepVerifier.create(result)
                 .assertNext(dto -> {
@@ -171,9 +171,9 @@ public class AnalyticSubscriptionServiceTest {
                             dto.approxYearPaid()
                     );
                 }).verifyComplete();
-        verify(webClientService).checkUserInGroup(anyLong(), any());
+        verify(webClientService).checkUserInGroup(anyInt(), any());
         verify(cacheService).getValue(any(), any());
-        verify(analyticSubscriptionRepository).selectTotalAnalyticByGroupId(anyLong());
+        verify(analyticSubscriptionRepository).selectTotalAnalyticByGroupId(anyInt());
         verify(cacheService).saveValue(anyString(), any(), any());
     }
 
@@ -184,17 +184,17 @@ public class AnalyticSubscriptionServiceTest {
                 BigDecimal.valueOf(1000),
                 BigDecimal.valueOf(1000).multiply(BigDecimal.valueOf(12))
         );
-        when(webClientService.checkUserInGroup(anyLong(), any())).thenReturn(Mono.empty());
+        when(webClientService.checkUserInGroup(anyInt(), any())).thenReturn(Mono.empty());
         when(cacheService.getValue(any(), any())).thenReturn(Mono.just(responseTotalAnalyticSubscriptionGroupDto));
 
-        Mono<ResponseTotalAnalyticSubscriptionGroupDto> result = analyticSubscriptionService.getAlreadyPaidByGroupId(anyLong(), any());
+        Mono<ResponseTotalAnalyticSubscriptionGroupDto> result = analyticSubscriptionService.getAlreadyPaidByGroupId(anyInt(), any());
 
         StepVerifier.create(result)
                 .expectNext(responseTotalAnalyticSubscriptionGroupDto)
                 .verifyComplete();
-        verify(webClientService).checkUserInGroup(anyLong(), any());
+        verify(webClientService).checkUserInGroup(anyInt(), any());
         verify(cacheService).getValue(any(), any());
-        verify(analyticSubscriptionRepository, times(0)).selectTotalAnalyticByGroupId(anyLong());
+        verify(analyticSubscriptionRepository, times(0)).selectTotalAnalyticByGroupId(anyInt());
         verify(cacheService, times(0)).saveValue(anyString(), any(), any());
     }
 
@@ -206,25 +206,25 @@ public class AnalyticSubscriptionServiceTest {
                 null,
                 null
         );
-        when(webClientService.checkUserInGroup(anyLong(), any())).thenReturn(Mono.empty());
+        when(webClientService.checkUserInGroup(anyInt(), any())).thenReturn(Mono.empty());
         when(cacheService.getValue(any(), any())).thenReturn(Mono.empty());
-        when(analyticSubscriptionRepository.selectTotalAnalyticByGroupId(anyLong())).thenReturn(Mono.just(responseTotalAnalyticSubscriptionGroupDto));
+        when(analyticSubscriptionRepository.selectTotalAnalyticByGroupId(anyInt())).thenReturn(Mono.just(responseTotalAnalyticSubscriptionGroupDto));
 
-        Mono<ResponseTotalAnalyticSubscriptionGroupDto> result = analyticSubscriptionService.getAlreadyPaidByGroupId(anyLong(), any());
+        Mono<ResponseTotalAnalyticSubscriptionGroupDto> result = analyticSubscriptionService.getAlreadyPaidByGroupId(anyInt(), any());
 
         StepVerifier.create(result)
                 .expectErrorSatisfies(throwable -> assertEquals(NoSuchElementException.class, throwable.getClass()))
                 .verify();
-        verify(webClientService).checkUserInGroup(anyLong(), any());
+        verify(webClientService).checkUserInGroup(anyInt(), any());
         verify(cacheService).getValue(any(), any());
-        verify(analyticSubscriptionRepository).selectTotalAnalyticByGroupId(anyLong());
+        verify(analyticSubscriptionRepository).selectTotalAnalyticByGroupId(anyInt());
         verify(cacheService, times(0)).saveValue(anyString(), any(), any());
     }
 
     @Test
     void getTotalAnalyticGroups_GroupsIdFound_CorrectReturn(){
         ResponseTotalAnalyticGroupsDto responseTotalAnalyticGroupsDto = new ResponseTotalAnalyticGroupsDto(5, BigDecimal.ONE);
-        when(webClientService.getGroupsIdByOwnerId(any())).thenReturn(Mono.just(List.of(1L, 2L, 3L)));
+        when(webClientService.getGroupsIdByOwnerId(any())).thenReturn(Mono.just(List.of(1, 2, 3)));
         when(analyticSubscriptionRepository.selectTotalAnalyticByGroupsId(any())).thenReturn(Mono.just(responseTotalAnalyticGroupsDto));
 
         Mono<ResponseTotalAnalyticGroupsDto> result = analyticSubscriptionService.getTotalAnalyticGroups(any());
@@ -239,7 +239,7 @@ public class AnalyticSubscriptionServiceTest {
         UserSubscription userSubscription = new UserSubscription();
         userSubscription.setAmount(BigDecimal.valueOf(1000));
         userSubscription.setStartDate(LocalDate.now().minusMonths(2L));
-        userSubscription.setId(1L);
+        userSubscription.setId(1);
         userSubscription.setPaymentPeriod(PaymentPeriod.MONTHLY.toString());
         when(analyticSubscriptionRepository.insertAllAnalyticSubscription(any())).thenReturn(Mono.empty());
 
@@ -255,7 +255,7 @@ public class AnalyticSubscriptionServiceTest {
         UserSubscription userSubscription = new UserSubscription();
         userSubscription.setAmount(BigDecimal.valueOf(1000));
         userSubscription.setStartDate(LocalDate.now().minusMonths(59L));
-        userSubscription.setId(1L);
+        userSubscription.setId(1);
         userSubscription.setPaymentPeriod(PaymentPeriod.MONTHLY.toString());
         when(analyticSubscriptionRepository.insertAllAnalyticSubscription(any())).thenReturn(Mono.empty());
 

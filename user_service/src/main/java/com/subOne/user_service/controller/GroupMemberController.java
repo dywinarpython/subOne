@@ -25,19 +25,19 @@ public class GroupMemberController {
 
     @Operation(summary = "Получение членов группы")
     @GetMapping("/{groupId}/members")
-    public Mono<ResponseEntity<ResponseMembersDto>> getMembers(@PathVariable Long groupId, @AuthenticationPrincipal Jwt jwt) {
+    public Mono<ResponseEntity<ResponseMembersDto>> getMembers(@PathVariable Integer groupId, @AuthenticationPrincipal Jwt jwt) {
         return groupMemberService.getUsers(groupId, jwt).map(ResponseEntity::ok);
     }
 
     @Operation(summary = "Проверка пользователь член группы")
     @GetMapping("{groupId}/members/check")
-    public Mono<ResponseEntity<Map<String, Boolean>>> checkUserInGroup(@PathVariable Long groupId, @AuthenticationPrincipal Jwt jwt) {
+    public Mono<ResponseEntity<Map<String, Boolean>>> checkUserInGroup(@PathVariable Integer groupId, @AuthenticationPrincipal Jwt jwt) {
         return groupMemberService.checkUserInGroup(groupId, jwt).thenReturn(ResponseEntity.ok(Map.of("hasAccess", true)));
     }
 
     @Operation(summary = "Проверка пользователь собственник группы")
     @GetMapping("{groupId}/members/check/owner")
-    public Mono<ResponseEntity<Map<String, Boolean>>> checkUserIsOwnerGroup(@PathVariable Long groupId, @AuthenticationPrincipal Jwt jwt) {
+    public Mono<ResponseEntity<Map<String, Boolean>>> checkUserIsOwnerGroup(@PathVariable Integer groupId, @AuthenticationPrincipal Jwt jwt) {
         return groupMemberService.checkUserIsOwnerGroup(groupId, jwt).thenReturn(ResponseEntity.ok(Map.of("hasAccess", true)));
     }
 
@@ -54,7 +54,7 @@ public class GroupMemberController {
     @Operation(summary = "Удаление пользователя из группы")
     @DeleteMapping("{groupId}/members/{userId}")
     public Mono<ResponseEntity<Void>> deleteMember(
-            @PathVariable Long groupId,
+            @PathVariable Integer groupId,
             @PathVariable UUID userId,
             @AuthenticationPrincipal Jwt jwt) {
         return groupMemberService.deleteMember(groupId, userId, jwt)

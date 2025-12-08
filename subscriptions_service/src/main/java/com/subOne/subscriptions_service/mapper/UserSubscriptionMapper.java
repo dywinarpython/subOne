@@ -21,7 +21,7 @@ public interface UserSubscriptionMapper {
             @Mapping(target = "status", expression = "java(\"ACTIVE\")"),
             @Mapping(target = "paymentPeriod", expression = "java(requestSubscriptionDto.paymentPeriod().toString())")
     })
-    UserSubscription requestSubscriptionDtoToUserSubscription(RequestSubscriptionDto requestSubscriptionDto, Long groupId);
+    UserSubscription requestSubscriptionDtoToUserSubscription(RequestSubscriptionDto requestSubscriptionDto, Integer groupId);
 
 
     ResponseSubscriptionDto userSubscriptionToResponseSubscriptionDto(UserSubscription userSubscription);

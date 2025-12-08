@@ -21,7 +21,6 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,14 +52,13 @@ class NotificationsControllerTest extends BaseIntegrationTest {
     private UUID userId;
     private Jwt jwt;
 
-    @Transactional
     private List<Notification> generateNotifications(int size, boolean read){
         List<Notification> notificationList = new ArrayList<>();
         for (int i = 0; i < size + 1; i++) {
             Notification notification = mapperNotification.parametersToNotification(userId,
                     NotificationType.PAYEMNT_SUBSCRIPTION,
                     NotificationTargetType.SUBSCRIPTION,
-                    System.currentTimeMillis());
+                    Math.abs( (int) System.currentTimeMillis()));
             if (read){
                 notification.setRead(true);
             }

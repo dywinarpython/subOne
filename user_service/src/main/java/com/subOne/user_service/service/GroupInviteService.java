@@ -13,5 +13,5 @@ public interface GroupInviteService {
     Mono<ResponseMembersDto> addUserByCode(UUID code, Jwt jwt);
 
 
-    Mono<ResponseInviteCodeDto> getCodeByGroupId(Long groupId, Jwt jwt);
+    Mono<ResponseInviteCodeDto> getCodeByGroupId(Integer groupId, Jwt jwt);
 }

@@ -8,9 +8,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import reactor.core.publisher.Flux;
 
-public interface AnalyticSubscriptionRepository extends R2dbcRepository<AnalyticSubscription, Long>,
+public interface AnalyticSubscriptionRepository extends R2dbcRepository<AnalyticSubscription, Integer>,
         SelectAnalyticSubscriptionRepository,
         InsertAnalyticSubscriptionRepository {
 
-    Flux<ResponseAnalyticPaymentSubscriptionDto> findBySubscriptionId(Long subscriptionId, Pageable pageable);
+    Flux<ResponseAnalyticPaymentSubscriptionDto> findBySubscriptionId(Integer subscriptionId, Pageable pageable);
 }

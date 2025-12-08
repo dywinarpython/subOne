@@ -13,13 +13,13 @@ import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
-public interface GroupMemberRepository extends R2dbcRepository<GroupMember, Long>, UpdateOwnerGroupRepository, InsertMembersRepository, DeleteAllByPairsRepository {
+public interface GroupMemberRepository extends R2dbcRepository<GroupMember, Integer>, UpdateOwnerGroupRepository, InsertMembersRepository, DeleteAllByPairsRepository {
 
 
 
-    Mono<Long> deleteByUserIdAndGroupId(UUID userId, Long groupId);
+    Mono<Long> deleteByUserIdAndGroupId(UUID userId, Integer groupId);
 
-    Mono<Boolean> existsByGroupIdAndUserId(Long groupId, UUID userId);
+    Mono<Boolean> existsByGroupIdAndUserId(Integer groupId, UUID userId);
 
     @Query("""
             select group_id
@@ -35,7 +35,7 @@ public interface GroupMemberRepository extends R2dbcRepository<GroupMember, Long
             join users u on u.user_id = g.user_id
             where group_id = :groupId
             """)
-    Flux<ResponseUserDto> findMembersIdByGroupId(Long groupId);
+    Flux<ResponseUserDto> findMembersIdByGroupId(Integer groupId);
 
     @Query("""
     SELECT
@@ -47,5 +47,5 @@ public interface GroupMemberRepository extends R2dbcRepository<GroupMember, Long
         ) as exist,
         CAST((SELECT COUNT(*) FROM group_members WHERE group_id = :groupId) AS BIGINT) AS count
     """)
-    Mono<GroupMemberInfoDto> findExistUserInGroupAndCountMemberInGroup(UUID userId, Long groupId);
+    Mono<GroupMemberInfoDto> findExistUserInGroupAndCountMemberInGroup(UUID userId, Integer groupId);
 }

@@ -13,7 +13,7 @@ import java.util.UUID;
 @Setter
 public class Group {
     @Id
-    private Long id;
+    private Integer id;
     private String name;
     private UUID ownerId;
     private OffsetDateTime createdAt;

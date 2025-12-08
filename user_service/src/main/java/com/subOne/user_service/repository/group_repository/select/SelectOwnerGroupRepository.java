@@ -5,5 +5,5 @@ import reactor.core.publisher.Mono;
 
 @FunctionalInterface
 public interface SelectOwnerGroupRepository {
-    Mono<ResponseUserDto> selectOwnerByGroupId(Long groupId);
+    Mono<ResponseUserDto> selectOwnerByGroupId(Integer groupId);
 }

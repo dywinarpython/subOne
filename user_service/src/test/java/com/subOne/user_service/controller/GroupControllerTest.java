@@ -126,7 +126,7 @@ public class GroupControllerTest extends AbstractControllerTest{
     void getOwnerIdByGroupId_GroupNotFound_CorrectReturn(){
         webTestClient
                 .get()
-                .uri(URI + "/" + System.currentTimeMillis() + "/owner")
+                .uri(URI + "/" + (int) System.currentTimeMillis() + "/owner")
                 .exchange()
                 .expectStatus().isNotFound();
     }

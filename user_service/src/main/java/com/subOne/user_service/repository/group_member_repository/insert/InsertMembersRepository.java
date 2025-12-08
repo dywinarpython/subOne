@@ -7,5 +7,5 @@ import java.util.UUID;
 
 @FunctionalInterface
 public interface InsertMembersRepository {
-    Mono<Void> insertAllMembers(List<Long> groupsId, UUID userId);
+    Mono<Void> insertAllMembers(List<Integer> groupsId, UUID userId);
 }

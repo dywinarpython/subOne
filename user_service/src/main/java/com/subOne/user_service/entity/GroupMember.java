@@ -12,7 +12,7 @@ import java.util.UUID;
 @Getter
 public class GroupMember {
     @Id
-    private Long id;
-    private Long groupId;
+    private Integer id;
+    private Integer groupId;
     private UUID userId;
 }

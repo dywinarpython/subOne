@@ -44,7 +44,7 @@ public class KafkaHandlerServiceTest extends BaseIntegrationTest {
     void deleteSubscriptionsByGroup_GroupFound_CorrectDeleteAndCheckDeleteAnalytics(){
         int countAnalytic = 2;
         UserSubscription userSubscription = new UserSubscription();
-        userSubscription.setGroupId(System.currentTimeMillis());
+        userSubscription.setGroupId(Math.abs( (int) System.currentTimeMillis()));
         userSubscription.setSubscriptionName("name");
         userSubscription.setServiceName("serviceName");
         userSubscription.setStartDate(LocalDate.now());

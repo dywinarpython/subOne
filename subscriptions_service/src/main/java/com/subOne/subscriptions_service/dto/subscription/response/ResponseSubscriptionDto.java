@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
-public record ResponseSubscriptionDto(Long id,
+public record ResponseSubscriptionDto(Integer id,
                                       String serviceName,
                                       String subscriptionName,
                                       LocalDate startDate,

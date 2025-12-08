@@ -13,8 +13,8 @@ import java.util.List;
 public interface SelectAnalyticSubscriptionRepository {
     Flux<SubscriptionLastDatePaymentDto> selectSubscriptionsLastDatePaid();
     Flux<SubscriptionLastDatePaymentIdAndGroupIdDto> selectSubscriptionsIdAndGroupByLastDatePaid();
-    Mono<ResponseTotalAnalyticSubscriptionDto> selectSumAmountAndLastDateBySubscriptionId(Long subscriptionId);
-    Mono<ResponseTotalAnalyticSubscriptionGroupDto> selectTotalAnalyticByGroupId(Long groupId);
-    Mono<ResponseTotalAnalyticGroupsDto> selectTotalAnalyticByGroupsId(List<Long> ids);
+    Mono<ResponseTotalAnalyticSubscriptionDto> selectSumAmountAndLastDateBySubscriptionId(Integer subscriptionId);
+    Mono<ResponseTotalAnalyticSubscriptionGroupDto> selectTotalAnalyticByGroupId(Integer groupId);
+    Mono<ResponseTotalAnalyticGroupsDto> selectTotalAnalyticByGroupsId(List<Integer> ids);
 
 }

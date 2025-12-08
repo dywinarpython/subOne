@@ -16,8 +16,8 @@ import java.time.OffsetDateTime;
 @Setter
 public class UserSubscription {
     @Id
-    private Long id;
-    private Long groupId;
+    private Integer id;
+    private Integer groupId;
     private String serviceName;
     private String subscriptionName;
     private LocalDate startDate;

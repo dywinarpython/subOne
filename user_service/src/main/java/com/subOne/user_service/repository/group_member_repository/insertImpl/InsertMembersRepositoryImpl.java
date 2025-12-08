@@ -15,7 +15,7 @@ public class InsertMembersRepositoryImpl implements InsertMembersRepository {
     private final DatabaseClient databaseClient;
 
     @Override
-    public Mono<Void> insertAllMembers(List<Long> groupsId, UUID userId) {
+    public Mono<Void> insertAllMembers(List<Integer> groupsId, UUID userId) {
         StringBuilder query = new StringBuilder(
                 """
                 insert into group_members (group_id, user_id) values

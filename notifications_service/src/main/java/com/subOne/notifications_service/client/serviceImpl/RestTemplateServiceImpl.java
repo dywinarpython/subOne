@@ -3,7 +3,6 @@ package com.subOne.notifications_service.client.serviceImpl;
 import com.subOne.notifications_service.client.service.RestTemplateService;
 import com.subOne.notifications_service.dto.ResponseGroupOwnerIdDto;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.lang.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -15,6 +14,7 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.NoSuchElementException;
 import java.util.UUID;
 @Slf4j
 @Service
@@ -33,8 +33,7 @@ public class RestTemplateServiceImpl implements RestTemplateService {
 
 
     @Override
-    @Nullable
-    public UUID getOwnerIdByGroupId(Long groupId) {
+    public UUID getOwnerIdByGroupId(Integer groupId) {
         HttpEntity<Void> entity = new HttpEntity<>(generateAccessToken());
         ResponseEntity<ResponseGroupOwnerIdDto> response = restTemplate.exchange(
                 userServiceUri + "groups/" + groupId + "/owner",
@@ -46,7 +45,7 @@ public class RestTemplateServiceImpl implements RestTemplateService {
             return response.getBody().ownerId();
         }
         log.error("The service could not get information about the owner of the group, status code: {}, body: {}", response.getStatusCode(), response.getBody());
-        return null;
+        throw new NoSuchElementException("User is not found");
     }
 
     private HttpHeaders generateAccessToken(){

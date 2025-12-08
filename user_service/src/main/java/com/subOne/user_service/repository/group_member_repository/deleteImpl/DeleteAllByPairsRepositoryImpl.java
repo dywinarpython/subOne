@@ -15,7 +15,7 @@ import java.util.UUID;
 public class DeleteAllByPairsRepositoryImpl implements DeleteAllByPairsRepository {
     private final DatabaseClient databaseClient;
     @Override
-    public Mono<Void> deleteAllByUserGroupPairs(List<Tuple2<UUID, Long>> pairs) {
+    public Mono<Void> deleteAllByUserGroupPairs(List<Tuple2<UUID, Integer>> pairs) {
         StringBuilder query = new StringBuilder("DELETE FROM group_members WHERE (user_id, group_id) IN (");
         for (int i = 0; i < pairs.size(); i++) {
             query.append("(").append(":userId").append(i).append(" , ").append(":groupId").append(i).append(")").append(",");
@@ -24,7 +24,7 @@ public class DeleteAllByPairsRepositoryImpl implements DeleteAllByPairsRepositor
         query.append(")");
         DatabaseClient.GenericExecuteSpec spec = databaseClient.sql(query.toString());
         for (int i = 0; i < pairs.size(); i++) {
-            Tuple2<UUID, Long> tuple2 = pairs.get(i);
+            Tuple2<UUID, Integer> tuple2 = pairs.get(i);
             spec = spec.bind("userId" + i, tuple2.getT1());
             spec = spec.bind("groupId" + i, tuple2.getT2());
         }

@@ -11,12 +11,12 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
-public interface NotificationRepository extends JpaRepository<Notification, Long> {
+public interface NotificationRepository extends JpaRepository<Notification, Integer> {
     List<ResponseNotificationDto> findByUserIdAndReadFalseOrderByCreatedAtDesc(UUID userId, Pageable pageable);
     List<ResponseNotificationDto> findByUserIdAndReadTrueOrderByCreatedAtDesc(UUID userId, Pageable pageable);
 
     @Query(value = "select count(*) from notifications n where n.user_id = :userId and n.read = false", nativeQuery = true)
-    long countByUserId(UUID userId);
+    int countByUserId(UUID userId);
 
     @Modifying
     @Query(
@@ -26,7 +26,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             where user_id = :userId and id in (:notificationsId)
             """, nativeQuery = true
     )
-    int updateReadNotificationsByUserId(List<Long> notificationsId, UUID userId);
+    int updateReadNotificationsByUserId(List<Integer> notificationsId, UUID userId);
 
     @Modifying
     @Query(value = "delete from notifications where created_at < :threshold", nativeQuery = true)

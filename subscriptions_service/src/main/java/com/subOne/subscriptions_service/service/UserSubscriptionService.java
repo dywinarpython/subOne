@@ -8,11 +8,11 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import reactor.core.publisher.Mono;
 
 public interface UserSubscriptionService {
-    Mono<ResponseSubscriptionDto> saveSubscription(Long groupId, Mono<RequestSubscriptionDto> requestSubscriptionDtoMono, Jwt jwt);
-    Mono<Void> updateSubscription(Long groupId, Long subscriptionId, Mono<RequestUpdateSubscriptionDto> requestUpdateSubscriptionDtoMono, Jwt jwt);
-    Mono<ResponseSubscriptionsDto> getSubscriptionsGroup(Long groupId, Integer page,  Jwt jwt);
-    Mono<ResponseSubscriptionDto> getSubscriptionById(Long groupId, Long subscriptionId, Jwt jwt);
-    Mono<Void> deleteSubscriptionById(Long groupId, Long subscriptionId, Jwt jwt);
-    Mono<Void> deleteSubscriptionsByGroupId(Long groupId);
-    Mono<Void> renewSubscriptionById(Long groupId, Long subscriptionId, Long extensionCount, Jwt jwt);
+    Mono<ResponseSubscriptionDto> saveSubscription(Integer groupId, Mono<RequestSubscriptionDto> requestSubscriptionDtoMono, Jwt jwt);
+    Mono<Void> updateSubscription(Integer groupId, Integer subscriptionId, Mono<RequestUpdateSubscriptionDto> requestUpdateSubscriptionDtoMono, Jwt jwt);
+    Mono<ResponseSubscriptionsDto> getSubscriptionsGroup(Integer groupId, Integer page,  Jwt jwt);
+    Mono<ResponseSubscriptionDto> getSubscriptionById(Integer groupId, Integer subscriptionId, Jwt jwt);
+    Mono<Void> deleteSubscriptionById(Integer groupId, Integer subscriptionId, Jwt jwt);
+    Mono<Void> deleteSubscriptionsByGroupId(Integer groupId);
+    Mono<Void> renewSubscriptionById(Integer groupId, Integer subscriptionId, Integer extensionCount, Jwt jwt);
 }

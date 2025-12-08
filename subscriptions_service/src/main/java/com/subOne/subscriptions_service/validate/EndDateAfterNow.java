@@ -6,7 +6,7 @@ import java.lang.annotation.*;
 
 @Documented
 @Constraint(validatedBy = EndDateAfterNowValidator.class)
-@Target({ ElementType.PARAMETER, ElementType.FIELD })
+@Target({ ElementType.FIELD })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface EndDateAfterNow {
     String message() default "EndDate must be in the future";
