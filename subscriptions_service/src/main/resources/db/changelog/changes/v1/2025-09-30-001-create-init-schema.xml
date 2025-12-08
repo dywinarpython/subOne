@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
+    <changeSet id="2025-09-30-001-create-init-schema" author="Dywinar">
+        <createTable tableName="user_subscriptions">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="group_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="service_name" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="subscription_name" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="start_date" type="date">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end_date" type="date">
+                <constraints nullable="false"/>
+            </column>
+            <column name="payment_period" type="varchar(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="amount" type="decimal(15,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamptz"/>
+        </createTable>
+        <sql>
+            ALTER TABLE user_subscriptions
+            ADD CONSTRAINT chk_start_before_end
+            CHECK (start_date  &lt; end_date);
+        </sql>
+        <sql>
+            ALTER TABLE user_subscriptions
+            ADD CONSTRAINT chk_now_before_end
+            CHECK (NOW()  &lt; end_date);
+        </sql>
+        <createIndex tableName="user_subscriptions" indexName="idx_group_created">
+            <column name="group_id"/>
+            <column name="created_at"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

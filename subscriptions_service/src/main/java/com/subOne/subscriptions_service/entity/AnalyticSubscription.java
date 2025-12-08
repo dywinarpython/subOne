@@ -1,0 +1,20 @@
+package com.subOne.subscriptions_service.entity;
+
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+@Table(name = "analytic_subscriptions")
+@Getter
+@Setter
+public class AnalyticSubscription {
+    @Id
+    private Integer id;
+    private Integer subscriptionId;
+    private LocalDate datePaid;
+    private BigDecimal amount;
+}

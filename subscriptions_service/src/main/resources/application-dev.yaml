@@ -1,0 +1,67 @@
+server:
+  port: ${SERVER_PORT:8001}
+spring:
+  page:
+    size: ${PAGE_SIZE:10}
+  config:
+    activate:
+      on-profile: dev
+  application:
+    name: subscriptions_service
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_URI:http://localhost:8080/realms/subOne}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  liquibase:
+    change-log: classpath:db/changelog/changelog-master.xml
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/subOne}
+    user: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:123456}
+    default-schema: subscriptions_service
+    enabled: true
+  r2dbc:
+    url: ${SPRING_DATASOURCE_URL_REACTIVE:r2dbc:postgresql://localhost:5432/subOne?schema=subscriptions_service}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:123456}
+    pool:
+      initial-size: 2
+      max-size: 10
+      max-idle-time: 30m
+      max-life-time: 2h
+      validation-query: SELECT 1
+      validation-depth: remote
+      leak-detection-threshold: 3000
+    properties:
+      connectTimeout: 5s
+      socketTimeout: 30s
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
+    properties:
+      enable.idempotence: true
+      request.timeout.ms: 15000
+      delivery.timeout.ms: 20000
+    consumer:
+      group_id: subscriptions_service
+user_service:
+  url: ${USER_SERVICE_URL:http://localhost:8000/api/v1/}
+  max_retries: ${USER_SERVICE_RETRIES:5}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, beans
+  endpoint:
+    health:
+      show-details: always
+logging:
+  level:
+    root: INFO
+    org.springframework.web.reactive.function.client: DEBUG
+    org.springframework.r2dbc.connection: DEBUG
+    org.springframework.data.r2dbc.core: DEBUG
+    io.r2dbc.spi: DEBUG

@@ -1,0 +1,46 @@
+package com.subOne.subscriptions_service;
+
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+import io.swagger.v3.oas.annotations.info.Info;
+import io.swagger.v3.oas.annotations.security.*;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
+import org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration;
+import org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration;
+
+@OpenAPIDefinition(
+		info = @Info(
+				title = "SubscriptionsService API",
+				version = "0.0.1-SNAPSHOT",
+				description = "Документация API"
+		),
+		security = @SecurityRequirement(name = "oauth2")
+)
+@SecurityScheme(
+		name = "oauth2",
+		type = SecuritySchemeType.OAUTH2,
+		flows = @OAuthFlows(
+				authorizationCode = @OAuthFlow(
+						authorizationUrl = "${KEYCLOAK_URI:http://localhost:8080/realms/subOne}/protocol/openid-connect/auth",
+						tokenUrl         = "${KEYCLOAK_URI:http://localhost:8080/realms/subOne}/protocol/openid-connect/token",
+						scopes = {
+								@OAuthScope(name = "openid",  description = "OpenID scope"),
+								@OAuthScope(name = "profile", description = "User profile")
+						}
+				)
+		)
+)
+@SpringBootApplication(exclude = {
+        RedisAutoConfiguration.class,
+        RedisReactiveAutoConfiguration.class,
+        RedisRepositoriesAutoConfiguration.class
+})
+public class SubscriptionsServiceApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(SubscriptionsServiceApplication.class, args);
+	}
+
+}
